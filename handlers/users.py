@@ -415,6 +415,7 @@ async def ask_question(message: Message, state: FSMContext):
 # Хендлер для вывода информации о поддержке
 @dp.message_handler(state="*", text="👨🏻‍💻Поддержка")
 async def support(message: Message, state: FSMContext):
+    
     await state.finish()  # Завершаем текущее состояние
     await message.answer('Ответы на многие вопросы можно найти в нашем <a href="https://t.me/NeuronAgent">канале</a>.',
                          disable_web_page_preview=True, reply_markup=user_kb.about)  # Кнопка с инструкцией
@@ -424,6 +425,7 @@ async def support(message: Message, state: FSMContext):
 @dp.message_handler(state="*", text="🎨Midjourney✅")
 @dp.message_handler(state="*", text="🎨Midjourney")
 async def gen_img(message: Message, state: FSMContext):
+
     await state.finish()  # Завершаем текущее состояние
     await db.change_default_ai(message.from_user.id, "image")  # Устанавливаем MidJourney как основной AI
     user = await db.get_user(message.from_user.id)  # Получаем данные пользователя

@@ -4,83 +4,74 @@ from asyncpg import Connection
 from config import DB_USER, DB_HOST, DB_DATABASE, DB_PASSWORD
 
 
-# Получение подключения к базе данных
+# Функция для установления соединения с базой данных
 async def get_conn() -> Connection:
+
     return await asyncpg.connect(user=DB_USER, password=DB_PASSWORD, database=DB_DATABASE, host=DB_HOST)
 
 
-# Инициализация базы данных: создание таблиц, если они не существуют
+# Функция для создания необходимых таблиц в базе данных, если они еще не существуют
 async def start():
+
     conn: Connection = await get_conn()
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS users("
-        "user_id BIGINT PRIMARY KEY,"  # ID пользователя
+        "user_id BIGINT PRIMARY KEY,"  # Уникальный идентификатор пользователя
         "username VARCHAR(32),"  # Имя пользователя
-        "first_name VARCHAR(64),"  # Имя
+        "first_name VARCHAR(64),"  # Имя пользователя
         "balance INT DEFAULT 0,"  # Баланс пользователя
-        "reg_time INT,"  # Время регистрации (timestamp)
-        "free_chatgpt SMALLINT DEFAULT 10000,"  # Бесплатные токены для ChatGPT
-        "free_image SMALLINT DEFAULT 10,"  # Бесплатные изображения для MidJourney
-        "default_ai VARCHAR(10) DEFAULT 'empty',"  # По умолчанию выбранный AI
-        "inviter_id BIGINT,"  # ID пользователя, пригласившего данного юзера
-        "ref_balance INT DEFAULT 0,"  # Баланс для реферальных выплат
-        "task_id VARCHAR(1024) DEFAULT '0',"  # ID задачи
-        "chat_gpt_lang VARCHAR(2) DEFAULT 'ru',"  # Язык для ChatGPT
-        "stock_time INT DEFAULT 0,"  # Время начала акции
-        "new_stock_time INT DEFAULT 0,"  # Время окончания акции
-        "is_pay BOOLEAN DEFAULT FALSE,"  # Флаг, указывающий на платного пользователя
+        "reg_time INT,"  # Время регистрации в формате timestamp
+        "free_chatgpt SMALLINT DEFAULT 10000,"  # Количество бесплатных токенов для ChatGPT
+        "free_image SMALLINT DEFAULT 10,"  # Количество бесплатных изображений в MidJourney
+        "default_ai VARCHAR(10) DEFAULT 'empty',"  # Выбранный по умолчанию AI
+        "inviter_id BIGINT,"  # ID пригласившего пользователя
+        "ref_balance INT DEFAULT 0,"  # Баланс с реферальных вознаграждений
+        "task_id VARCHAR(1024) DEFAULT '0',"  # ID задачи, связанной с пользователем
+        "chat_gpt_lang VARCHAR(2) DEFAULT 'ru',"  # Язык для общения с ChatGPT
+        "stock_time INT DEFAULT 0,"  # Время, связанное со скидками
+        "new_stock_time INT DEFAULT 0,"  # Время для новых акций
+        "is_pay BOOLEAN DEFAULT FALSE,"  # Флаг оплаты пользователя
         "chatgpt_about_me VARCHAR(256) DEFAULT '',"  # Информация о пользователе для ChatGPT
         "chatgpt_settings VARCHAR(256) DEFAULT '',"  # Настройки ChatGPT
-        "sub_time TIMESTAMP DEFAULT NOW(),"  # Время окончания подписки
+        "sub_time TIMESTAMP DEFAULT NOW(),"  # Время начала подписки
         "sub_type VARCHAR(12),"  # Тип подписки
-        "tokens INTEGER DEFAULT 0,"  # Количество токенов
-        "mj INTEGER DEFAULT 0,"  # Количество изображений для MidJourney
-        "is_notified BOOLEAN DEFAULT FALSE)"  # Уведомлялся ли пользователь
+        "tokens INTEGER DEFAULT 0,"  # Количество токенов для ChatGPT
+        "mj INTEGER DEFAULT 0,"  # Количество токенов для MidJourney
+        "is_notified BOOLEAN DEFAULT FALSE)"  # Флаг уведомления пользователя
     )
-    
-    # Создание таблицы заказов
     await conn.execute("CREATE TABLE IF NOT EXISTS orders(id SERIAL PRIMARY KEY, user_id BIGINT, amount INT, stock INT,"
                        "pay_time INT)")
-    
-    # Создание таблицы использования AI-услуг
+
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS usage(id SERIAL PRIMARY KEY, user_id BIGINT, ai_type VARCHAR(10), use_time INT,"
         "get_response BOOLEAN DEFAULT FALSE)")
 
-    # Создание таблицы для выводов средств
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS withdraws(id SERIAL PRIMARY KEY, user_id BIGINT, amount INT, withdraw_time INT)")
 
-    # Конфигурационная таблица
     await conn.execute("CREATE TABLE IF NOT EXISTS config(config_key VARCHAR(32), config_value VARCHAR(256))")
 
-    # Таблица промокодов
     await conn.execute("CREATE TABLE IF NOT EXISTS promocode("
-                       "promocode_id SMALLSERIAL,"
-                       "amount INTEGER,"
-                       "uses_count SMALLINT,"
-                       "code VARCHAR(10) UNIQUE)")
+                       "promocode_id SMALLSERIAL,"  # Уникальный идентификатор промокода
+                       "amount INTEGER,"  # Сумма, которая может быть получена по промокоду
+                       "uses_count SMALLINT,"  # Количество использований промокода
+                       "code VARCHAR(10) UNIQUE)")  # Сам код промокода
 
-    # Таблица для отслеживания использованных промокодов
     await conn.execute("CREATE TABLE IF NOT EXISTS user_promocode("
-                       "promocode_id SMALLINT,"
-                       "user_id BIGINT)")
-    
-    ''' Не нужна, так как подписок больше нет
+                       "promocode_id SMALLINT,"  # ID промокода
+                       "user_id BIGINT)")  # ID пользователя, связанного с промокодом
 
-    # Таблица заказов подписок
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS sub_orders("
-        "sub_order_id SERIAL,"
-        "user_id BIGINT,"
-        "amount INTEGER,"
-        "create_time TIMESTAMP DEFAULT NOW(),"  # Время создания заказа
-        "pay_time TIMESTAMP,"  # Время оплаты
+        "sub_order_id SERIAL,"  # Уникальный идентификатор подписки
+        "user_id BIGINT,"  # ID пользователя
+        "amount INTEGER,"  # Сумма подписки
+        "create_time TIMESTAMP DEFAULT NOW(),"  # Время создания подписки
+        "pay_time TIMESTAMP,"  # Время оплаты подписки
         "sub_type VARCHAR(12),"  # Тип подписки
         "days INTEGER,"  # Количество дней подписки
-        "with_discount BOOLEAN DEFAULT FALSE)"  # Есть ли скидка
+        "with_discount BOOLEAN DEFAULT FALSE)"  # Наличие скидки
     )
-    '''
 
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS orders("
@@ -90,17 +81,17 @@ async def start():
         "order_type VARCHAR(10),"  # Тип заказа: 'chatgpt' или 'midjourney'
         "quantity INT,"  # Количество токенов или запросов
         "create_time TIMESTAMP DEFAULT NOW(),"  # Время создания заказа
-        "pay_time TIMESTAMP)"  # Время оплаты
+        "pay_time TIMESTAMP)"  # Время оплаты заказа
     )
-    
-    # Проверка наличия IAM токена, если его нет — создание
+
+    # Проверяем наличие токена конфигурации, и если его нет - добавляем значение по умолчанию
     row = await conn.fetchrow("SELECT config_value FROM config WHERE config_key = 'iam_token'")
     if row is None:
         await conn.execute("INSERT INTO config VALUES('iam_token', '1')")
     await conn.close()
 
 
-# Получение списка всех пользователей
+# Функция для получения всех пользователей
 async def get_users():
 
     conn: Connection = await get_conn()
@@ -109,7 +100,7 @@ async def get_users():
     return rows
 
 
-# Получение информации о пользователе по его ID
+# Функция для получения информации о пользователе по user_id
 async def get_user(user_id):
 
     conn: Connection = await get_conn()
@@ -118,7 +109,7 @@ async def get_user(user_id):
     return row
 
 
-# Добавление нового пользователя
+# Функция для добавления нового пользователя
 async def add_user(user_id, username, first_name, inviter_id):
 
     conn: Connection = await get_conn()
@@ -127,58 +118,330 @@ async def add_user(user_id, username, first_name, inviter_id):
         user_id, username, first_name, int(datetime.now().timestamp()), inviter_id)
     await conn.close()
 
-""" Стырае функции для работы с подписками
 
-# Обновление информации о подписке пользователя
-async def update_sub_info(user_id, sub_time, sub_type, tokens, mj):
+# Функция для обновления task_id пользователя
+async def update_task_id(user_id, task_id):
+
     conn: Connection = await get_conn()
-    await conn.execute(
-        "UPDATE users SET sub_time = $2, sub_type = $3, tokens = $4, mj = $5, is_notified = FALSE WHERE user_id = $1",
-        user_id, sub_time, sub_type, tokens, mj)
+    await conn.execute("UPDATE users SET task_id = $2 WHERE user_id = $1", user_id, task_id)
     await conn.close()
 
-# Установка времени оплаты для заказа подписки
-async def set_sub_order_pay(sub_order_id):
+
+# Функция для обновления флага оплаты пользователя
+async def update_is_pay(user_id, is_pay):
+
     conn: Connection = await get_conn()
-    await conn.execute("UPDATE sub_orders SET pay_time = NOW() WHERE sub_order_id = $1", sub_order_id)
+    await conn.execute("UPDATE users SET is_pay = $2 WHERE user_id = $1", user_id, is_pay)
     await conn.close()
 
-# Добавление заказа подписки
-async def add_sub_order(user_id, amount, sub_type, discount, days):
-    conn: Connection = await get_conn()
-    row = await conn.fetchrow(
-        "INSERT INTO sub_orders(user_id, amount, sub_type, with_discount, days) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        user_id, amount, sub_type, discount, days)
-    await conn.close()
-    return row["sub_order_id"]
 
-# Получение информации о заказе подписки
-async def get_sub_order(sub_order_id):
+# Функция для обновления информации о пользователе для ChatGPT
+async def update_chatgpt_about_me(user_id, text):
+
     conn: Connection = await get_conn()
-    row = await conn.fetchrow("SELECT * FROM sub_orders WHERE sub_order_id = $1", sub_order_id)
+    await conn.execute("UPDATE users SET chatgpt_about_me = $2 WHERE user_id = $1", user_id, text)
+    await conn.close()
+
+
+# Функция для обновления настроек ChatGPT пользователя
+async def update_chatgpt_settings(user_id, text):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET chatgpt_settings = $2 WHERE user_id = $1", user_id, text)
+    await conn.close()
+
+
+# Функция для изменения AI по умолчанию для пользователя
+async def change_default_ai(user_id, ai_type):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET default_ai = $2 WHERE user_id = $1", user_id, ai_type)
+    await conn.close()
+
+
+# Функция для уменьшения количества бесплатных токенов ChatGPT для пользователя
+async def remove_free_chatgpt(user_id, tokens):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET free_chatgpt = free_chatgpt - $2 WHERE user_id = $1", user_id, tokens)
+    await conn.close()
+
+
+# Функция для уменьшения количества токенов ChatGPT у пользователя
+async def remove_chatgpt(user_id, tokens):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET tokens = tokens - $2 WHERE user_id = $1", user_id, tokens)
+    await conn.close()
+
+
+# Функция для уменьшения количества бесплатных изображений у пользователя
+async def remove_free_image(user_id):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET free_image = free_image - 1 WHERE user_id = $1", user_id)
+    await conn.close()
+
+
+# Функция для уменьшения количества токенов MidJourney у пользователя
+async def remove_image(user_id):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET mj = mj - 1 WHERE user_id = $1", user_id)
+    await conn.close()
+
+
+# Функция для обновления времени акций у пользователя
+async def update_stock_time(user_id, stock_time):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET stock_time = $2 WHERE user_id = $1", user_id, stock_time)
+    await conn.close()
+
+
+# Функция для обновления нового времени акций у пользователя
+async def update_new_stock_time(user_id, new_stock_time):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET new_stock_time = $2 WHERE user_id = $1", user_id, new_stock_time)
+    await conn.close()
+
+
+# Функция для уменьшения баланса пользователя на фиксированное значение (10)
+async def remove_balance(user_id):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET balance = balance - 10 WHERE user_id = $1", user_id)
+    await conn.close()
+
+
+# Функция для добавления баланса пользователю администратором
+async def add_balance_from_admin(user_id, amount):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET balance = balance + $2 WHERE user_id = $1", user_id, amount)
+    await conn.close()
+
+
+# Функция для добавления баланса пользователю и начисления реферального бонуса, если это не промоакция
+async def add_balance(user_id, amount, is_promo=False):
+
+    conn: Connection = await get_conn()
+    ref_balance = int(float(amount) * 0.15)
+    await conn.execute("UPDATE users SET balance = balance + $2 WHERE user_id = $1", user_id, amount)
+    if not is_promo:
+        await conn.execute(
+            "UPDATE users SET ref_balance = ref_balance + $2 WHERE user_id = (SELECT inviter_id FROM users WHERE user_id = $1)",
+            user_id, ref_balance)
+    await conn.close()
+
+
+# Функция для добавления нового заказа
+async def add_order(user_id, amount, stock):
+
+    conn: Connection = await get_conn()
+    await conn.execute("INSERT INTO orders(user_id, amount, stock, pay_time) VALUES ($1, $2, $3, $4)",
+                       user_id, amount, stock, int(datetime.now().timestamp()))
+    await conn.close()
+
+
+# Проверка наличия активного заказа со скидкой для пользователя
+async def check_discount_order(user_id):
+
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT * FROM sub_orders WHERE user_id = $1 and with_discount = TRUE", user_id)
     await conn.close()
     return row
 
-"""
 
-
-# Добавление заказа на покупку токенов или запросов
-async def add_token_or_request_order(user_id, amount, item_type, quantity, discount=False):
+# Добавление баланса пользователю за счет реферального баланса
+async def add_balance_from_ref(user_id):
 
     conn: Connection = await get_conn()
-    row = await conn.fetchrow(
-        """
-        INSERT INTO orders (user_id, item_type, quantity, amount, status, discount, create_time)
-        VALUES ($1, $2, $3, $4, 'pending', $5, NOW())
-        RETURNING order_id
-        """,
-        user_id, item_type, quantity, amount, discount
-    )
+    await conn.execute("UPDATE users SET balance = balance + ref_balance, ref_balance = 0 WHERE user_id = $1",
+                       user_id)
     await conn.close()
-    return row["order_id"]
 
 
-""" Заказы """
+# Изменение языка ChatGPT для пользователя
+async def change_chat_gpt_lang(user_id, new_lang):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET chat_gpt_lang = $2 WHERE user_id = $1",
+                       user_id, new_lang)
+    await conn.close()
+
+# Получение статистики по рефералам для пользователя
+async def get_ref_stat(user_id):
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT (SELECT CAST(sum(amount) * 0.15 as int) FROM sub_orders WHERE "
+                              "EXISTS(SELECT * FROM users "
+                              "WHERE inviter_id = $1 AND users.user_id = sub_orders.user_id)) as all_income,"
+                              "(SELECT ref_balance FROM users WHERE user_id = $1) as available_for_withdrawal,"
+                              "(SELECT COUNT(user_id) FROM users WHERE inviter_id = $1) as count_refs,"
+                              "(SELECT COUNT(sub_order_id) FROM sub_orders JOIN users u ON sub_orders.user_id = u.user_id WHERE u.inviter_id = $1) as orders_count",
+                              user_id)
+    await conn.close()
+    return row
+
+
+# Получение всех пользователей, которые являются пригласившими
+async def get_all_inviters():
+
+    conn: Connection = await get_conn()
+    rows = await conn.fetch('select distinct inviter_id from users where inviter_id != 0')
+    await conn.close()
+    return rows
+
+
+# Добавление действия пользователя (использование AI)
+async def add_action(user_id, ai_type, image_type=''):
+
+    conn: Connection = await get_conn()
+    action = await conn.fetchrow("INSERT INTO usage(user_id, ai_type, image_type) VALUES ($1, $2, $3) RETURNING id",
+                                 user_id, ai_type, image_type)
+    await conn.close()
+    return action["id"]
+
+
+# Получение информации о действии по его ID
+async def get_action(action_id):
+
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT * FROM usage WHERE id = $1", action_id)
+    await conn.close()
+    return row
+
+
+# Установка флага, что ответ на действие пользователя был получен
+async def set_action_get_response(usage_id):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE usage SET get_response = TRUE WHERE id = $1", usage_id)
+    await conn.close()
+
+
+# Получение общей статистики
+async def get_stat():
+
+    end = datetime.now()
+    start = datetime.combine(date.today(), time())
+    print(start, end)
+    old_end = int(datetime.now().timestamp())
+    old_start = int(datetime.combine(date.today(), time()).timestamp())
+
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT (SELECT COUNT(*) FROM users) as users_count,"
+                              "(SELECT COUNT(*) FROM users where reg_time between $3 and $4) as today_users_count,"
+                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt') as chatgpt_count,"
+                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'image') as image_count,"
+                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt' and create_time between $1 and $2) "
+                              "as today_chatgpt_count,"
+                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'image' and create_time between $1 and $2) "
+                              "as today_image_count",
+                              start, end, old_start, old_end)
+    await conn.close()
+    return row
+
+
+# Получение IAM токена из таблицы конфигурации
+async def get_iam_token():
+
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT config_value FROM config WHERE config_key = 'iam_token'")
+    await conn.close()
+    return row['config_value']
+
+
+# Изменение IAM токена
+async def change_iam_token(iam_token):
+
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "UPDATE config SET config_value = $1 WHERE config_key = 'iam_token'", iam_token)
+    await conn.close()
+
+
+# Добавление нового вывода средств
+async def add_withdraw(user_id, amount):
+
+    conn: Connection = await get_conn()
+    await conn.execute("INSERT INTO withdraws(user_id, amount, withdraw_time) VALUES ($1, $2, $3)",
+                       user_id, amount, int(datetime.now().timestamp()))
+    await conn.close()
+
+
+# Сброс реферального баланса пользователя
+async def reset_ref_balance(user_id):
+
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "UPDATE users SET ref_balance = 0 WHERE user_id = $1", user_id)
+    await conn.close()
+
+
+# Создание нового промокода
+async def create_promocode(amount, uses_count, code):
+
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "INSERT INTO promocode(amount, uses_count, code) VALUES ($1, $2, $3)", amount, uses_count, code)
+    await conn.close()
+
+
+# Получение промокода по его коду
+async def get_promocode_by_code(code):
+
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT * FROM promocode WHERE code = $1", code)
+    await conn.close()
+    return row
+
+
+# Создание промокода для пользователя
+async def create_user_promocode(promocode_id, user_id):
+
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "INSERT INTO user_promocode(promocode_id, user_id) VALUES ($1, $2)", promocode_id, user_id)
+    await conn.close()
+
+
+# Получение пользовательского промокода по его ID и ID пользователя
+async def get_user_promocode_by_promocode_id_and_user_id(promocode_id, user_id):
+
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT * FROM user_promocode WHERE promocode_id = $1 and user_id = $2", promocode_id,
+                              user_id)
+    await conn.close()
+    return row
+
+
+# Получение всех промокодов пользователя по его ID
+async def get_all_user_promocode_by_promocode_id(promocode_id):
+
+    conn: Connection = await get_conn()
+    rows = await conn.fetch("SELECT * FROM user_promocode WHERE promocode_id = $1", promocode_id)
+    await conn.close()
+    return rows
+
+
+# Получение статистики по промокодам
+async def get_promo_for_stat():
+
+    conn: Connection = await get_conn()
+    rows = await conn.fetch("""select code, amount, uses_count, count(up.user_id) as users_count
+from promocode
+         left join user_promocode up on promocode.promocode_id = up.promocode_id
+group by promocode.promocode_id, amount, uses_count, code
+having count(up.user_id) < uses_count""")
+    await conn.close()
+    return rows
+
+
+""" НОВЫЕ ФУНКЦИИ ТОКЕНОВ И ЗАПРОСОВ """
+""" Заказы токенов и запросов"""
+
 
 # Добавление нового заказа на токены/запросы
 async def add_order(user_id, amount, order_type, quantity):
@@ -207,7 +470,6 @@ async def set_order_pay(order_id):
     await conn.execute("UPDATE orders SET pay_time = NOW() WHERE id = $1", order_id)
     await conn.close()
 
-
 ''' Токены и Запросы '''
 
 # Обновление количества токенов у пользователя
@@ -225,4 +487,56 @@ async def update_requests(user_id, new_requests):
     await conn.execute("UPDATE users SET mj = $2 WHERE user_id = $1", user_id, new_requests)
     await conn.close()
 
+''' СТАРЫЕ ФУНКЦИИ ПОДПИСОК
 
+async def update_sub_info(user_id, sub_time, sub_type, tokens, mj):
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "UPDATE users SET sub_time = $2, sub_type = $3, tokens = $4, mj = $5, is_notified = FALSE WHERE user_id = $1",
+        user_id, sub_time, sub_type, tokens, mj)
+    await conn.close()
+
+async def set_sub_order_pay(sub_order_id):
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE sub_orders SET pay_time = NOW() WHERE sub_order_id = $1", sub_order_id)
+    await conn.close()
+
+
+async def add_sub_order(user_id, amount, sub_type, discount, days):
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow(
+        "INSERT INTO sub_orders(user_id, amount, sub_type, with_discount, days) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+        user_id, amount, sub_type, discount, days)
+    await conn.close()
+    return row["sub_order_id"]
+
+
+async def get_sub_order(sub_order_id):
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT * FROM sub_orders WHERE sub_order_id = $1", sub_order_id)
+    await conn.close()
+    return row
+
+
+async def get_sub_stat():
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT "
+                              "COUNT(*) FILTER (WHERE sub_type = 'base') as base,"
+                              "COUNT(*) FILTER (WHERE sub_type = 'standard') as standard,"
+                              "COUNT(*) FILTER (WHERE sub_type = 'premium') as premium "
+                              "FROM users where sub_time > NOW()")
+    await conn.close()
+    return row
+
+
+async def get_today_sub_stat():
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT "
+                              "COUNT(*) FILTER (WHERE sub_type = 'base') as base,"
+                              "COUNT(*) FILTER (WHERE sub_type = 'standard') as standard,"
+                              "COUNT(*) FILTER (WHERE sub_type = 'premium') as premium "
+                              "FROM sub_orders WHERE pay_time is not null and pay_time::date = current_date"
+                              )
+    await conn.close()
+    return row
+'''

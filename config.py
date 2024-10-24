@@ -1,4 +1,4 @@
-TOKEN = "bot_token"
+TOKEN = "8006085349:AAGdxFYLSP9vdAFHBu0ZWKtKa3M5n4wo0M0"
 OPENAPI_TOKEN = "none"
 TNL_API_KEY = "none"
 TNL_API_KEY1 = "none"
@@ -6,13 +6,13 @@ MJ_API_KEY = "none"
 IMGBB_API_KEY = "none"
 ya_token = "none"
 ya_folder = "none"
-bot_url = 'https://t.me/bot'
+bot_url = 'https://t.me/coin_gifter_bot'
 midjourney_webhook_url = "none"
 go_api_token = "none"
 log_on = False
-ADMINS = ["tg_id"]
+ADMINS = ["5101525651"]
 bug_id = "id"
-channel_id = "id"
+channel_id = "https://t.me/NeuronAgent"
 
 LAVA_API_KEY = "none"
 LAVA_SHOP_ID = "none"
@@ -23,15 +23,15 @@ NOTIFY_URL = "http://127.0.0.1:8001"
 DB_USER = "postgres"
 DB_PASSWORD = "postgres"
 DB_DATABASE = "ai_bot"
-DB_HOST = "localhost"
+DB_HOST = "db"
 
 PHOTO_PATH = "/var/www/images/"
 MJ_PHOTO_BASE_URL = "https://neuronbot.ru/files/images/"
 
-'''
+
 class Tinkoff:
     terminal_id = "TinkoffBankTest"
-    api_token = "none
+    api_token = "none"
 
 
 class FKWallet:
@@ -47,7 +47,7 @@ class FreeKassa:
 class PayOK:
     shop_id = 7598
     secret = "none"
-'''
+
 
 sub_types = {
     "base": {
