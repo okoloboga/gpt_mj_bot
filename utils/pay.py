@@ -1,6 +1,7 @@
 import hashlib  # Для генерации хешей
 import hmac     # Для создания HMAC подписи
 import json     # Для работы с JSON
+import logging
 import random   # Для генерации случайных чисел
 from datetime import datetime, timedelta  # Для работы с датами
 from urllib.parse import urlencode  # Для кодирования URL параметров
@@ -11,7 +12,12 @@ import config  # Импорт конфигурации
 from config import FreeKassa, LAVA_API_KEY, LAVA_SHOP_ID, PayOK, Tinkoff  # Импорт настроек платежных систем
 from utils import db  # Импорт функций работы с базой данных
 
+logger = logging.getLogger(__name__)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(filename)s:%(lineno)d #%(levelname)-8s '
+           '[%(asctime)s] - %(name)s - %(message)s')
 # Функция для получения ссылки оплаты через Tinkoff
 def get_pay_url_tinkoff(order_id, amount):
 
@@ -31,8 +37,8 @@ def get_pay_url_tinkoff(order_id, amount):
 
     # Отправка запроса на инициализацию оплаты
     res = requests.post("https://securepay.tinkoff.ru/v2/Init", json=data)
+    logger.info(f'Tinkoff Response: {res.json()}')
     res_data = res.json()  # Получение ответа в формате JSON
-    print(res_data)
     return res_data["PaymentURL"]  # Возвращаем URL для оплаты
 
 

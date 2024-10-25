@@ -55,13 +55,13 @@ async def choose_midjourney_requests(call: CallbackQuery):
 async def handle_chatgpt_tokens_purchase(call: CallbackQuery):
 
     tokens = int(call.data.split(":")[1])  # Получаем количество токенов
-    amount = get_token_price(tokens)  # Получаем цену за количество токенов
+    amount = int(call.data.split(":")[2])  # Получаем цену за количество токенов
 
     # Создаем заказ для покупки токенов в базе данных
-    order_id = await db.add_token_or_request_order(call.from_user.id, amount, "chatgpt_tokens", tokens)
+    order_id = await db.add_order(call.from_user.id, amount, "chatgpt", tokens)
 
     # Генерируем ссылки для оплаты
-    urls = get_pay_urls(order_id, amount)
+    urls = get_pay_urls('s'+str(order_id), amount)
     
     # Отправляем пользователю сообщение с выбором способа оплаты
     await call.message.edit_text(f"Вы выбрали {tokens} токенов для 💬ChatGPT, стоимость {amount}₽.",
@@ -73,13 +73,13 @@ async def handle_chatgpt_tokens_purchase(call: CallbackQuery):
 async def handle_midjourney_requests_purchase(call: CallbackQuery):
 
     requests_count = int(call.data.split(":")[1])  # Получаем количество запросов
-    amount = get_request_price(requests_count)  # Получаем цену за количество запросов
+    amount = int(call.data.split(":")[2])  # Получаем цену за количество запросов
 
     # Создаем заказ для покупки запросов в базе данных
-    order_id = await db.add_token_or_request_order(call.from_user.id, amount, "midjourney_requests", requests_count)
+    order_id = await db.add_order(call.from_user.id, amount, "midjourney", requests_count)
 
     # Генерируем ссылки для оплаты
-    urls = get_pay_urls(order_id, amount)
+    urls = get_pay_urls('s'+str(order_id), amount)
 
     # Отправляем пользователю сообщение с выбором способа оплаты
     await call.message.edit_text(f"Вы выбрали {requests_count} запросов для 🎨MidJourney, стоимость {amount}₽.",
@@ -179,7 +179,7 @@ async def choose_amount(call: CallbackQuery):
 async def back_to_buy_vpn(call: CallbackQuery):
 
     order_id = int(call.data.split(":")[1])  # Получаем ID заказа
-    order = await db.get_sub_order(order_id)  # Получаем данные о заказе из базы данных
+    order = await db.get_order(order_id)  # Получаем данные о заказе из базы данных
 
     # Отправляем пользователю инвойс для оплаты через Telegram
     await call.bot.send_invoice(call.from_user.id,
@@ -209,4 +209,4 @@ async def approve_order(pre_checkout_query: PreCheckoutQuery):
 async def process_successful_payment(message: Message):
     
     order_id = int(message.successful_payment.invoice_payload)  # Получаем ID заказа из payload
-    await utils.pay.process_sub(message.bot, order_id)  # Обрабатываем подписку (обновляем в базе)
+    await utils.pay.process_purchase(message.bot, order_id)  # Обрабатываем подписку (обновляем в базе)

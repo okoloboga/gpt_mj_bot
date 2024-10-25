@@ -39,8 +39,6 @@ async def start():
         "mj INTEGER DEFAULT 0,"  # Количество токенов для MidJourney
         "is_notified BOOLEAN DEFAULT FALSE)"  # Флаг уведомления пользователя
     )
-    await conn.execute("CREATE TABLE IF NOT EXISTS orders(id SERIAL PRIMARY KEY, user_id BIGINT, amount INT, stock INT,"
-                       "pay_time INT)")
 
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS usage(id SERIAL PRIMARY KEY, user_id BIGINT, ai_type VARCHAR(10), use_time INT,"
@@ -487,6 +485,29 @@ async def update_requests(user_id, new_requests):
     await conn.execute("UPDATE users SET mj = $2 WHERE user_id = $1", user_id, new_requests)
     await conn.close()
 
+
+async def get_sub_stat():
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT "
+                              "COUNT(*) FILTER (WHERE sub_type = 'base') as base,"
+                              "COUNT(*) FILTER (WHERE sub_type = 'standard') as standard,"
+                              "COUNT(*) FILTER (WHERE sub_type = 'premium') as premium "
+                              "FROM users where sub_time > NOW()")
+    await conn.close()
+    return row
+
+
+async def get_today_sub_stat():
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT "
+                              "COUNT(*) FILTER (WHERE sub_type = 'base') as base,"
+                              "COUNT(*) FILTER (WHERE sub_type = 'standard') as standard,"
+                              "COUNT(*) FILTER (WHERE sub_type = 'premium') as premium "
+                              "FROM sub_orders WHERE pay_time is not null and pay_time::date = current_date"
+                              )
+    await conn.close()
+    return row
+
 ''' СТАРЫЕ ФУНКЦИИ ПОДПИСОК
 
 async def update_sub_info(user_id, sub_time, sub_type, tokens, mj):
@@ -518,25 +539,5 @@ async def get_sub_order(sub_order_id):
     return row
 
 
-async def get_sub_stat():
-    conn: Connection = await get_conn()
-    row = await conn.fetchrow("SELECT "
-                              "COUNT(*) FILTER (WHERE sub_type = 'base') as base,"
-                              "COUNT(*) FILTER (WHERE sub_type = 'standard') as standard,"
-                              "COUNT(*) FILTER (WHERE sub_type = 'premium') as premium "
-                              "FROM users where sub_time > NOW()")
-    await conn.close()
-    return row
 
-
-async def get_today_sub_stat():
-    conn: Connection = await get_conn()
-    row = await conn.fetchrow("SELECT "
-                              "COUNT(*) FILTER (WHERE sub_type = 'base') as base,"
-                              "COUNT(*) FILTER (WHERE sub_type = 'standard') as standard,"
-                              "COUNT(*) FILTER (WHERE sub_type = 'premium') as premium "
-                              "FROM sub_orders WHERE pay_time is not null and pay_time::date = current_date"
-                              )
-    await conn.close()
-    return row
 '''

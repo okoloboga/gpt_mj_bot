@@ -77,7 +77,7 @@ async def add_balance(user_id, amount):
 async def process_pay(order_id, amount):
 
     if order_id.startswith("s"):  # Если это подписка
-        await utils.pay.process_purchase(bot, int(order_id)) # Обрабатываем покупку токенов или запросов
+        await utils.pay.process_purchase(bot, int(order_id[1:])) # Обрабатываем покупку токенов или запросов
         # await utils.pay.process_sub(bot, int(order_id[1:]))  # Обрабатываем подписку
     else:
         user_id = int(order_id.split("_")[0])  # Если это пополнение баланса
@@ -150,3 +150,37 @@ async def get_midjourney(action_id: int, request: Request):
         await bot.send_photo(user_id, open(image_path, "rb"),
                              reply_markup=user_kb.get_choose(data["task_id"]))
     return 200
+
+@app.post('/api/midjourney/choose')
+async def get_midjourney_choose(request: Request):
+    data = await request.json()
+    action_id = int(data["ref"])
+    action = await db.get_action(action_id)
+    user_id = action["user_id"]
+    photo_url = data["imageUrl"]
+    print(data)
+    await send_mj_photo(user_id, photo_url, user_kb.get_choose(data["buttonMessageId"], action["api_key_number"]))
+    await db.set_action_get_response(action_id)
+    await db.remove_image(user_id)
+
+
+@app.post('/api/midjourney/button')
+async def get_midjourney_button(request: Request):
+    await asyncio.sleep(1)
+    data = await request.json()
+    action_id = int(data["ref"])
+    action = await db.get_action(action_id)
+    user_id = action["user_id"]
+    photo_url = data["imageUrl"]
+    await send_mj_photo(user_id, photo_url,
+                        user_kb.get_try_prompt_or_choose(data["buttonMessageId"], action["api_key_number"]))
+    user = await db.get_user(user_id)
+    await db.set_action_get_response(action_id)
+    if user["free_image"] > 0:
+        await db.remove_free_image(user["user_id"])
+    else:
+        await db.remove_image(user["user_id"])
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")

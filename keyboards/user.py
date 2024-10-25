@@ -229,9 +229,9 @@ def get_neural_network_menu():
 def get_chatgpt_tokens_menu():
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("100 тыс токенов, 149₽", callback_data="select_chatgpt_tokens:100000"),
-        InlineKeyboardButton("200 тыс токенов, 249₽ (-20%)", callback_data="select_chatgpt_tokens:200000"),
-        InlineKeyboardButton("500 тыс токенов, 449₽ (-40%)", callback_data="select_chatgpt_tokens:500000"),
+        InlineKeyboardButton("100 тыс токенов, 149₽", callback_data="select_chatgpt_tokens:100000:149"),
+        InlineKeyboardButton("200 тыс токенов, 249₽ (-20%)", callback_data="select_chatgpt_tokens:200000:249"),
+        InlineKeyboardButton("500 тыс токенов, 449₽ (-40%)", callback_data="select_chatgpt_tokens:500000:449"),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
@@ -240,9 +240,9 @@ def get_chatgpt_tokens_menu():
 def get_midjourney_requests_menu():
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("10 запросов, 149₽", callback_data="select_midjourney_requests:10"),
-        InlineKeyboardButton("20 запросов, 259₽ (-13%)", callback_data="select_midjourney_requests:20"),
-        InlineKeyboardButton("50 запросов, 599₽ (-19%)", callback_data="select_midjourney_requests:50"),
-        InlineKeyboardButton("100 запросов, 1099₽ (-26%)", callback_data="select_midjourney_requests:100"),
+        InlineKeyboardButton("10 запросов, 149₽", callback_data="select_midjourney_requests:10:149"),
+        InlineKeyboardButton("20 запросов, 259₽ (-13%)", callback_data="select_midjourney_requests:20:259"),
+        InlineKeyboardButton("50 запросов, 599₽ (-19%)", callback_data="select_midjourney_requests:50:599"),
+        InlineKeyboardButton("100 запросов, 1099₽ (-26%)", callback_data="select_midjourney_requests:100:1099"),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )

@@ -125,7 +125,7 @@ async def get_mj(prompt, user_id, bot: Bot):
     user = await db.get_user(user_id)
 
     # Проверяем наличие запросов и отправляем уведомление, если запросы исчерпаны
-    if (user["mj"] <= 0 or user["sub_time"] <= datetime.now()) and user["free_image"] <= 0:
+    if user["mj"] <= 0 and user["free_image"] <= 0:
         await not_enough_balance(bot, user_id, "image")  # Отправляем уведомление о недостатке средств
         return
 
@@ -146,8 +146,8 @@ async def get_mj(prompt, user_id, bot: Bot):
     # Проверка на количество оставшихся запросов MidJourney
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
     if user["mj"] <= 3 and not user["is_notified"]:  # Если осталось 3 или меньше запросов
-        await notify_low_midjourney_requests(user_id)  # Отправляем уведомление о низком количестве запросов
-        await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
+        await notify_low_midjourney_requests(user_id, bot)  # Отправляем уведомление о низком количестве запросов
+        # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
 
 
 # Генерация ответа от ChatGPT
@@ -175,8 +175,8 @@ async def get_gpt(prompt, messages, user_id, bot: Bot):
     # Проверка на количество оставшихся токенов
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
     if user["tokens"] <= 30000 and not user["is_notified"]:  # Если осталось 30 тыс или меньше токенов
-        await notify_low_chatgpt_tokens(user_id)  # Отправляем уведомление о низком количестве токенов
-        await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
+        await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов
+        # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
 
     await db.add_action(user_id, "chatgpt")  # Логируем действие пользователя
     return messages
@@ -185,7 +185,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot):
 ''' Новые две функции - уведомления об заканчивающихся токенах '''
 
 # Уведомение о низком количестве токенов GPT
-async def notify_low_chatgpt_tokens(user_id):
+async def notify_low_chatgpt_tokens(user_id, bot: Bot):
 
     await bot.send_message(user_id, """
 У вас заканчиваются запросы для 💬ChatGPT
@@ -194,10 +194,10 @@ async def notify_low_chatgpt_tokens(user_id):
 200 тыс токенов, 249₽ > 224₽  (-10%)
 500 тыс токенов, 449₽ > 381₽  (-15%)
 Успейте приобрести запросы со скидкой, предложение актуально 24 часа⤵️
-    """, reply_markup=user_kb.get_discount_chatgpt_tokens())
+    """, reply_markup=user_kb.get_chatgpt_tokens_menu())
 
 # Уведомление о низком количестве запросов MidJourney
-async def notify_low_midjourney_requests(user_id):
+async def notify_low_midjourney_requests(user_id, bot: Bot):
 
     await bot.send_message(user_id, """
 У вас заканчиваются запросы для 🎨Midjourney
@@ -207,7 +207,7 @@ async def notify_low_midjourney_requests(user_id):
 50 генераций, 599₽ > 550₽ (-8%)
 100 генераций, 1099₽ > 989₽ (-10%)
 Успейте приобрести запросы со скидкой, предложение актуально 24 часа⤵️
-    """, reply_markup=user_kb.get_discount_midjourney_requests())
+    """, reply_markup=user_kb.get_midjourney_requests_menu())
 
 
 # Хэндлер команды /start
@@ -400,7 +400,7 @@ async def ask_question(message: Message, state: FSMContext):
     user = await db.get_user(message.from_user.id)  # Получаем данные пользователя
 
     # Проверяем наличие токенов и подписки
-    if (user["tokens"] <= 0 or user["sub_time"] <= datetime.now()) and user["free_chatgpt"] <= 0:
+    if user["tokens"] <= 0 and user["free_chatgpt"] <= 0:
         return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")  # Сообщаем об исчерпании лимита
 
     # Сообщение с запросом ввода
@@ -430,7 +430,7 @@ async def gen_img(message: Message, state: FSMContext):
     await db.change_default_ai(message.from_user.id, "image")  # Устанавливаем MidJourney как основной AI
     user = await db.get_user(message.from_user.id)  # Получаем данные пользователя
     # Проверяем наличие токенов и подписки
-    if (user["mj"] <= 0 or user["sub_time"] <= datetime.now()) and user["free_image"] <= 0:
+    if user["mj"] <= 0 and user["free_image"] <= 0:
         await not_enough_balance(message.bot, message.from_user.id, "image")  # Сообщаем об исчерпании лимита
         return
 
@@ -499,7 +499,7 @@ async def choose_image(call: CallbackQuery):
 
     await call.answer()  # Закрываем callback уведомление
     user = await db.get_user(call.from_user.id)
-    if (user["mj"] <= 0 or user["sub_time"] <= datetime.now()) and user["free_image"] <= 0:
+    if user["mj"] <= 0 and user["free_image"] <= 0:
         await not_enough_balance(call.bot, call.from_user.id, "image")  # Проверка наличия баланса для MidJourney
         return
     task_id = call.data.split(":")[1]
@@ -518,7 +518,7 @@ async def change_image(call: CallbackQuery):
 
     await call.answer()  # Закрываем callback уведомление
     user = await db.get_user(call.from_user.id)
-    if (user["mj"] <= 0 or user["sub_time"] <= datetime.now()) and user["free_image"] <= 0:
+    if user["mj"] <= 0 and user["free_image"] <= 0:
         await not_enough_balance(call.bot, call.from_user.id, "image")  # Проверка лимитов
         return
     task_id = call.data.split(":")[3]
@@ -631,7 +631,7 @@ async def gen_prompt(message: Message, state: FSMContext):
         return await message.bot.send_message(796644977, message.from_user.id)
 
     if user["default_ai"] == "chatgpt":
-        if (user["tokens"] <= 0 or user["sub_time"] <= datetime.now()) and user["free_chatgpt"] <= 0:
+        if user["tokens"] <= 0 and user["free_chatgpt"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
 
         data = await state.get_data()
