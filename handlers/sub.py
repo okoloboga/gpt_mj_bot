@@ -36,15 +36,52 @@ async def choose_neural_network(call: CallbackQuery):
 @dp.callback_query_handler(text="buy_chatgpt_tokens")
 async def choose_chatgpt_tokens(call: CallbackQuery):
 
-    await call.message.edit_text("""
-Выберите количество токенов⤵️""",
-    reply_markup=user_kb.get_chatgpt_tokens_menu())
+    user_id = call.from_user.id
+    
+    # Получаем данные о последнем уведомлении пользователя
+    user_data = await db.get_user_notified_gpt(user_id)
+    now = datetime.now()
+
+    # Проверяем, было ли уведомление отправлено менее 24 часов назад
+    if user_data and user_data['last_notification']:
+        last_notification = user_data['last_notification']
+        
+        # Если уведомление было менее 24 часов назад, показываем меню со скидкой
+        if now < last_notification + timedelta(hours=24):
+            await call.message.edit_text(
+                "Выберите количество токенов со скидкой⤵️",
+                reply_markup=user_kb.get_chatgpt_discount_tokens_menu()
+            )
+            return
+    
+    # Если уведомление не было отправлено или прошло больше 24 часов, показываем обычное меню
+    await call.message.edit_text(
+        "Выберите количество токенов⤵️",
+        reply_markup=user_kb.get_chatgpt_tokens_menu()
+    )
 
 
 # Меню для выбора количества запросов MidJourney
 @dp.callback_query_handler(text="buy_midjourney_requests")
 async def choose_midjourney_requests(call: CallbackQuery):
+    user_id = call.from_user.id
+    
+    # Получаем данные о последнем уведомлении пользователя
+    user_data = await db.get_user_notified_mj(user_id)
+    now = datetime.now()
 
+    # Проверяем, было ли уведомление отправлено менее 24 часов назад
+    if user_data and user_data['last_notification']:
+        last_notification = user_data['last_notification']
+        
+        # Если уведомление было менее 24 часов назад, показываем меню со скидкой
+        if now < last_notification + timedelta(hours=24):
+            await call.message.edit_text(
+                "Выберите количество запросов со скидкой⤵️",
+                reply_markup=user_kb.get_midjourney_discount_requests_menu()
+            )
+            return
+    
     await call.message.edit_text("""
 Выберите количество запросов⤵️""",
     reply_markup=user_kb.get_midjourney_requests_menu())
@@ -54,36 +91,57 @@ async def choose_midjourney_requests(call: CallbackQuery):
 @dp.callback_query_handler(Text(startswith="select_chatgpt_tokens:"))
 async def handle_chatgpt_tokens_purchase(call: CallbackQuery):
 
+    user_id = call.from_user.id
+
     tokens = int(call.data.split(":")[1])  # Получаем количество токенов
     amount = int(call.data.split(":")[2])  # Получаем цену за количество токенов
+    discounts = [139, 224, 381]
+    user_discount = await db.get_user_notified_gpt(user_id)
 
-    # Создаем заказ для покупки токенов в базе данных
-    order_id = await db.add_order(call.from_user.id, amount, "chatgpt", tokens)
+    if user_discount is None or (user_discount['used'] != True or (user_discount['used'] == True and amount not in discounts)):
+        
+        if amount in discounts:  # Покупка со скидкой
+            await db.update_used_discount_gpt(user_id)
 
-    # Генерируем ссылки для оплаты
-    urls = get_pay_urls('s'+str(order_id), amount)
+        # Создаем заказ для покупки токенов в базе данных
+        order_id = await db.add_order(call.from_user.id, amount, "chatgpt", tokens)
+
+        # Генерируем ссылки для оплаты
+        urls = get_pay_urls('s'+str(order_id), amount)
     
-    # Отправляем пользователю сообщение с выбором способа оплаты
-    await call.message.edit_text(f"Вы выбрали {tokens} токенов для 💬ChatGPT, стоимость {amount}₽.",
-                                 reply_markup=user_kb.get_pay_urls(urls, order_id))
-
+        # Отправляем пользователю сообщение с выбором способа оплаты
+        await call.message.edit_text(f"Вы выбрали {tokens} токенов для 💬ChatGPT, стоимость {amount}₽.",
+                                     reply_markup=user_kb.get_pay_urls(urls, order_id))
+    
+    else:
+        await call.message.edit_text("Вы уже использовали скидку")
 
 # Реагирование на нажатие кнопки с выбором количества запросов для Midjourney
 @dp.callback_query_handler(Text(startswith="select_midjourney_requests:"))
 async def handle_midjourney_requests_purchase(call: CallbackQuery):
 
+    user_id = call.from_user.id
     requests_count = int(call.data.split(":")[1])  # Получаем количество запросов
     amount = int(call.data.split(":")[2])  # Получаем цену за количество запросов
+    discounts = [246, 550, 989]
+    user_discount = await db.get_user_notified_mj(user_id)
 
-    # Создаем заказ для покупки запросов в базе данных
-    order_id = await db.add_order(call.from_user.id, amount, "midjourney", requests_count)
+    if user_discount is None or (user_discount['used'] != True or (user_discount['used'] == True and amount not in discounts)):
+        
+        if amount in discounts:  # Покупка со скидкой
+            await db.update_used_discount_mj(user_id)
+        
+        # Создаем заказ для покупки запросов в базе данных
+        order_id = await db.add_order(call.from_user.id, amount, "midjourney", requests_count)
 
-    # Генерируем ссылки для оплаты
-    urls = get_pay_urls('s'+str(order_id), amount)
+        # Генерируем ссылки для оплаты
+        urls = get_pay_urls('s'+str(order_id), amount)
 
-    # Отправляем пользователю сообщение с выбором способа оплаты
-    await call.message.edit_text(f"Вы выбрали {requests_count} запросов для 🎨MidJourney, стоимость {amount}₽.",
-                                 reply_markup=user_kb.get_pay_urls(urls, order_id))
+        # Отправляем пользователю сообщение с выбором способа оплаты
+        await call.message.edit_text(f"Вы выбрали {requests_count} запросов для 🎨MidJourney, стоимость {amount}₽.",
+                                     reply_markup=user_kb.get_pay_urls(urls, order_id))
+    else:
+        await call.message.edit_text("Вы уже использовали скидку")
 
 ''' Старые функции подписок 
 

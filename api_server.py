@@ -66,6 +66,7 @@ async def add_balance(user_id, amount):
         stock = int(amount * 0.1)  # Добавляем 10% бонус
         await db.update_stock_time(user_id, 0)
     requests.delete(NOTIFY_URL + f"/stock/{user_id}")  # Удаляем уведомление о бонусе
+
     await db.update_is_pay(user_id, True)  # Обновляем статус оплаты
     await db.add_balance(user_id, amount + stock)  # Добавляем баланс пользователю
     await db.add_order(user_id, amount, stock)  # Добавляем запись о пополнении
@@ -76,11 +77,23 @@ async def add_balance(user_id, amount):
 # Функция для обработки платежей
 async def process_pay(order_id, amount):
 
+    order = await db.get_order(order_id[1:])
+    user_id = order["user_id"]
+
     if order_id.startswith("s"):  # Если это подписка
+        
+        # Если покупка была со скидкой:
+        discounts_gpt = [139, 224, 381]
+        discounts_mj = [246, 550, 989]
+
+        if amount in discounts_gpt:
+            await db.update_used_discount_gpt(user_id)
+        elif amount in discounts_mj:
+            await db.update_used_discount_mj(user_id)
+        
         await utils.pay.process_purchase(bot, int(order_id[1:])) # Обрабатываем покупку токенов или запросов
         # await utils.pay.process_sub(bot, int(order_id[1:]))  # Обрабатываем подписку
     else:
-        user_id = int(order_id.split("_")[0])  # Если это пополнение баланса
         await add_balance(user_id, amount)  # Пополняем баланс
 
 

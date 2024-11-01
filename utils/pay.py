@@ -12,12 +12,15 @@ import config  # Импорт конфигурации
 from config import FreeKassa, LAVA_API_KEY, LAVA_SHOP_ID, PayOK, Tinkoff  # Импорт настроек платежных систем
 from utils import db  # Импорт функций работы с базой данных
 
+
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(filename)s:%(lineno)d #%(levelname)-8s '
            '[%(asctime)s] - %(name)s - %(message)s')
+
+
 # Функция для получения ссылки оплаты через Tinkoff
 def get_pay_url_tinkoff(order_id, amount):
 

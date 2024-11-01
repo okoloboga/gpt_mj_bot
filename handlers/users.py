@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 
 import requests
@@ -107,12 +107,44 @@ async def not_enough_balance(bot: Bot, user_id, ai_type="chatgpt"):
 # Функция для уведомления пользователя о недостатке средств
 async def not_enough_balance(bot: Bot, user_id: int, ai_type: str):
 
+    now = datetime.now()
+
     if ai_type == "chatgpt":
+        user_data = await db.get_user_notified_gpt(user_id)
+
+        if user_data and user_data['last_notification']:
+            last_notification = user_data['last_notification']
+
+            # Если уведомление было менее 24 часов назад, показываем меню со скидкой
+            if now < last_notification + timedelta(hours=24):
+                await bot.send_message("""
+К сожалению, лимит токенов для 💬ChatGPT исчерпан
+Вы можете восполнить токены по кнопке⤵️
+                """,
+                    reply_markup=user_kb.get_сhatgpt_discount_tokens_menu()
+                )
+                return
+
         await bot.send_message(user_id, """
 К сожалению, лимит токенов для 💬ChatGPT исчерпан
 Вы можете восполнить токены по кнопке⤵️
         """, reply_markup=user_kb.get_chatgpt_tokens_menu())  # Отправляем уведомление с клавиатурой для пополнения токенов
+
     elif ai_type == "image":
+        user_data = await db.get_user_notified_mj(user_id)
+
+        if user_data and user_data['last_notification']:
+            last_notification = user_data['last_notification']
+
+            # Если уведомление было менее 24 часов назад, показываем меню со скидкой
+            if now < last_notification + timedelta(hours=24):
+                await bot.send_message("""
+К сожалению, лимит токенов для 🎨Midjourney исчерпан
+Вы можете восполнить токены по кнопке⤵️
+                """,
+                    reply_markup=user_kb.get_midjourney_discount_requests_menu()
+                )
+                return
         await bot.send_message(user_id, """
 К сожалению, лимит запросов для 🎨Midjourney исчерпан
 Вы можете восполнить запросы по кнопке⤵️
@@ -133,21 +165,25 @@ async def get_mj(prompt, user_id, bot: Bot):
     await bot.send_chat_action(user_id, ChatActions.UPLOAD_PHOTO)
 
     res = await ai.get_mdjrny(prompt, user_id)  # Получаем изображение через API
-    if res == "error":
-        await bot.send_message(user_id, "Произошла ошибка, повторите попытку позже")
+    if res['status'] == "failed":
+        await bot.send_message(user_id, f"Произошла ошибка, повторите попытку позже\n\n{res['message']}")
         return
 
-    # Списывание запросов MidJourney
-    if user["free_image"] > 0:
-        await db.remove_free_image(user_id)  # Уменьшаем бесплатные запросы
-    else:
-        await db.remove_image(user_id)  # Уменьшаем платные запросы
-
     # Проверка на количество оставшихся запросов MidJourney
+    now = datetime.now()
+    user_notified = await db.get_user_notified_mj(user_id)
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
-    if user["mj"] <= 3 and not user["is_notified"]:  # Если осталось 3 или меньше запросов
-        await notify_low_midjourney_requests(user_id, bot)  # Отправляем уведомление о низком количестве запросов
-        # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
+    
+    if 1 < user["mj"] <= 3:  # Если осталось 3 или меньше запросов
+        if user_notified is None:
+            await db.create_user_notification_mj(user_id)
+            await notify_low_midjourney_requests(user_id, bot)  # Отправляем уведомление о низком количестве токенов
+            # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
+        else:
+            last_notification = user_notified['last_notification']
+            if last_notification is None or now > last_notification + timedelta(days=30):
+                await db.update_user_notification_mj(user_id)
+                await notify_low_midjourney_requests(user_id, bot)
 
 
 # Генерация ответа от ChatGPT
@@ -173,10 +209,20 @@ async def get_gpt(prompt, messages, user_id, bot: Bot):
         await db.remove_chatgpt(user_id, res["tokens"])  # Уменьшаем платные токены
 
     # Проверка на количество оставшихся токенов
+    now = datetime.now()
+    user_notified = await db.get_user_notified_gpt(user_id)
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
-    if user["tokens"] <= 30000 and not user["is_notified"]:  # Если осталось 30 тыс или меньше токенов
-        await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов
-        # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
+    
+    if 0 < user["tokens"] <= 30000:  # Если осталось 30 тыс или меньше токенов
+        if user_notified is None:
+            await db.create_user_notification_gpt(user_id)
+            await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов
+            # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
+        else:
+            last_notification = user_notified['last_notification']
+            if last_notification is None or now > last_notification + timedelta(days=30):
+                await db.update_user_notification_gpt(user_id)
+                await notify_low_chatgpt_tokens(user_id, bot)
 
     await db.add_action(user_id, "chatgpt")  # Логируем действие пользователя
     return messages
@@ -189,25 +235,20 @@ async def notify_low_chatgpt_tokens(user_id, bot: Bot):
 
     await bot.send_message(user_id, """
 У вас заканчиваются запросы для 💬ChatGPT
-Специально для вас мы подготовили персональную скидку!
-100 тыс токенов, 149₽ > 139₽  (-5%)
-200 тыс токенов, 249₽ > 224₽  (-10%)
-500 тыс токенов, 449₽ > 381₽  (-15%)
-Успейте приобрести запросы со скидкой, предложение актуально 24 часа⤵️
-    """, reply_markup=user_kb.get_chatgpt_tokens_menu())
+Специально для вас мы подготовили <b>персональную скидку</b>!
+
+Успейте приобрести запросы со скидкой, предложение актуально <b>24 часа</b>⤵️
+    """, reply_markup=user_kb.get_chatgpt_discount_tokens_menu())
 
 # Уведомление о низком количестве запросов MidJourney
 async def notify_low_midjourney_requests(user_id, bot: Bot):
 
     await bot.send_message(user_id, """
 У вас заканчиваются запросы для 🎨Midjourney
-Специально для вас мы подготовили персональную скидку!
-10 генераций, 149₽
-20 генераций, 259₽ > 246₽ (-5%)
-50 генераций, 599₽ > 550₽ (-8%)
-100 генераций, 1099₽ > 989₽ (-10%)
-Успейте приобрести запросы со скидкой, предложение актуально 24 часа⤵️
-    """, reply_markup=user_kb.get_midjourney_requests_menu())
+Специально для вас мы подготовили <b>персональную скидку</b>!
+
+Успейте приобрести запросы со скидкой, предложение актуально <b>24 часа</b>⤵️
+    """, reply_markup=user_kb.get_midjourney_discount_requests_menu())
 
 
 # Хэндлер команды /start
@@ -311,11 +352,14 @@ async def show_profile(message: Message, state: FSMContext):
     await state.finish()
     user = await db.get_user(message.from_user.id)  # Получаем данные пользователя
 
+    mj = int(user['mj']) + int(user['free_image']) if int(user['mj']) + int(user['free_image']) >= 0 else 0
+    gpt = int(user['tokens']) + int(user['free_chatgpt']) if int(user['tokens']) + int(user['free_chatgpt']) >= 0 else 0
+
     # Формируем текст с количеством доступных генераций и токенов
     sub_text = f"""
-Доступно генераций для 🎨Midjourney: {user['mj']}
-Доступно токенов для 💬ChatGPT: {user['tokens']}
-    """
+Доступно генераций для 🎨Midjourney:  {format(mj, ',').replace(',', ' ')}
+Доступно токенов для 💬ChatGPT:  {format(gpt, ',').replace(',', ' ')}
+        """
     
     # Отправляем сообщение с обновленными данными аккаунта
     await message.answer(f"""🆔: <code>{message.from_user.id}</code>
@@ -338,15 +382,20 @@ async def show_profile(message: Message, state: FSMContext):
 
 # Хендлер для возврата к профилю пользователя через callback-запрос
 @dp.callback_query_handler(text="back_to_profile")
-async def back_to_profile(call: CallbackQuery):
+async def back_to_profile(call: CallbackQuery, state: FSMContext):
 
+    await state.finish()
     user = await db.get_user(call.from_user.id)  # Получаем данные пользователя
-    sub_text = "У вас нет активной подписки"
-    if user["sub_type"] and user["sub_time"] > datetime.now():
-        sub_text = "Действующий тариф - " + config.sub_types[user["sub_type"]]["title"]
-    await call.message.answer(f"""id: {call.from_user.id}
+
+    # Формируем текст с количеством доступных генераций и токенов
+    sub_text = f"""
+Доступно генераций для 🎨Midjourney:  {format(int(user['mj']) + int(user['free_image']), ',').replace(',', ' ')}
+Доступно токенов для 💬ChatGPT:  {format(int(user['tokens']) + int(user['free_chatgpt']), ',').replace(',', ' ')}
+        """
+    
+    # Отправляем сообщение с обновленными данными аккаунта
+    await message.answer(f"""🆔: <code>{message.from_user.id}</code>
 {sub_text}""", reply_markup=user_kb.get_account(user["chat_gpt_lang"], "account"))
-    await call.message.delete()  # Удаляем предыдущее сообщение
 
 
 # Хендлер для смены языка через callback-запрос

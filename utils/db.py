@@ -22,7 +22,7 @@ async def start():
         "balance INT DEFAULT 0,"  # Баланс пользователя
         "reg_time INT,"  # Время регистрации в формате timestamp
         "free_chatgpt SMALLINT DEFAULT 10000,"  # Количество бесплатных токенов для ChatGPT
-        "free_image SMALLINT DEFAULT 10,"  # Количество бесплатных изображений в MidJourney
+        "free_image SMALLINT DEFAULT 3,"  # Количество бесплатных изображений в MidJourney
         "default_ai VARCHAR(10) DEFAULT 'empty',"  # Выбранный по умолчанию AI
         "inviter_id BIGINT,"  # ID пригласившего пользователя
         "ref_balance INT DEFAULT 0,"  # Баланс с реферальных вознаграждений
@@ -80,6 +80,22 @@ async def start():
         "quantity INT,"  # Количество токенов или запросов
         "create_time TIMESTAMP DEFAULT NOW(),"  # Время создания заказа
         "pay_time TIMESTAMP)"  # Время оплаты заказа
+    )
+
+    await conn.execute(
+        "CREATE TABLE IF NOT EXISTS discount_gpt ("
+        "user_id BIGINT PRIMARY KEY,"           # Уникальный идентификатор пользователя
+        "is_notified BOOLEAN DEFAULT FALSE,"    # Статус уведомления
+        "last_notification TIMESTAMP,"           # Дата и время последнего уведомления
+        "used BOOLEAN DEFAULT FALSE)"           # Статус использования скидки
+    )
+
+    await conn.execute(
+        "CREATE TABLE IF NOT EXISTS discount_mj ("
+        "user_id BIGINT PRIMARY KEY,"           # Уникальный идентификатор пользователя
+        "is_notified BOOLEAN DEFAULT FALSE,"    # Статус уведомления
+        "last_notification TIMESTAMP,"           # Дата и время последнего уведомления
+        "used BOOLEAN DEFAULT FALSE)"           # Статус использования скидки
     )
 
     # Проверяем наличие токена конфигурации, и если его нет - добавляем значение по умолчанию
@@ -232,16 +248,6 @@ async def add_balance(user_id, amount, is_promo=False):
             "UPDATE users SET ref_balance = ref_balance + $2 WHERE user_id = (SELECT inviter_id FROM users WHERE user_id = $1)",
             user_id, ref_balance)
     await conn.close()
-
-
-# Функция для добавления нового заказа
-async def add_order(user_id, amount, stock):
-
-    conn: Connection = await get_conn()
-    await conn.execute("INSERT INTO orders(user_id, amount, stock, pay_time) VALUES ($1, $2, $3, $4)",
-                       user_id, amount, stock, int(datetime.now().timestamp()))
-    await conn.close()
-
 
 # Проверка наличия активного заказа со скидкой для пользователя
 async def check_discount_order(user_id):
@@ -507,6 +513,85 @@ async def get_today_sub_stat():
                               )
     await conn.close()
     return row
+
+"""Скидка ChatGPT"""
+
+async def get_user_notified_gpt(user_id):
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow(
+        "SELECT is_notified, last_notification, used FROM discount_gpt WHERE user_id = $1", 
+        user_id)
+    await conn.close()
+    return row
+
+async def create_user_notification_gpt(user_id):
+    """Создаем новую запись уведомления для пользователя."""
+    conn: Connection = await get_conn()
+    await conn.execute(
+        """
+        INSERT INTO discount_gpt (user_id, is_notified, last_notification) 
+        VALUES ($1, TRUE, NOW()) 
+        ON CONFLICT (user_id) 
+        DO UPDATE SET is_notified = TRUE, last_notification = NOW()
+        """,
+        user_id
+    )
+    await conn.close()
+
+async def update_user_notification_gpt(user_id):
+    """Обновляем уведомление пользователя, если запись уже существует."""
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "UPDATE discount_gpt SET is_notified = TRUE, last_notification = NOW() WHERE user_id = $1",
+        user_id)
+    await conn.close()
+
+async def update_used_discount_gpt(user_id):
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "UPDATE discount_gpt SET used = TRUE, WHERE user_id = $1",
+        user_id)
+    await conn.close()
+
+"""Скидка Midjourney"""
+
+async def get_user_notified_mj(user_id):
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow(
+        "SELECT is_notified, last_notification, used FROM discount_mj WHERE user_id = $1", 
+        user_id)
+    await conn.close()
+    return row
+
+async def create_user_notification_mj(user_id):
+    """Создаем новую запись уведомления для пользователя."""
+    conn: Connection = await get_conn()
+    await conn.execute(
+        """
+        INSERT INTO discount_mj (user_id, is_notified, last_notification) 
+        VALUES ($1, TRUE, NOW()) 
+        ON CONFLICT (user_id) 
+        DO UPDATE SET is_notified = TRUE, last_notification = NOW()
+        """,
+        user_id
+    )
+    await conn.close()
+
+async def update_user_notification_mj(user_id):
+    """Обновляем уведомление пользователя, если запись уже существует."""
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "UPDATE discount_mj SET is_notified = TRUE, last_notification = NOW() WHERE user_id = $1",
+        user_id)
+    await conn.close()
+
+async def update_used_discount_mj(user_id):
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "UPDATE discount_mj SET used = TRUE, WHERE user_id = $1",
+        user_id)
+    await conn.close()
+
 
 ''' СТАРЫЕ ФУНКЦИИ ПОДПИСОК
 
