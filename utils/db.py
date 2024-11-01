@@ -128,7 +128,7 @@ async def add_user(user_id, username, first_name, inviter_id):
 
     conn: Connection = await get_conn()
     await conn.execute(
-        "INSERT INTO users(user_id, username, first_name, reg_time, inviter_id, free_image) VALUES ($1, $2, $3, $4, $5, 10)",
+        "INSERT INTO users(user_id, username, first_name, reg_time, inviter_id, free_image) VALUES ($1, $2, $3, $4, $5, 3)",
         user_id, username, first_name, int(datetime.now().timestamp()), inviter_id)
     await conn.close()
 
@@ -549,7 +549,7 @@ async def update_user_notification_gpt(user_id):
 async def update_used_discount_gpt(user_id):
     conn: Connection = await get_conn()
     await conn.execute(
-        "UPDATE discount_gpt SET used = TRUE, WHERE user_id = $1",
+        "UPDATE discount_gpt SET used = TRUE WHERE user_id = $1",
         user_id)
     await conn.close()
 
@@ -588,7 +588,7 @@ async def update_user_notification_mj(user_id):
 async def update_used_discount_mj(user_id):
     conn: Connection = await get_conn()
     await conn.execute(
-        "UPDATE discount_mj SET used = TRUE, WHERE user_id = $1",
+        "UPDATE discount_mj SET used = TRUE WHERE user_id = $1",
         user_id)
     await conn.close()
 

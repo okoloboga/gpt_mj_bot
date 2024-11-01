@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Annotated
 
 import config
+import logger
 import utils
 from config import NOTIFY_URL, bug_id
 from keyboards import user as user_kb
@@ -13,6 +14,14 @@ from io import BytesIO  # Для работы с потоками байтов
 from utils import db  # Импорт функций работы с базой данных
 import requests  # Для синхронных HTTP-запросов
 import uvicorn  # Для запуска сервера FastAPI
+
+
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(filename)s:%(lineno)d #%(levelname)-8s '
+           '[%(asctime)s] - %(name)s - %(message)s')
 
 
 # Инициализация FastAPI приложения
@@ -54,8 +63,7 @@ async def add_balance(user_id, amount):
     print(user_id)
     user = await db.get_user(user_id)  # Получаем информацию о пользователе
     print("USER", user)
-    if user is None:
-        return
+
     stock = 0  # Стартовый бонус
     
     # Если это первый платеж или прошло менее суток с момента последнего бонуса
@@ -78,23 +86,28 @@ async def add_balance(user_id, amount):
 async def process_pay(order_id, amount):
 
     order = await db.get_order(order_id[1:])
-    user_id = order["user_id"]
-
-    if order_id.startswith("s"):  # Если это подписка
-        
-        # Если покупка была со скидкой:
-        discounts_gpt = [139, 224, 381]
-        discounts_mj = [246, 550, 989]
-
-        if amount in discounts_gpt:
-            await db.update_used_discount_gpt(user_id)
-        elif amount in discounts_mj:
-            await db.update_used_discount_mj(user_id)
-        
-        await utils.pay.process_purchase(bot, int(order_id[1:])) # Обрабатываем покупку токенов или запросов
-        # await utils.pay.process_sub(bot, int(order_id[1:]))  # Обрабатываем подписку
+    
+    if order is None:
+        logger.info(f'Order {order_id} not found')
+        return
     else:
-        await add_balance(user_id, amount)  # Пополняем баланс
+        user_id = order["user_id"]
+
+        if order_id.startswith("s"):  # Если это подписка
+        
+            # Если покупка была со скидкой:
+            discounts_gpt = [139, 224, 381]
+            discounts_mj = [246, 550, 989]
+
+            if amount in discounts_gpt:
+                await db.update_used_discount_gpt(user_id)
+            elif amount in discounts_mj:
+                await db.update_used_discount_mj(user_id)
+        
+            await utils.pay.process_purchase(bot, int(order_id[1:])) # Обрабатываем покупку токенов или запросов
+            # await utils.pay.process_sub(bot, int(order_id[1:]))  # Обрабатываем подписку
+        else:
+            await add_balance(user_id, amount)  # Пополняем баланс
 
 
 # Обработка платежей от FreeKassa

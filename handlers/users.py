@@ -394,7 +394,7 @@ async def back_to_profile(call: CallbackQuery, state: FSMContext):
         """
     
     # Отправляем сообщение с обновленными данными аккаунта
-    await message.answer(f"""🆔: <code>{message.from_user.id}</code>
+    await message.answer(f"""🆔: <code>{call.from_user.id}</code>
 {sub_text}""", reply_markup=user_kb.get_account(user["chat_gpt_lang"], "account"))
 
 
