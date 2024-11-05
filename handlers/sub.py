@@ -95,6 +95,7 @@ async def handle_chatgpt_tokens_purchase(call: CallbackQuery):
 
     tokens = int(call.data.split(":")[1])  # Получаем количество токенов
     amount = int(call.data.split(":")[2])  # Получаем цену за количество токенов
+    src = str(call.data.split(":")[3])  # Источник сообщения - из уведомления или аккаунта
     discounts = [139, 224, 381]
     user_discount = await db.get_user_notified_gpt(user_id)
 
@@ -111,7 +112,7 @@ async def handle_chatgpt_tokens_purchase(call: CallbackQuery):
     
         # Отправляем пользователю сообщение с выбором способа оплаты
         await call.message.edit_text(f"Вы выбрали {tokens} токенов для 💬ChatGPT, стоимость {amount}₽.",
-                                     reply_markup=user_kb.get_pay_urls(urls, order_id))
+                                     reply_markup=user_kb.get_pay_urls(urls, order_id, src))
     
     else:
         await call.message.edit_text("Вы уже использовали скидку")
@@ -123,6 +124,7 @@ async def handle_midjourney_requests_purchase(call: CallbackQuery):
     user_id = call.from_user.id
     requests_count = int(call.data.split(":")[1])  # Получаем количество запросов
     amount = int(call.data.split(":")[2])  # Получаем цену за количество запросов
+    src = str(call.data.split(":")[3])  # Источник сообщения - из уведомления или аккаунта
     discounts = [246, 550, 989]
     user_discount = await db.get_user_notified_mj(user_id)
 
@@ -139,7 +141,7 @@ async def handle_midjourney_requests_purchase(call: CallbackQuery):
 
         # Отправляем пользователю сообщение с выбором способа оплаты
         await call.message.edit_text(f"Вы выбрали {requests_count} запросов для 🎨MidJourney, стоимость {amount}₽.",
-                                     reply_markup=user_kb.get_pay_urls(urls, order_id))
+                                     reply_markup=user_kb.get_pay_urls(urls, order_id, src))
     else:
         await call.message.edit_text("Вы уже использовали скидку")
 
@@ -268,3 +270,16 @@ async def process_successful_payment(message: Message):
     
     order_id = int(message.successful_payment.invoice_payload)  # Получаем ID заказа из payload
     await utils.pay.process_purchase(message.bot, order_id)  # Обрабатываем подписку (обновляем в базе)
+
+
+# Хэндлдер для возврата ссылки на оплату Tinkoff:
+@dp.callback_query_handler(Text(startswith="open_url"))
+async def open_url(call: CallbackQuery):
+    
+    splitted = call.data.split(":")
+    url = str(splitted[1] + ":" + splitted[2])
+
+    await call.bot.send_message(call.from_user.id, f'Ваша ссылка на оплату:\n{url}\n\nСкопируйте и откройте в стороннем браузере\n\
+Не открывайте через Telegram-браузер')
+
+    await call.answer()

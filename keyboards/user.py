@@ -116,19 +116,19 @@ def get_pay(user_id, stock=0):
         InlineKeyboardButton("500₽" + stock_text, callback_data="select_amount:500"),
         InlineKeyboardButton("1000₽" + stock_text, callback_data="select_amount:1000")).add(
         InlineKeyboardButton("💰Другая сумма" + stock_text, callback_data="other_amount")).add(
-        InlineKeyboardButton("🔙Назад", callback_data="back_to_profile")
+        InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
     )
 
 
 # Кнопки для выбора способа оплаты (Tinkoff, криптовалюта и т.д.)
-def get_pay_urls(urls, order_id):
+def get_pay_urls(urls, order_id, src='acc'):
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("Банковская карта", url=urls["tinkoff"]),
+        InlineKeyboardButton("Банковская карта", callback_data=f'open_url:{urls["tinkoff"]}'),
         InlineKeyboardButton("Криптовалюта", web_app=WebAppInfo(url=urls["freekassa"])),
         InlineKeyboardButton("Telegram Stars", callback_data=f"tg_stars:{order_id}"),
         InlineKeyboardButton("Другие способы", web_app=WebAppInfo(url=urls["freekassa"])),
-        InlineKeyboardButton("🔙Назад", callback_data="back_to_profile"))
+        InlineKeyboardButton("🔙Назад", callback_data=f"back_to_profile:{src}"))
 
 
 # Клавиатура для оплаты через Telegram Stars
@@ -229,9 +229,9 @@ def get_neural_network_menu():
 def get_chatgpt_tokens_menu():
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("100 тыс токенов, 149₽", callback_data="select_chatgpt_tokens:100000:149"),
-        InlineKeyboardButton("200 тыс токенов, 249₽ (-20%)", callback_data="select_chatgpt_tokens:200000:249"),
-        InlineKeyboardButton("500 тыс токенов, 449₽ (-40%)", callback_data="select_chatgpt_tokens:500000:449"),
+        InlineKeyboardButton("100 тыс токенов, 149₽", callback_data="select_chatgpt_tokens:100000:149:acc"),
+        InlineKeyboardButton("200 тыс токенов, 249₽ (-20%)", callback_data="select_chatgpt_tokens:200000:249:acc"),
+        InlineKeyboardButton("500 тыс токенов, 449₽ (-40%)", callback_data="select_chatgpt_tokens:500000:449:acc"),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
@@ -240,10 +240,10 @@ def get_chatgpt_tokens_menu():
 def get_midjourney_requests_menu():
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("10 генераций, 149₽", callback_data="select_midjourney_requests:10:149"),
-        InlineKeyboardButton("20 генераций, 259₽ (-13%)", callback_data="select_midjourney_requests:20:259"),
-        InlineKeyboardButton("50 генераций, 599₽ (-19%)", callback_data="select_midjourney_requests:50:599"),
-        InlineKeyboardButton("100 генераций, 1099₽ (-26%)", callback_data="select_midjourney_requests:100:1099"),
+        InlineKeyboardButton("10 генераций, 149₽", callback_data="select_midjourney_requests:10:149:acc"),
+        InlineKeyboardButton("20 генераций, 259₽ (-13%)", callback_data="select_midjourney_requests:20:259:acc"),
+        InlineKeyboardButton("50 генераций, 599₽ (-19%)", callback_data="select_midjourney_requests:50:599:acc"),
+        InlineKeyboardButton("100 генераций, 1099₽ (-26%)", callback_data="select_midjourney_requests:100:1099:acc"),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
@@ -251,9 +251,9 @@ def get_midjourney_requests_menu():
 def get_chatgpt_discount_tokens_menu():
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("100 тыс токенов, 149₽ > 139₽ (-5%)", callback_data="select_chatgpt_tokens:100000:139"),
-        InlineKeyboardButton("200 тыс токенов, 249₽ > 224₽ (-10%)", callback_data="select_chatgpt_tokens:200000:224"),
-        InlineKeyboardButton("500 тыс токенов, 449₽ > 381₽ (-15%)", callback_data="select_chatgpt_tokens:500000:381"),
+        InlineKeyboardButton("100 тыс токенов, 149₽ > 139₽ (-5%)", callback_data="select_chatgpt_tokens:100000:139:acc"),
+        InlineKeyboardButton("200 тыс токенов, 249₽ > 224₽ (-10%)", callback_data="select_chatgpt_tokens:200000:224:acc"),
+        InlineKeyboardButton("500 тыс токенов, 449₽ > 381₽ (-15%)", callback_data="select_chatgpt_tokens:500000:381:acc"),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
@@ -261,9 +261,28 @@ def get_chatgpt_discount_tokens_menu():
 def get_midjourney_discount_requests_menu():
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("10 генераций, 149₽", callback_data="select_midjourney_requests:10:149"),
-        InlineKeyboardButton("20 генераций, 259₽ > 246₽ (-5%)", callback_data="select_midjourney_requests:20:246"),
-        InlineKeyboardButton("50 генераций, 599₽ > 550₽ (-8%)", callback_data="select_midjourney_requests:50:550"),
-        InlineKeyboardButton("100 генераций, 1099₽ > 989₽ (-10%)", callback_data="select_midjourney_requests:100:989"),
+        InlineKeyboardButton("10 генераций, 149₽", callback_data="select_midjourney_requests:10:149:acc"),
+        InlineKeyboardButton("20 генераций, 259₽ > 246₽ (-5%)", callback_data="select_midjourney_requests:20:246:acc"),
+        InlineKeyboardButton("50 генераций, 599₽ > 550₽ (-8%)", callback_data="select_midjourney_requests:50:550:acc"),
+        InlineKeyboardButton("100 генераций, 1099₽ > 989₽ (-10%)", callback_data="select_midjourney_requests:100:989:acc"),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
+    )
+
+    
+# Кнопки выбора количества токенов для ChatGPT СО СКИДКОЙ при уведомлении
+def get_chatgpt_discount_nofication():
+
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton("100 тыс токенов, 149₽ > 139₽ (-5%)", callback_data="select_chatgpt_tokens:100000:139:not_gpt"),
+        InlineKeyboardButton("200 тыс токенов, 249₽ > 224₽ (-10%)", callback_data="select_chatgpt_tokens:200000:224:not_gpt"),
+        InlineKeyboardButton("500 тыс токенов, 449₽ > 381₽ (-15%)", callback_data="select_chatgpt_tokens:500000:381:not_gpt")
+    )
+
+# Кнопки выбора количества запросов для Midjourney СО СКИДКОЙ при уведомлении
+def get_midjourney_discount_notification():
+
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton("20 генераций, 259₽ > 246₽ (-5%)", callback_data="select_midjourney_requests:20:246:not_mj"),
+        InlineKeyboardButton("50 генераций, 599₽ > 550₽ (-8%)", callback_data="select_midjourney_requests:50:550:not_mj"),
+        InlineKeyboardButton("100 генераций, 1099₽ > 989₽ (-10%)", callback_data="select_midjourney_requests:100:989:not_mj")
     )

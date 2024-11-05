@@ -139,14 +139,16 @@ async def not_enough_balance(bot: Bot, user_id: int, ai_type: str):
             # Если уведомление было менее 24 часов назад, показываем меню со скидкой
             if now < last_notification + timedelta(hours=24):
                 await bot.send_message("""
-К сожалению, лимит токенов для 🎨Midjourney исчерпан
-Вы можете восполнить токены по кнопке⤵️
+К сожалению, лимит запросов для 
+🎨Midjourney исчерпан
+Вы можете восполнить запросы по кнопке⤵️
                 """,
                     reply_markup=user_kb.get_midjourney_discount_requests_menu()
                 )
                 return
         await bot.send_message(user_id, """
-К сожалению, лимит запросов для 🎨Midjourney исчерпан
+К сожалению, лимит запросов для 
+🎨Midjourney исчерпан
 Вы можете восполнить запросы по кнопке⤵️
         """, reply_markup=user_kb.get_midjourney_requests_menu())  # Отправляем уведомление с клавиатурой для пополнения запросов
 
@@ -234,11 +236,11 @@ async def get_gpt(prompt, messages, user_id, bot: Bot):
 async def notify_low_chatgpt_tokens(user_id, bot: Bot):
 
     await bot.send_message(user_id, """
-У вас заканчиваются запросы для 💬ChatGPT
+У вас заканчиваются токены для 💬ChatGPT
 Специально для вас мы подготовили <b>персональную скидку</b>!
 
-Успейте приобрести запросы со скидкой, предложение актуально <b>24 часа</b>⤵️
-    """, reply_markup=user_kb.get_chatgpt_discount_tokens_menu())
+Успейте приобрести токены со скидкой, предложение актуально <b>24 часа</b>⤵️
+    """, reply_markup=user_kb.get_chatgpt_discount_nofication())
 
 # Уведомление о низком количестве запросов MidJourney
 async def notify_low_midjourney_requests(user_id, bot: Bot):
@@ -248,7 +250,7 @@ async def notify_low_midjourney_requests(user_id, bot: Bot):
 Специально для вас мы подготовили <b>персональную скидку</b>!
 
 Успейте приобрести запросы со скидкой, предложение актуально <b>24 часа</b>⤵️
-    """, reply_markup=user_kb.get_midjourney_discount_requests_menu())
+    """, reply_markup=user_kb.get_midjourney_discount_notification())
 
 
 # Хэндлер команды /start
@@ -381,22 +383,47 @@ async def show_profile(message: Message, state: FSMContext):
 
 
 # Хендлер для возврата к профилю пользователя через callback-запрос
-@dp.callback_query_handler(text="back_to_profile")
+@dp.callback_query_handler(Text(startswith="back_to_profile"))
 async def back_to_profile(call: CallbackQuery, state: FSMContext):
 
-    await state.finish()
-    user = await db.get_user(call.from_user.id)  # Получаем данные пользователя
+    src = call.data.split(":")[1]
 
-    # Формируем текст с количеством доступных генераций и токенов
-    sub_text = f"""
+    if src == "acc":
+        await state.finish()
+        user = await db.get_user(call.from_user.id)  # Получаем данные пользователя
+
+        # Формируем текст с количеством доступных генераций и токенов
+        sub_text = f"""
 Доступно генераций для 🎨Midjourney:  {format(int(user['mj']) + int(user['free_image']), ',').replace(',', ' ')}
 Доступно токенов для 💬ChatGPT:  {format(int(user['tokens']) + int(user['free_chatgpt']), ',').replace(',', ' ')}
         """
     
-    # Отправляем сообщение с обновленными данными аккаунта
-    await call.message.answer(f"""🆔: <code>{call.from_user.id}</code>
-{sub_text}""", reply_markup=user_kb.get_account(user["chat_gpt_lang"], "account"))
+        # Отправляем сообщение с обновленными данными аккаунта
+        await call.message.edit_text(f"""🆔: <code>{call.from_user.id}</code>
+    {sub_text}""", reply_markup=user_kb.get_account(user["chat_gpt_lang"], "account"))
 
+    else:
+        await state.finish()
+
+        if src == "not_gpt":
+        
+            await call.message.edit_text("""
+У вас заканчиваются токены для 💬ChatGPT
+Специально для вас мы подготовили <b>персональную скидку</b>!
+
+Успейте приобрести токены со скидкой, предложение актуально <b>24 часа</b>⤵️
+            """, reply_markup=user_kb.get_chatgpt_discount_nofication())
+
+        if src == "not_mj":
+            await call.message.edit_text("""
+У вас заканчиваются запросы для 🎨Midjourney
+Специально для вас мы подготовили <b>персональную скидку</b>!
+
+Успейте приобрести запросы со скидкой, предложение актуально <b>24 часа</b>⤵️
+            """, reply_markup=user_kb.get_midjourney_discount_notification())
+
+    await call.answer()
+    
 
 # Хендлер для смены языка через callback-запрос
 @dp.callback_query_handler(Text(startswith="change_lang:"))
@@ -566,9 +593,12 @@ async def choose_image(call: CallbackQuery):
 async def change_image(call: CallbackQuery):
 
     await call.answer()  # Закрываем callback уведомление
-    user = await db.get_user(call.from_user.id)
+    user_id = call.from_user.id
+    user_notified = await db.get_user_notified_mj(user_id)
+
+    user = await db.get_user(user_id)
     if user["mj"] <= 0 and user["free_image"] <= 0:
-        await not_enough_balance(call.bot, call.from_user.id, "image")  # Проверка лимитов
+        await not_enough_balance(call.bot, user_id, "image")  # Проверка лимитов
         return
     task_id = call.data.split(":")[3]
     button_type = call.data.split(":")[1]
@@ -576,7 +606,21 @@ async def change_image(call: CallbackQuery):
     await call.message.answer("Ожидайте, обрабатываю изображение⏳", 
                               reply_markup=user_kb.get_menu(user["default_ai"]))
 
-    action_id = await db.add_action(call.from_user.id, "image", button_type)
+    action_id = await db.add_action(user_id, "image", button_type)
+
+    if 1 < user["mj"] <= 3:  # Если осталось 3 или меньше запросов
+        now = datetime.now()
+
+        if user_notified is None:
+            await db.create_user_notification_mj(user_id)
+            await notify_low_midjourney_requests(user_id, call.bot)  # Отправляем уведомление о низком количестве токенов
+            # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
+        else:
+            last_notification = user_notified['last_notification']
+            if last_notification is None or now > last_notification + timedelta(days=30):
+                await db.update_user_notification_mj(user_id)
+                await notify_low_midjourney_requests(user_id, call.bot)
+
     if button_type == "zoom":
         response = await GoAPI.outpaint(task_id, value, action_id)  # Масштабирование изображения через API
     elif button_type == "vary":
