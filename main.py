@@ -1,14 +1,23 @@
 from aiogram.utils import executor
 from create_bot import dp, bot
 from utils import db
+from utils.ai import mj_api
 from handlers import admin
 from handlers import users
 from handlers import sub
+
 
 async def on_startup(_):
     # Функция, которая выполняется при запуске бота.
     # Здесь вызывается метод start() из модуля db, который инициирует подключение к базе данных.
     await db.start()
+
+
+async def on_shutdown(dispatcher: dp):
+    logger.info("Закрытие сессий API и бота...")
+    await mj_api.close()  # Закрываем сессии GoAPI и ApiFrame
+    await bot.close()
+    logger.info("Все сессии закрыты.")
 
 
 if __name__ == "__main__":
@@ -17,5 +26,5 @@ if __name__ == "__main__":
     # dp - диспетчер из create_bot, который обрабатывает входящие сообщения
     # skip_updates=True - игнорирует старые обновления, накопившиеся до запуска бота
     # on_startup=on_startup - запускает функцию при старте
-    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
+    executor.start_polling(dp, skip_updates=True, on_startup=on_startup, on_shutdown=on_shutdown)
 

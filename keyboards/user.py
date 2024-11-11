@@ -93,7 +93,7 @@ def get_menu(default_ai):
                                                                           KeyboardButton("👨🏻‍💻Поддержка"),
                                                                           KeyboardButton("🤝Партнерская программа"))
 
-
+'''
 # Кнопки для выбора типа подписки
 sub_types = InlineKeyboardMarkup(row_width=3).add(
     InlineKeyboardButton("Базовый", callback_data="sub_type:base"),
@@ -118,7 +118,7 @@ def get_pay(user_id, stock=0):
         InlineKeyboardButton("💰Другая сумма" + stock_text, callback_data="other_amount")).add(
         InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
     )
-
+'''
 
 # Кнопки для выбора способа оплаты (Tinkoff, криптовалюта и т.д.)
 def get_pay_urls(urls, order_id, src='acc'):
@@ -173,7 +173,7 @@ def get_choose(task_id):
         InlineKeyboardButton("🔍 Zoom Out 2x", callback_data=f"change_image:zoom:2:{task_id}"),
         InlineKeyboardButton("🔍 Zoom Out 1.5x", callback_data=f"change_image:zoom:1.5:{task_id}"))
 
-
+'''
 # Клавиатура для уведомлений о скидках на оплату
 def get_notify_pay(with_discount):
 
@@ -212,7 +212,7 @@ def get_sub_period(sub_type, prices, with_discount):
         InlineKeyboardButton(text="🔙Назад", callback_data="buy_sub")
     )
     return kb
-
+'''
 
 ''' Новые кнопки для выбора покупки токенов для GPT или MJ '''
 

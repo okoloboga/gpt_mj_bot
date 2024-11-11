@@ -13,12 +13,12 @@ from states import user as states  # Состояния FSM для пользо�
 import keyboards.user as user_kb  # Клавиатуры для взаимодействия с пользователями
 from config import bot_url, TOKEN, NOTIFY_URL, bug_id, PHOTO_PATH, MJ_PHOTO_BASE_URL
 from create_bot import dp  # Диспетчер из create_bot.py
-from utils.ai import GoAPI
+from utils.ai import mj_api
 
 
 vary_types = {"subtle": "Subtle", "strong": "Strong"}  # Типы для использования в дальнейшем
 
-
+'''
 # Проверка и активация промокодов
 async def check_promocode(user_id, code, bot: Bot):
 
@@ -40,7 +40,7 @@ async def check_promocode(user_id, code, bot: Bot):
             await bot.send_message(user_id, "<b>Данная ссылка была активирована Вами ранее.</b>")
         elif len(all_user_promocode) >= promocode["uses_count"]:
             await bot.send_message(user_id, "<b>Ссылка исчерпала максимальное количество активаций.</b>")
-
+'''
 
 # Снижение баланса пользователя
 async def remove_balance(bot: Bot, user_id):
@@ -54,7 +54,7 @@ async def remove_balance(bot: Bot, user_id):
 Успей пополнить в течении 24 часов и получи на счёт +10% от суммы пополнения ⤵️""", 
                                reply_markup=user_kb.get_pay(user_id, 10))  # Кнопка пополнения баланса
 
-
+'''
 # Тексты для разных типов подписок
 sub_types_texts = {
     "standard": """Тариф <b>«Стандарт»</b>
@@ -102,6 +102,7 @@ async def not_enough_balance(bot: Bot, user_id, ai_type="chatgpt"):
             kb = None  # Для этих типов тарифов кнопка пополнения не нужна
             text = "К сожалению ваш суточный лимит исчерпан"
     await bot.send_message(user_id, text, reply_markup=kb)
+'''
 
 
 # Функция для уведомления пользователя о недостатке средств
@@ -290,6 +291,7 @@ async def start_message(message: Message, state: FSMContext):
         await check_promocode(message.from_user.id, code, message.bot)
 
 
+
 # Хендлер для проверки подписки через callback-запрос
 @dp.callback_query_handler(text="check_sub")
 async def check_sub(call: CallbackQuery):
@@ -303,15 +305,17 @@ async def check_sub(call: CallbackQuery):
 <b>ChatGPT или Midjourney?</b>""", reply_markup=user_kb.get_menu(user["default_ai"]))  # Меню выбора AI
     await call.answer()
 
+
 # Хендлер для удаления сообщения через callback-запрос
 @dp.callback_query_handler(text="delete_msg")
 async def delete_msg(call: CallbackQuery, state: FSMContext):
 
     await call.message.delete()  # Удаляем сообщение
 
+
 # Хендлер для возврата к главному меню через callback-запрос
 @dp.callback_query_handler(text="back_to_menu")
-async def check_sub(call: CallbackQuery):
+async def back_to_menu(call: CallbackQuery):
 
     user = await db.get_user(call.from_user.id)  # Получаем данные пользователя
     await call.message.answer("""NeuronAgent🤖 - 2 нейросети в одном месте!
@@ -442,6 +446,7 @@ async def change_lang(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=kb)  # Обновляем клавиатуру
 
 
+'''
 # Хендлер для выбора суммы пополнения
 @dp.callback_query_handler(text="top_up_balance")
 async def choose_amount(call: CallbackQuery):
@@ -464,7 +469,7 @@ async def enter_other_amount(call: CallbackQuery):
 
 <b>Минимальный платеж 200 рублей</b>""", reply_markup=user_kb.back_to_choose)  # Меню с кнопкой "Назад"
     await states.EnterAmount.enter_amount.set()  # Устанавливаем состояние для ввода суммы
-
+'''
 
 # Хендлер для ChatGPT
 @dp.message_handler(state="*", text="💬ChatGPT✅")
@@ -536,6 +541,7 @@ async def select_amount(call: CallbackQuery):
     await call.answer()
 
 
+'''
 # Хендлер для ввода суммы пополнения
 @dp.message_handler(state=states.EnterAmount.enter_amount)
 async def create_other_order(message: Message, state: FSMContext):
@@ -558,6 +564,7 @@ async def create_other_order(message: Message, state: FSMContext):
 
 ♻️ Средства зачислятся автоматически</b>""", reply_markup=user_kb.get_pay_urls(urls))  # Кнопки с ссылками на оплату
         await state.finish()  # Завершаем состояние
+'''
 
 
 # Хендлер для отмены текущего состояния
@@ -622,10 +629,10 @@ async def change_image(call: CallbackQuery):
                 await notify_low_midjourney_requests(user_id, call.bot)
 
     if button_type == "zoom":
-        response = await GoAPI.outpaint(task_id, value, action_id)  # Масштабирование изображения через API
+        response = await mj_api.outpaint(task_id, value, action_id)  # Масштабирование изображения через API
     elif button_type == "vary":
         value += "_variation"
-        response = await GoAPI.variation(task_id, value, action_id)  # Вариация изображения через API
+        response = await mj_api.variation(task_id, value, action_id)  # Вариация изображения через API
 
 
 # Хендлер для очистки контента через callback
@@ -671,7 +678,7 @@ async def chatgpt_about_me(call: CallbackQuery, state: FSMContext):
 
 # Хендлер для сохранения введенной информации о пользователе в ChatGPT
 @dp.message_handler(state=states.ChangeChatGPTAboutMe.text)
-async def show_profile(message: Message, state: FSMContext):
+async def change_profile_info(message: Message, state: FSMContext):
 
     if len(message.text) > 256:
         return await message.answer("Максимальная длина 256 символов")
@@ -682,7 +689,7 @@ async def show_profile(message: Message, state: FSMContext):
 
 # Хендлер для сброса настроек ChatGPT
 @dp.callback_query_handler(text="reset_chatgpt_settings", state="*")
-async def chatgpt_about_me(call: CallbackQuery, state: FSMContext):
+async def reset_chatgpt_settings(call: CallbackQuery, state: FSMContext):
 
     await db.update_chatgpt_settings(call.from_user.id, "")
     await db.update_chatgpt_about_me(call.from_user.id, "")  # Сброс данных
@@ -691,7 +698,7 @@ async def chatgpt_about_me(call: CallbackQuery, state: FSMContext):
 
 # Хендлер для изменения настроек ChatGPT
 @dp.callback_query_handler(text="chatgpt_settings", state="*")
-async def chatgpt_about_me(call: CallbackQuery, state: FSMContext):
+async def chatgpt_setting(call: CallbackQuery, state: FSMContext):
 
     user = await db.get_user(call.from_user.id)
     await call.message.answer(
@@ -704,7 +711,7 @@ async def chatgpt_about_me(call: CallbackQuery, state: FSMContext):
 
 # Хендлер для сохранения новых настроек ChatGPT
 @dp.message_handler(state=states.ChangeChatGPTSettings.text)
-async def show_profile(message: Message, state: FSMContext):
+async def change_profile_settings(message: Message, state: FSMContext):
 
     if len(message.text) > 256:
         return await message.answer("Максимальная длина 256 символов")

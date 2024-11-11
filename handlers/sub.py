@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 
 from aiogram.dispatcher.filters import Text
@@ -10,6 +11,13 @@ from create_bot import dp  # Диспетчер для регистрации х
 from utils import db, pay  # Модули для работы с базой данных и платежными сервисами
 
 vary_types = {"subtle": "Subtle", "strong": "Strong"}  # Типы вариаций для MidJourney
+
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(filename)s:%(lineno)d #%(levelname)-8s '
+           '[%(asctime)s] - %(name)s - %(message)s')
 
 
 # Функция для получения ссылок на оплату для разных сервисов
@@ -52,7 +60,6 @@ async def choose_chatgpt_tokens(call: CallbackQuery):
                 "Выберите количество токенов со скидкой⤵️",
                 reply_markup=user_kb.get_chatgpt_discount_tokens_menu()
             )
-            return
     
     # Если уведомление не было отправлено или прошло больше 24 часов, показываем обычное меню
     await call.message.edit_text(
@@ -80,7 +87,6 @@ async def choose_midjourney_requests(call: CallbackQuery):
                 "Выберите количество запросов со скидкой⤵️",
                 reply_markup=user_kb.get_midjourney_discount_requests_menu()
             )
-            return
     
     await call.message.edit_text("""
 Выберите количество запросов⤵️""",

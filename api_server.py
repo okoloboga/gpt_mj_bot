@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import Annotated
 
 import config
-import logger
+import logging
 import utils
 from config import NOTIFY_URL, bug_id
 from keyboards import user as user_kb
@@ -57,31 +57,6 @@ async def send_mj_photo(user_id, photo_url, kb):
     await bot.send_photo(user_id, photo=img, reply_markup=kb)  # Отправляем изображение пользователю
 
 
-# Функция для пополнения баланса пользователя
-async def add_balance(user_id, amount):
-
-    print(user_id)
-    user = await db.get_user(user_id)  # Получаем информацию о пользователе
-    print("USER", user)
-
-    stock = 0  # Стартовый бонус
-    
-    # Если это первый платеж или прошло менее суток с момента последнего бонуса
-    if not user["is_pay"] and int(datetime.now().timestamp()) - user["new_stock_time"] < 86400:
-        stock = int(amount * 0.3)  # Добавляем 30% бонус
-        await db.update_new_stock_time(user_id, 0)
-    elif int(datetime.now().timestamp()) - user["stock_time"] < 86400:
-        stock = int(amount * 0.1)  # Добавляем 10% бонус
-        await db.update_stock_time(user_id, 0)
-    requests.delete(NOTIFY_URL + f"/stock/{user_id}")  # Удаляем уведомление о бонусе
-
-    await db.update_is_pay(user_id, True)  # Обновляем статус оплаты
-    await db.add_balance(user_id, amount + stock)  # Добавляем баланс пользователю
-    await db.add_order(user_id, amount, stock)  # Добавляем запись о пополнении
-    print("???") # ???
-    await bot.send_message(user_id, f"💰 Успешное пополнение ({amount + stock} руб.)")  # Сообщаем пользователю
-
-
 # Функция для обработки платежей
 async def process_pay(order_id, amount):
 
@@ -92,22 +67,17 @@ async def process_pay(order_id, amount):
         return
     else:
         user_id = order["user_id"]
-
-        if order_id.startswith("s"):  # Если это подписка
         
-            # Если покупка была со скидкой:
-            discounts_gpt = [139, 224, 381]
-            discounts_mj = [246, 550, 989]
+        # Если покупка была со скидкой:
+        discounts_gpt = [139, 224, 381]
+        discounts_mj = [246, 550, 989]
 
-            if amount in discounts_gpt:
-                await db.update_used_discount_gpt(user_id)
-            elif amount in discounts_mj:
-                await db.update_used_discount_mj(user_id)
+        if amount in discounts_gpt:
+            await db.update_used_discount_gpt(user_id)
+        elif amount in discounts_mj:
+            await db.update_used_discount_mj(user_id)
         
-            await utils.pay.process_purchase(bot, int(order_id[1:])) # Обрабатываем покупку токенов или запросов
-            # await utils.pay.process_sub(bot, int(order_id[1:]))  # Обрабатываем подписку
-        else:
-            await add_balance(user_id, amount)  # Пополняем баланс
+        await utils.pay.process_purchase(bot, int(order_id[1:])) # Обрабатываем покупку токенов или запросов
 
 
 # Обработка платежей от FreeKassa
@@ -120,7 +90,7 @@ async def check_pay_freekassa(MERCHANT_ORDER_ID, AMOUNT):
 
 # Обработка платежей от Lava
 @app.post('/api/pay/lava')
-async def check_pay_freekassa(data: LavaWebhook):
+async def check_pay_lava(data: LavaWebhook):
 
     if data.status != "success":
         raise HTTPException(200)  # Если статус не успешный, возвращаем HTTP 200
@@ -142,7 +112,7 @@ async def check_pay_tinkoff(request: Request):
 
 # Обработка платежей от PayOK
 @app.post('/api/pay/payok')
-async def check_pay_freekassa(payment_id: Annotated[str, Form()], amount: Annotated[str, Form()]):
+async def check_pay_payok(payment_id: Annotated[str, Form()], amount: Annotated[str, Form()]):
 
     await process_pay(payment_id, int(amount))  # Обрабатываем платеж
     raise HTTPException(200)
@@ -184,7 +154,7 @@ async def get_midjourney_choose(request: Request):
     action = await db.get_action(action_id)
     user_id = action["user_id"]
     photo_url = data["imageUrl"]
-    print(data)
+    logger.info(f'data: {data}')
     await send_mj_photo(user_id, photo_url, user_kb.get_choose(data["buttonMessageId"], action["api_key_number"]))
     await db.set_action_get_response(action_id)
     await db.remove_image(user_id)

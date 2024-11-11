@@ -592,37 +592,3 @@ async def update_used_discount_mj(user_id):
         user_id)
     await conn.close()
 
-
-''' СТАРЫЕ ФУНКЦИИ ПОДПИСОК
-
-async def update_sub_info(user_id, sub_time, sub_type, tokens, mj):
-    conn: Connection = await get_conn()
-    await conn.execute(
-        "UPDATE users SET sub_time = $2, sub_type = $3, tokens = $4, mj = $5, is_notified = FALSE WHERE user_id = $1",
-        user_id, sub_time, sub_type, tokens, mj)
-    await conn.close()
-
-async def set_sub_order_pay(sub_order_id):
-    conn: Connection = await get_conn()
-    await conn.execute("UPDATE sub_orders SET pay_time = NOW() WHERE sub_order_id = $1", sub_order_id)
-    await conn.close()
-
-
-async def add_sub_order(user_id, amount, sub_type, discount, days):
-    conn: Connection = await get_conn()
-    row = await conn.fetchrow(
-        "INSERT INTO sub_orders(user_id, amount, sub_type, with_discount, days) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        user_id, amount, sub_type, discount, days)
-    await conn.close()
-    return row["sub_order_id"]
-
-
-async def get_sub_order(sub_order_id):
-    conn: Connection = await get_conn()
-    row = await conn.fetchrow("SELECT * FROM sub_orders WHERE sub_order_id = $1", sub_order_id)
-    await conn.close()
-    return row
-
-
-
-'''
