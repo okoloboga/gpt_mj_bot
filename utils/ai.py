@@ -85,7 +85,7 @@ async def get_mdjrny(prompt, user_id):
 
     translated_prompt = await get_translate(prompt)  # Переводим запрос на английский
     action_id = await db.add_action(user_id, "image", "imagine")  # Сохраняем действие в базе данных
-    response = await GoAPI.imagine(translated_prompt, action_id)  # Отправляем запрос в GoAPI
+    response = await mj_api.imagine(translated_prompt, action_id)  # Отправляем запрос в GoAPI
     return response
 
 
@@ -93,7 +93,7 @@ async def get_mdjrny(prompt, user_id):
 async def get_choose_mdjrny(task_id, image_id, user_id):
 
     action_id = await db.add_action(user_id, "image", "upscale")  # Сохраняем действие в базе данных
-    response = await GoAPI.upscale(task_id, image_id, action_id)  # Отправляем запрос на улучшение изображения
+    response = await mj_api.upscale(task_id, image_id, action_id)  # Отправляем запрос на улучшение изображения
     return response
 
 
