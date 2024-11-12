@@ -150,6 +150,9 @@ class MidJourneyAPI:
         await self.apiframe.close()
 
     async def create_request(self, data, action, request_id):
+
+        logger.info(f'Data: {data}, Action: {action}, Request ID: {request_id}')
+
         if self.primary_api == "goapi":
             try:
                 response = await GoAPI.create_request(data, action, request_id)
