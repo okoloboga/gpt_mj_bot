@@ -130,6 +130,9 @@ async def get_midjourney(action_id: int, request: Request):
 
     image_path = f'photos/{action_id}.png'  # Путь для сохранения изображения
     res = requests.get(image_url)  # Загружаем изображение
+
+    logger.info(f'MJ webhook: Action ID = {action_id}, Data = {data}')
+
     with open(image_path, "wb") as f:
         f.write(res.content)  # Сохраняем изображение
 
