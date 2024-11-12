@@ -178,7 +178,7 @@ async def get_mj(prompt, user_id, bot: Bot):
 
     logger.info(f"MidJourney: {res}")
 
-    if (res is not None) or (res['status'] == "failed"):
+    if (res is None) or (res['status'] == "failed"):
         await bot.send_message(user_id, f"Произошла ошибка, повторите попытку позже\n\n{res['message']}")
         return
 
