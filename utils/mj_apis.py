@@ -160,7 +160,7 @@ class MidJourneyAPI:
                 return response
             except Exception as e:
                 logger.error(f"GoAPI недоступен: {e}. Пытаемся использовать ApiFrame.")
-                self.set_primary_api("apiframe")
+                # self.set_primary_api("apiframe")
         if self.primary_api == "apiframe":
             try:
                 response = await self.apiframe.create_request(data, action, request_id)

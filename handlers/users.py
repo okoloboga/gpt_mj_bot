@@ -338,6 +338,7 @@ ChatGPT или Midjourney?""", reply_markup=user_kb.get_menu(user["default_ai"])
 
 # Хендлер для партнерской программы
 @dp.message_handler(text="🤝Партнерская программа")
+@dp.message_handler(commands='partner')
 async def ref_menu(message: Message):
 
     ref_data = await db.get_ref_stat(message.from_user.id)  # Получаем данные по рефералам
@@ -366,6 +367,7 @@ async def ref_menu(message: Message):
 
 # Хендлер для показа профиля пользователя (страница аккаунта)
 @dp.message_handler(state="*", text="⚙Аккаунт")
+@dp.message_handler(state="*", commands="account")
 async def show_profile(message: Message, state: FSMContext):
 
     await state.finish()
@@ -487,6 +489,7 @@ async def enter_other_amount(call: CallbackQuery):
 # Хендлер для ChatGPT
 @dp.message_handler(state="*", text="💬ChatGPT✅")
 @dp.message_handler(state="*", text="💬ChatGPT")
+@dp.message_handler(state="*", commands="chatgpt")
 async def ask_question(message: Message, state: FSMContext):
 
     await state.finish()  # Завершаем текущее состояние
@@ -508,6 +511,7 @@ async def ask_question(message: Message, state: FSMContext):
 
 # Хендлер для вывода информации о поддержке
 @dp.message_handler(state="*", text="👨🏻‍💻Поддержка")
+@dp.message_handler(state="*", commands="help")
 async def support(message: Message, state: FSMContext):
     
     await state.finish()  # Завершаем текущее состояние
@@ -518,6 +522,7 @@ async def support(message: Message, state: FSMContext):
 # Хендлер для MidJourney
 @dp.message_handler(state="*", text="🎨Midjourney✅")
 @dp.message_handler(state="*", text="🎨Midjourney")
+@dp.message_handler(state="*", commands="midjourney")
 async def gen_img(message: Message, state: FSMContext):
 
     await state.finish()  # Завершаем текущее состояние
