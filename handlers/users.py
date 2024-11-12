@@ -171,12 +171,9 @@ async def get_mj(prompt, user_id, bot: Bot):
 
     logger.info(f"MidJourney: {res}")
 
-    try:
-        if res['status'] == "failed":
-            await bot.send_message(user_id, f"Произошла ошибка, повторите попытку позже\n\n{res['message']}")
-            return
-    except KeyError:
-        pass
+    if (res is not None) or (res['status'] == "failed"):
+        await bot.send_message(user_id, f"Произошла ошибка, повторите попытку позже\n\n{res['message']}")
+        return
 
     # Проверка на количество оставшихся запросов MidJourney
     now = datetime.now()

@@ -40,7 +40,7 @@ class GoAPI:
 
         data["webhook_endpoint"] = midjourney_webhook_url + "/" + str(request_id)  # Указываем вебхук для ответа
         data["notify_progress"] = True
-        url=f"{GOAPI_HEADERS}/{action}"
+        url=f"{GOAPI_URL}/{action}"
         try:
             async with self.session.post(url, json=data, headers=GOAPI_HEADERS) as response:
                 if response.status != 200:
