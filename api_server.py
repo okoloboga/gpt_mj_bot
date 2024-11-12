@@ -124,15 +124,14 @@ async def get_midjourney(action_id: int, request: Request):
     
     action = await db.get_action(action_id)  # Получаем информацию о действии
     data = await request.json()  # Получаем данные из запроса
-    user_id = action["user_id"]  # Идентификатор пользователя
-    user = await db.get_user(user_id)  # Получаем данные о пользователе
-    image_url = data["task_result"]["image_url"]  # URL сгенерированного изображения
-
-    image_path = f'photos/{action_id}.png'  # Путь для сохранения изображения
-    res = requests.get(image_url)  # Загружаем изображение
 
     logger.info(f'MJ webhook: Action ID = {action_id}, Data = {data}')
 
+    user_id = action["user_id"]  # Идентификатор пользователя
+    user = await db.get_user(user_id)  # Получаем данные о пользователе
+    image_url = data["task_result"]["image_url"]  # URL сгенерированного изображения
+    image_path = f'photos/{action_id}.png'  # Путь для сохранения изображения
+    res = requests.get(image_url)  # Загружаем изображение
     with open(image_path, "wb") as f:
         f.write(res.content)  # Сохраняем изображение
 
