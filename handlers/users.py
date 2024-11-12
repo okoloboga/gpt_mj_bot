@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from typing import List
 
@@ -15,6 +16,12 @@ from config import bot_url, TOKEN, NOTIFY_URL, bug_id, PHOTO_PATH, MJ_PHOTO_BASE
 from create_bot import dp  # Диспетчер из create_bot.py
 from utils.ai import mj_api
 
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(filename)s:%(lineno)d #%(levelname)-8s '
+           '[%(asctime)s] - %(name)s - %(message)s')
 
 vary_types = {"subtle": "Subtle", "strong": "Strong"}  # Типы для использования в дальнейшем
 
