@@ -168,9 +168,15 @@ async def get_mj(prompt, user_id, bot: Bot):
     await bot.send_chat_action(user_id, ChatActions.UPLOAD_PHOTO)
 
     res = await ai.get_mdjrny(prompt, user_id)  # Получаем изображение через API
-    if res['status'] == "failed":
-        await bot.send_message(user_id, f"Произошла ошибка, повторите попытку позже\n\n{res['message']}")
-        return
+
+    logger.info(f"MidJourney: {res}")
+
+    try:
+        if res['status'] == "failed":
+            await bot.send_message(user_id, f"Произошла ошибка, повторите попытку позже\n\n{res['message']}")
+            return
+    except KeyError:
+        pass
 
     # Проверка на количество оставшихся запросов MidJourney
     now = datetime.now()

@@ -84,8 +84,11 @@ async def get_gpt(messages):
 async def get_mdjrny(prompt, user_id):
 
     translated_prompt = await get_translate(prompt)  # Переводим запрос на английский
-    action_id = await db.add_action(user_id, "image", "imagine")  # Сохраняем действие в базе данных
-    response = await mj_api.imagine(translated_prompt, action_id)  # Отправляем запрос в GoAPI
+    request_id = await db.add_action(user_id, "image", "imagine")  # Сохраняем действие в базе данных
+    response = await mj_api.imagine(translated_prompt, request_id)  # Отправляем запрос в GoAPI
+    
+    logger.info(f'Request ID: {request_id}, response: {response}')
+
     return response
 
 
