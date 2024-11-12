@@ -337,7 +337,7 @@ ChatGPT или Midjourney?""", reply_markup=user_kb.get_menu(user["default_ai"])
     await call.message.delete()  # Удаляем предыдущее сообщение
 
 # Хендлер для партнерской программы
-@dp.message_handler(text="🤝Партнерская программа")
+@dp.message_handler(state="*", text="🤝Партнерская программа")
 @dp.message_handler(commands='partner')
 async def ref_menu(message: Message):
 
