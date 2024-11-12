@@ -140,6 +140,7 @@ class MidJourneyAPI:
     def __init__(self, primary_api="goapi"):
         self.primary_api = primary_api  # "goapi" или "apiframe"
         self.apiframe = ApiFrame()
+        self.goapi = GoAPI()
 
     def set_primary_api(self, api_type):
         if api_type not in ["goapi", "apiframe"]:
@@ -155,7 +156,7 @@ class MidJourneyAPI:
 
         if self.primary_api == "goapi":
             try:
-                response = await GoAPI.create_request(data, action, request_id)
+                response = await self.goapi.create_request(data, action, request_id)
                 return response
             except Exception as e:
                 logger.error(f"GoAPI недоступен: {e}. Пытаемся использовать ApiFrame.")
@@ -165,8 +166,8 @@ class MidJourneyAPI:
                 response = await self.apiframe.create_request(data, action, request_id)
                 return response
             except Exception as e:
-                logger.error(f"ApiFrame недоступен: {e}. Пытаемся использовать GoAPI.")
-                self.set_primary_api("goapi")
+                logger.error(f"ApiFrame недоступен: {e}.")
+                # self.set_primary_api("goapi")
                 # Попробуем снова GoAPI
                 try:
                     response = await GoAPI.create_request(data, action, request_id)
