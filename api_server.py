@@ -60,7 +60,7 @@ async def send_mj_photo(user_id, photo_url, kb):
 # Функция для обработки платежей
 async def process_pay(order_id, amount):
 
-    order = await db.get_order(order_id[1:])
+    order = await db.get_order(int(order_id[1:]))
     
     if order is None:
         logger.info(f'Order {order_id} not found')
