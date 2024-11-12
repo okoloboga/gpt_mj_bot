@@ -125,29 +125,35 @@ async def get_midjourney(action_id: int, request: Request):
     action = await db.get_action(action_id)  # Получаем информацию о действии
     data = await request.json()  # Получаем данные из запроса
 
-    logger.info(f'MJ webhook: Action ID = {action_id}, Data = {data}')
+    if data['status'] != 'failed':
 
-    user_id = action["user_id"]  # Идентификатор пользователя
-    user = await db.get_user(user_id)  # Получаем данные о пользователе
-    image_url = data["task_result"]["image_url"]  # URL сгенерированного изображения
-    image_path = f'photos/{action_id}.png'  # Путь для сохранения изображения
-    res = requests.get(image_url)  # Загружаем изображение
-    with open(image_path, "wb") as f:
-        f.write(res.content)  # Сохраняем изображение
+        user_id = action["user_id"]  # Идентификатор пользователя
+        user = await db.get_user(user_id)  # Получаем данные о пользователе
+        image_url = data["task_result"]["image_url"]  # URL сгенерированного изображения
+        image_path = f'photos/{action_id}.png'  # Путь для сохранения изображения
+        res = requests.get(image_url)  # Загружаем изображение
+        with open(image_path, "wb") as f:
+            f.write(res.content)  # Сохраняем изображение
 
-    # В зависимости от типа изображения отправляем пользователю разные кнопки
-    if action["image_type"] in ("imagine", "vary", "zoom"):
-        await bot.send_photo(user_id, open(image_path, "rb"),
-                             reply_markup=user_kb.get_try_prompt_or_choose(data["task_id"],
-                                                                           include_try=True))
-        if user["free_image"] > 0:
-            await db.remove_free_image(user["user_id"])  # Уменьшаем количество бесплатных изображений
-        else:
-            await db.remove_image(user["user_id"])  # Уменьшаем количество доступных изображений
-    elif action["image_type"] == "upscale":
-        await bot.send_photo(user_id, open(image_path, "rb"),
-                             reply_markup=user_kb.get_choose(data["task_id"]))
-    return 200
+        # В зависимости от типа изображения отправляем пользователю разные кнопки
+        if action["image_type"] in ("imagine", "vary", "zoom"):
+            await bot.send_photo(user_id, open(image_path, "rb"),
+                                reply_markup=user_kb.get_try_prompt_or_choose(data["task_id"],
+                                                                            include_try=True))
+            if user["free_image"] > 0:
+                await db.remove_free_image(user["user_id"])  # Уменьшаем количество бесплатных изображений
+            else:
+                await db.remove_image(user["user_id"])  # Уменьшаем количество доступных изображений
+        elif action["image_type"] == "upscale":
+            await bot.send_photo(user_id, open(image_path, "rb"),
+                                reply_markup=user_kb.get_choose(data["task_id"]))
+        return 200
+
+    else:
+        error_messages = ''.join(data['task_result']['error_messages'])
+        await bot.send_message(user_id, f"Произошла ошибка, подробности ошибки:\n\n{error_messages}")
+        return 200
+
 
 @app.post('/api/midjourney/choose')
 async def get_midjourney_choose(request: Request):
