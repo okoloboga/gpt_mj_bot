@@ -13,7 +13,8 @@ withdraw_ref_menu = InlineKeyboardMarkup(row_width=2).add(
 
 # Клавиатура с ссылками для информации о проекте и поддержке
 about = InlineKeyboardMarkup(row_width=2).add(InlineKeyboardButton("📢Канал проекта", url="https://t.me/NeuronAgent"),
-                                              InlineKeyboardButton("🆘Помощь", url="https://t.me/NeuronSupportBot"))
+                                              InlineKeyboardButton("🆘Помощь", url="https://t.me/NeuronSupportBot"),
+                                              InlineKeyboardButton("Инструкция для Midjourney", url="https://telegra.ph/Kak-polzovatsya-MidJourney-podrobnaya-instrukciya-10-16"))
 
 
 # Кнопка для отмены действия (например, при вводе данных)
@@ -60,7 +61,8 @@ def get_account(lang, from_msg):
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("💰Выбрать тариф", callback_data="buy_sub"),
         InlineKeyboardButton(f"Ответы ChatGPT: {lang_text[lang]}", callback_data=f"change_lang:{lang}:{from_msg}"),
-        InlineKeyboardButton("Сбросить настройки ChatGPT", callback_data="reset_chatgpt_settings")
+        InlineKeyboardButton("Сбросить настройки ChatGPT", callback_data="reset_chatgpt_settings"),
+        InlineKeyboardButton("Инструкция для Midjourney", url="https://telegra.ph/Kak-polzovatsya-MidJourney-podrobnaya-instrukciya-10-16")
     )
 
 
