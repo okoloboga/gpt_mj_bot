@@ -18,7 +18,7 @@ import asyncio
 
 # Хендлер для переключения основного API
 @dp.message_handler(text=["#switch_to_goapi", "#switch_to_apiframe"])
-async def switch_api_handler(message: types.Message):
+async def switch_api_handler(message: Message):
     user_id = message.from_user.id
     if user_id not in config.ADMINS:
         await message.reply("Не известная команда.")
