@@ -8,12 +8,38 @@ from aiogram.dispatcher import FSMContext
 import config
 import keyboards.admin as admin_kb  # Клавиатуры для админских команд
 from config import bot_url
+from utils.ai import mj_api
 from create_bot import dp  # Диспетчер для регистрации хендлеров
 from tabulate import tabulate  # Модуль для форматирования данных в таблицы
 import states.admin as states  # Состояния для административных задач
 from utils import db  # Модуль для работы с базой данных
 import asyncio
 
+
+# Хендлер для переключения основного API
+@dp.message_handler(text=["#switch_to_goapi", "#switch_to_apiframe"])
+async def switch_api_handler(message: types.Message):
+    user_id = message.from_user.id
+    if user_id not in config.ADMINS:
+        await message.reply("Не известная команда.")
+        return
+
+    if message.text == "#switch_to_goapi":
+        try:
+            mj_api.set_primary_api("goapi")
+            await message.reply("Основной API переключен на **GoAPI**.")
+            logging.info(f"API переключено на GoAPI по команде пользователя {user_id}.")
+        except ValueError as e:
+            await message.reply(f"Ошибка: {e}")
+            logging.error(f"Ошибка при переключении на GoAPI: {e}")
+    elif message.text == "#switch_to_apiframe":
+        try:
+            mj_api.set_primary_api("apiframe")
+            await message.reply("Основной API переключен на **ApiFrame**.")
+            logging.info(f"API переключено на ApiFrame по команде пользователя {user_id}.")
+        except ValueError as e:
+            await message.reply(f"Ошибка: {e}")
+            logging.error(f"Ошибка при переключении на ApiFrame: {e}")
 
 # Хендлер для отображения статистики по пользователям и запросам
 @dp.message_handler(is_admin=True, commands="stats")
