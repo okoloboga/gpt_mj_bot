@@ -1,5 +1,6 @@
 import string
 import random
+import logging
 from datetime import datetime, timedelta
 
 from aiogram.types import Message, CallbackQuery
@@ -16,12 +17,20 @@ from utils import db  # Модуль для работы с базой данн�
 import asyncio
 
 
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(filename)s:%(lineno)d #%(levelname)-8s '
+           '[%(asctime)s] - %(name)s - %(message)s')
+
+
 # Хендлер для переключения основного API
 @dp.message_handler(text=["#switch_to_goapi", "#switch_to_apiframe"])
 async def switch_api_handler(message: Message):
     user_id = message.from_user.id
     if user_id not in config.ADMINS:
-        await message.reply("Не известная команда.")
+        await message.reply("Неизвестная команда.")
         return
 
     if message.text == "#switch_to_goapi":
