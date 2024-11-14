@@ -196,6 +196,7 @@ async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
             logger.error("В запросе отсутствует task_id")
             raise HTTPException(status_code=400, detail="Missing task_id")
         action = await db.get_action_by_task_id(task_id)
+        action_id = action['id']
 
     if not action:
         logger.error(f"Action not found для action_id: {action_id} или task_id: {task_id}")
@@ -218,10 +219,7 @@ async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
             logger.error("В ответе отсутствует image_url или original_image_url")
             raise HTTPException(status_code=400, detail="Missing image URL")
 
-        if action_id:
-            image_path = f'photos/{action_id}.png'
-        else:
-            image_path = f'photos/{action["id"]}.png'
+        image_path = f'photos/{action_id}.png'
 
         try:
             async with aiohttp.ClientSession() as session:
