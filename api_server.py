@@ -118,6 +118,15 @@ async def check_pay_payok(payment_id: Annotated[str, Form()], amount: Annotated[
     raise HTTPException(200)
 
 
+@app.post('/api/midjourney')
+async def get_midjourney_test(request: Request):
+    try:
+        data = await request.json()
+        logger.info(f"Получен webhook: {data}")
+    except Exception as e:
+        logger.error(f"Не удалось разобрать JSON: {e}")
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
 # Обработка webhook от MidJourney
 @app.post('/api/midjourney/{action_id}')
 async def get_midjourney(action_id: int, request: Request):
