@@ -657,7 +657,6 @@ async def change_image(call: CallbackQuery):
     if button_type == "zoom":
         response = await mj_api.outpaint(task_id, value, action_id)  # Масштабирование изображения через API
     elif button_type == "vary":
-        value += "_variation"
         response = await mj_api.variation(task_id, value, action_id)  # Вариация изображения через API
 
 
