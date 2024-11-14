@@ -210,6 +210,7 @@ class MidJourneyAPI:
                     return None
 
     async def imagine(self, prompt, request_id):
+        action = "imagine"
         if self.primary_api == "goapi":
             data = {
                 "process_mode": "fast",
@@ -224,9 +225,7 @@ class MidJourneyAPI:
         return await self.create_request(data, action, request_id)
 
     async def upscale(self, task_id, index, request_id):
-
-        logger.info(f'Upscale task_id: {task_id}, index: {index}, request_id: {request_id}')
-
+        action = "upscale"
         if self.primary_api == "goapi":
             data = {
                 "origin_task_id": task_id,
@@ -240,6 +239,7 @@ class MidJourneyAPI:
         return await self.create_request(data, action, request_id)
 
     async def variation(self, task_id, index, request_id):
+        action = "variation"
         if self.primary_api == "goapi":
             data = {
                 "origin_task_id": task_id,
@@ -253,6 +253,7 @@ class MidJourneyAPI:
         return await self.create_request(data, action, request_id)
 
     async def outpaint(self, task_id, zoom_ratio, request_id):
+        action = "outpaint"
         if self.primary_api == "goapi":
             data = {
                 "origin_task_id": task_id,
