@@ -1,5 +1,7 @@
 import logging
 import aiohttp
+
+from utils import db
 from config import go_api_token, APIFRAME_API_KEY, midjourney_webhook_url
 
 logger = logging.getLogger(__name__)
