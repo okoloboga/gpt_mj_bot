@@ -127,7 +127,7 @@ class ApiFrame:
 
     async def create_request(self, data, action, request_id):
         # Используем фиксированный webhook_endpoint без request_id
-        data["webhook_endpoint"] = f"{midjourney_webhook_url}/api/midjourney"
+        data["webhook_endpoint"] = f"{midjourney_webhook_url}"
         data["notify_progress"] = True
         url = f"{APIFRAME_URL}/{action}"
 
