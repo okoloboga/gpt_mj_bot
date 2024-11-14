@@ -608,6 +608,9 @@ async def choose_image(call: CallbackQuery):
     await call.message.answer("Ожидайте, сохраняю изображение в отличном качестве…⏳", 
                               reply_markup=user_kb.get_menu(user["default_ai"]))
     res = await ai.get_choose_mdjrny(task_id, image_id, call.from_user.id)  # Запрос к MidJourney API
+
+    logger.info(f'res: {res}, task_id: {task_id}, image_id: {image_id}')
+
     if not res["success"]:
         if res["message"] == "repeat task":
             return await call.message.answer("Вы уже сохраняли это изображение!")  # Сообщение, если изображение уже сохранялось

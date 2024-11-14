@@ -210,8 +210,11 @@ async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
         if not image_url:
             logger.error("В ответе отсутствует image_url или original_image_url")
             raise HTTPException(status_code=400, detail="Missing image URL")
-
-        image_path = f'photos/{action_id}.png'
+            
+        if action_id:
+            image_path = f'photos/{action_id}.png'
+        else:
+            image_path = f'photos/{action["id"]}.png'
 
         try:
             async with aiohttp.ClientSession() as session:
