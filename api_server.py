@@ -209,8 +209,10 @@ async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
         # Извлекаем правильный URL изображения
         if 'task_result' in data:
             image_url = data["task_result"]["image_url"]
-        else:
+        elif 'original_image_url' in data:
             image_url = data["original_image_url"]
+        elif data['status'] == 'processing':
+            return 200
 
         if not image_url:
             logger.error("В ответе отсутствует image_url или original_image_url")
