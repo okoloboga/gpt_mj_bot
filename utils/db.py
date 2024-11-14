@@ -335,6 +335,15 @@ async def get_action_by_task_id(task_id):
     return row
 
 
+
+# Получение информации о действии по action_id
+async def get_task_by_action_id(action_id):
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT external_task_id FROM usage WHERE id = $1", action_id)
+    await conn.close()
+    return row
+
+
 # Установка флага, что ответ на действие пользователя был получен
 async def set_action_get_response(usage_id):
 

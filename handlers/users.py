@@ -603,8 +603,9 @@ async def choose_image(call: CallbackQuery):
     if user["mj"] <= 0 and user["free_image"] <= 0:
         await not_enough_balance(call.bot, call.from_user.id, "image")  # Проверка наличия баланса для MidJourney
         return
-    task_id = call.data.split(":")[1]
+    action_id = call.data.split(":")[1]
     image_id = call.data.split(":")[2]
+    task_id = db.get_task_by_action_id(action_id)
     await call.message.answer("Ожидайте, сохраняю изображение в отличном качестве…⏳", 
                               reply_markup=user_kb.get_menu(user["default_ai"]))
     res = await ai.get_choose_mdjrny(task_id, image_id, call.from_user.id)  # Запрос к MidJourney API
