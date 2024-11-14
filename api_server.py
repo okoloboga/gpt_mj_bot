@@ -8,7 +8,7 @@ import utils
 from config import NOTIFY_URL, bug_id
 from keyboards import user as user_kb
 from fastapi import FastAPI, Request, HTTPException, Form  # Импорт необходимых классов для работы с FastAPI
-from fastapi.responses import JSONRespons
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel  # Импорт базовой модели данных
 from create_bot import bot  # Импорт бота
 from io import BytesIO  # Для работы с потоками байтов
