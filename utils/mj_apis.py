@@ -137,6 +137,7 @@ class ApiFrame:
                 # Сохраняем task_id в базе данных для сопоставления с action_id
                 task_id = response_content.get('task_id')
                 if task_id:
+                    logger.info(f"Task ID: {task_id}, Request ID: {request_id}")
                     await db.update_action_with_task_id(request_id, task_id)
                 
                 return response_content
