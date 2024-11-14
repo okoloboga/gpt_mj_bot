@@ -629,9 +629,10 @@ async def change_image(call: CallbackQuery):
     if user["mj"] <= 0 and user["free_image"] <= 0:
         await not_enough_balance(call.bot, user_id, "image")  # Проверка лимитов
         return
-    task_id = call.data.split(":")[3]
+    action = call.data.split(":")[3]
     button_type = call.data.split(":")[1]
     value = call.data.split(":")[2]
+    task_id = (await db.get_task_by_action_id(int(action)))["external_task_id"]
     await call.message.answer("Ожидайте, обрабатываю изображение⏳", 
                               reply_markup=user_kb.get_menu(user["default_ai"]))
 
