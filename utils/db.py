@@ -42,7 +42,7 @@ async def start():
 
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS usage(id SERIAL PRIMARY KEY, user_id BIGINT, ai_type VARCHAR(10), use_time INT,"
-        "get_response BOOLEAN DEFAULT FALSE, external_task_id VARCHAR(1024)")
+        "get_response BOOLEAN DEFAULT FALSE, external_task_id VARCHAR(1024))")
 
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS withdraws(id SERIAL PRIMARY KEY, user_id BIGINT, amount INT, withdraw_time INT)")
