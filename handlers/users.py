@@ -615,8 +615,8 @@ async def choose_image(call: CallbackQuery):
 
     logger.info(f'res: {res}, task_id: {task_id}, image_id: {image_id}')
 
-    if "success" not in res:
-        if res["message"] in res and res["message"] == "repeat task":
+    if res is not None and "success" not in res:
+        if "message" in res and res["message"] == "repeat task":
             return await call.message.answer("Вы уже сохраняли это изображение!")  # Сообщение, если изображение уже сохранялось
 
 
