@@ -41,6 +41,9 @@ class GoAPI:
         data["webhook_endpoint"] = midjourney_webhook_url + "/" + str(request_id)  # Указываем вебхук для ответа
         data["notify_progress"] = True
         url=f"{GOAPI_URL}/{action}"
+
+        logger.info(f"Отправка запроса к GoAPI: URL={url}, Data={data}")
+
         try:
             async with self.session.post(url, json=data, headers=GOAPI_HEADERS) as response:
                 if response.status != 200:
@@ -48,10 +51,10 @@ class GoAPI:
                     print(f"Ошибка GoAPI: {response.status} - {error_text}")
                     raise Exception(f"GoAPI Error: {response.status} - {error_text}")
                 response_content = await response.json()
-                print(response_content)
+                logger.info(response_content)
                 return response_content
         except Exception as e:
-            print(f"Ошибка при запросе к GoAPI: {e}")
+            logger.info(f"Ошибка при запросе к GoAPI: {e}")
             raise
 
     async def imagine(self, prompt, request_id):
@@ -192,7 +195,7 @@ class MidJourneyAPI:
                 response = await self.goapi.create_request(data, action, request_id)
                 return response
             except Exception as e:
-                logger.error(f"GoAPI недоступен: {e}. Пытаемся использовать ApiFrame.")
+                logger.error(f"GoAPI недоступен: {e}.")
                 # self.set_primary_api("apiframe")
         if self.primary_api == "apiframe":
             try:
