@@ -5,6 +5,7 @@ from typing import Annotated
 import config
 import logging
 import utils
+import aiohttp
 from config import NOTIFY_URL, bug_id
 from keyboards import user as user_kb
 from fastapi import FastAPI, Request, HTTPException, Form  # Импорт необходимых классов для работы с FastAPI
