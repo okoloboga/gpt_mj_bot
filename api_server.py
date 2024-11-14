@@ -235,7 +235,7 @@ async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
                 if action["image_type"] in ("imagine", "vary", "zoom"):
                     await bot.send_photo(
                         user_id, photo,
-                        reply_markup=user_kb.get_try_prompt_or_choose(action.id, include_try=True)
+                        reply_markup=user_kb.get_try_prompt_or_choose(action_id, include_try=True)
                     )
                     if user["free_image"] > 0:
                         await db.remove_free_image(user_id)
@@ -244,7 +244,7 @@ async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
                 elif action["image_type"] == "upscale":
                     await bot.send_photo(
                         user_id, photo,
-                        reply_markup=user_kb.get_choose(action.id)
+                        reply_markup=user_kb.get_choose(action_id)
                     )
         except Exception as e:
             logger.error(f"Ошибка при отправке фото: {e}")
