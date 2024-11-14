@@ -96,6 +96,9 @@ async def get_mdjrny(prompt, user_id):
 async def get_choose_mdjrny(task_id, image_id, user_id):
 
     action_id = await db.add_action(user_id, "image", "upscale")  # Сохраняем действие в базе данных
+
+    logger.info(f'Task ID: {task_id}, Image ID: {image_id}, Action ID: {action_id}')
+
     response = await mj_api.upscale(task_id, image_id, action_id)  # Отправляем запрос на улучшение изображения
     return response
 

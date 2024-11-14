@@ -221,10 +221,12 @@ class MidJourneyAPI:
                 "prompt": prompt,
                 # Другие поля, необходимые для ApiFrame
             }
-        action = "imagine" if self.primary_api == "goapi" else "imagine"  # Обновите действие, если нужно
         return await self.create_request(data, action, request_id)
 
     async def upscale(self, task_id, index, request_id):
+
+        logger.info(f'Upscale task_id: {task_id}, index: {index}, request_id: {request_id}')
+
         if self.primary_api == "goapi":
             data = {
                 "origin_task_id": task_id,
@@ -235,7 +237,6 @@ class MidJourneyAPI:
                 "parent_task_id": task_id,
                 "index": index
             }
-        action = "upscale" if self.primary_api == "goapi" else "upscale"  # Обновите действие, если нужно
         return await self.create_request(data, action, request_id)
 
     async def variation(self, task_id, index, request_id):
@@ -249,7 +250,6 @@ class MidJourneyAPI:
                 "parent_task_id": task_id,
                 "index": index
             }
-        action = "variation" if self.primary_api == "goapi" else "variation"
         return await self.create_request(data, action, request_id)
 
     async def outpaint(self, task_id, zoom_ratio, request_id):
@@ -263,5 +263,4 @@ class MidJourneyAPI:
                 "parent_task_id": task_id,
                 "zoom_ratio": zoom_ratio
             }
-        action = "outpaint" if self.primary_api == "goapi" else "outpaint"
         return await self.create_request(data, action, request_id)
