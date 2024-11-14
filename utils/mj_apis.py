@@ -51,7 +51,14 @@ class GoAPI:
                     print(f"Ошибка GoAPI: {response.status} - {error_text}")
                     raise Exception(f"GoAPI Error: {response.status} - {error_text}")
                 response_content = await response.json()
-                logger.info(response_content)
+                logger.info(f"Ответ GoAPI: {response_content}")
+
+                # Сохраняем task_id в базе данных для сопоставления с action_id
+                task_id = response_content.get('task_id')
+                if task_id:
+                    logger.info(f"Task ID: {task_id}, Request ID: {request_id}")
+                    await db.update_action_with_task_id(request_id, task_id)
+
                 return response_content
         except Exception as e:
             logger.info(f"Ошибка при запросе к GoAPI: {e}")
