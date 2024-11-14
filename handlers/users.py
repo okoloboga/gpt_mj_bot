@@ -606,6 +606,10 @@ async def choose_image(call: CallbackQuery):
     action_id = call.data.split(":")[1]
     image_id = call.data.split(":")[2]
     task_id = await db.get_task_by_action_id(int(action_id))
+    
+    for key in task_id.keys():
+        logger.info(f"{key}: {task_id[key]}")
+
     await call.message.answer("Ожидайте, сохраняю изображение в отличном качестве…⏳", 
                               reply_markup=user_kb.get_menu(user["default_ai"]))
     res = await ai.get_choose_mdjrny(task_id, image_id, call.from_user.id)  # Запрос к MidJourney API
