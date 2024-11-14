@@ -265,6 +265,12 @@ class MidJourneyAPI:
         return await self.create_request(data, action, request_id)
 
     async def outpaint(self, task_id, zoom_ratio, request_id):
+
+        if index == '1.5':
+            index = '1.5' if self.primary_api == "goapi" else 1.5
+        elif index == '2':
+            index = '2' if self.primary_api == "goapi" else 2
+            
         action = "outpaint"
         if self.primary_api == "goapi":
             data = {

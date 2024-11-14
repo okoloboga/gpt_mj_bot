@@ -655,7 +655,7 @@ async def change_image(call: CallbackQuery):
                 await notify_low_midjourney_requests(user_id, call.bot)
 
     if button_type == "zoom":
-        response = await mj_api.outpaint(task_id, int(value), action_id)  # Масштабирование изображения через API
+        response = await mj_api.outpaint(task_id, value, action_id)  # Масштабирование изображения через API
     elif button_type == "vary":
         response = await mj_api.variation(task_id, value, action_id)  # Вариация изображения через API
 
