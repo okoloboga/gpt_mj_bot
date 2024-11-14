@@ -7,6 +7,12 @@ import requests  # Для синхронных HTTP-запросов
 from aiogram import Bot  # Для работы с ботом
 from midjourney_api import TNL  # Импорт библиотеки для взаимодействия с MidJourney
 from googletranslatepy import Translator  # Библиотека для перевода текста
+from gtts import gTTS  # Библиотека для синтеза речи
+
+import speech_recognition as sr  # Библиотека для распознавания речи
+from pydub import AudioSegment  # Библиотека для работы с аудио
+import tempfile
+import os
 
 from config import OPENAPI_TOKEN, midjourney_webhook_url, MJ_API_KEY, TNL_API_KEY, TOKEN, NOTIFY_URL, TNL_API_KEY1  # Импорт конфигураций и токенов
 from utils import db  # Работа с базой данных
@@ -125,3 +131,42 @@ async def press_mj_button(button, buttonMessageId, user_id, api_key_number):
     except requests.exceptions.JSONDecodeError:
         status = False  # Ошибка при обработке JSON
     return status
+
+
+"""Работа с голосовыми сообщениями"""
+# Функция для преобразования голосового сообщения в текст
+def voice_to_text(file_path):
+    recognizer = sr.Recognizer()
+    audio = AudioSegment.from_file(file_path)
+    
+    # Сохраняем аудио как временный wav-файл
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_wav_file:
+        audio.export(temp_wav_file.name, format="wav")
+        temp_wav_file_path = temp_wav_file.name
+
+    with sr.AudioFile(temp_wav_file_path) as source:
+        audio_data = recognizer.record(source)
+        
+    os.remove(temp_wav_file_path)  # Удаляем временный файл
+    
+    try:
+        text = recognizer.recognize_google(audio_data, language="ru-RU")
+        return text
+    except sr.UnknownValueError:
+        return "Не удалось распознать речь"
+    except sr.RequestError:
+        return "Ошибка запроса к сервису распознавания"
+
+    
+# Функция для преобразования текста в аудио
+def text_to_speech(text):
+    tts = gTTS(text=text, lang='ru')
+
+    # Сохраняем результат как временный mp3-файл
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
+        temp_audio_path = temp_audio_file.name
+        tts.save(temp_audio_path)
+        
+    audio_file = InputFile(temp_audio_path)
+    os.remove(temp_audio_path)  # Удаляем временный файл после использования
+    return audio_file

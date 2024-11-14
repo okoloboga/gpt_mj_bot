@@ -8,13 +8,16 @@ from aiogram.types import Message, CallbackQuery, ChatActions, ContentType
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 
+import tempfile
+import os
 import config
 from utils import db, ai, more_api, pay  # Импорт утилит для взаимодействия с БД и внешними API
 from states import user as states  # Состояния FSM для пользователя
 import keyboards.user as user_kb  # Клавиатуры для взаимодействия с пользователями
 from config import bot_url, TOKEN, NOTIFY_URL, bug_id, PHOTO_PATH, MJ_PHOTO_BASE_URL
 from create_bot import dp  # Диспетчер из create_bot.py
-from utils.ai import mj_api
+from utils.ai import mj_api, text_to_speech, voice_to_text
+
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +206,7 @@ async def get_mj(prompt, user_id, bot: Bot):
 
 
 # Генерация ответа от ChatGPT
-async def get_gpt(prompt, messages, user_id, bot: Bot):
+async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
     user = await db.get_user(user_id)
     lang_text = {"en": "compose an answer in English", "ru": "составь ответ на русском языке"}
@@ -213,7 +216,9 @@ async def get_gpt(prompt, messages, user_id, bot: Bot):
     await bot.send_chat_action(user_id, ChatActions.TYPING)
 
     res = await ai.get_gpt(messages)  # Отправляем запрос в ChatGPT
-    await bot.send_message(user_id, res["content"], reply_markup=user_kb.clear_content)
+    await state.update_data(content=res["content"])
+
+    await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
     if not res["status"]:
         return
     messages.append({"role": "assistant", "content": res["content"]})
@@ -665,6 +670,7 @@ async def change_image(call: CallbackQuery):
 async def clear_content(call: CallbackQuery, state: FSMContext):
 
     user = await db.get_user(call.from_user.id)
+    await state.clear()
     await state.finish()  # Завершаем текущее состояние
     await call.message.answer("Диалог завершен", reply_markup=user_kb.get_menu(user["default_ai"]))  # Сообщение о завершении диалога
     try:
@@ -763,12 +769,56 @@ async def gen_prompt(message: Message, state: FSMContext):
         system_msg = user["chatgpt_about_me"] + "\n" + user["chatgpt_settings"]
         messages = [{"role": "system", "content": system_msg}] if "messages" not in data else data["messages"]
         update_messages = await get_gpt(prompt=message.text, messages=messages, user_id=message.from_user.id,
-                                        bot=message.bot)  # Генерация ответа от ChatGPT
+                                        bot=message.bot, state=state)  # Генерация ответа от ChatGPT
         await state.update_data(messages=update_messages)
 
     elif user["default_ai"] == "image":
         await get_mj(message.text, message.from_user.id, message.bot)  # Генерация изображения через MidJourney
 
+
+# Хэндлер для работы с голосовыми сообщениями
+@dp.message_handler(content_types=['voice'])
+async def handle_voice(message: Message, state: FSMContext):
+
+    file_info = await bot.get_file(message.voice.file_id)
+    file_path = file_info.file_path
+    file = await bot.download_file(file_path)
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as temp_ogg_file:
+        temp_ogg_file.write(file.getbuffer())
+        temp_ogg_path = temp_ogg_file.name
+    
+    text = voice_to_text(temp_ogg_path)
+    os.remove(temp_ogg_path)
+    await state.update_data(prompt=text)  # Сохраняем запрос пользователя
+
+    if user is None:
+        await message.answer("Введите команду /start для перезагрузки бота")
+        return await message.bot.send_message(796644977, message.from_user.id)
+
+    if user["default_ai"] == "chatgpt":
+        if user["tokens"] <= 0 and user["free_chatgpt"] <= 0:
+            return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
+
+        data = await state.get_data()
+        system_msg = user["chatgpt_about_me"] + "\n" + user["chatgpt_settings"]
+        messages = [{"role": "system", "content": system_msg}] if "messages" not in data else data["messages"]
+        update_messages = await get_gpt(prompt=text, messages=messages, user_id=message.from_user.id,
+                                        bot=message.bot, state=state)  # Генерация ответа от ChatGPT
+        await state.update_data(messages=update_messages)
+
+    elif user["default_ai"] == "image":
+        await get_mj(text, message.from_user.id, message.bot)  # Генерация изображения через MidJourney
+
+
+# Перевод текста в Аудио
+@dp.message_handler(text="text_to_audio")
+async def return_voice(call: CallbackQuery, state: FSMContext):
+
+    content_raw = await state.get_data()
+    content = content_raw.get("content")
+    audio_response = text_to_speech(content)
+    await call.reply_voice(voice=audio_response)
 
 # Хендлер для обработки фотографий
 @dp.message_handler(is_media_group=False, content_types="photo")
