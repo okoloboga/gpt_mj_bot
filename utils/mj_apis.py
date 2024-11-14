@@ -213,14 +213,6 @@ class MidJourneyAPI:
                 return response
             except Exception as e:
                 logger.error(f"ApiFrame недоступен: {e}.")
-                # self.set_primary_api("goapi")
-                # Попробуем снова GoAPI
-                try:
-                    response = await GoAPI.create_request(data, action, request_id)
-                    return response
-                except Exception as e:
-                    logger.error(f"GoAPI тоже недоступен: {e}.")
-                    return None
 
     async def imagine(self, prompt, request_id):
         action = "imagine"
@@ -258,7 +250,7 @@ class MidJourneyAPI:
             index = 'high' if self.primary_api == "goapi" else 'strong'
         elif index == 'low':
             index = 'low' if self.primary_api == "goapi" else 'subtle'
-            
+
         action = "variation" if self.primary_api == "goapi" else "variations"
         if self.primary_api == "goapi":
             data = {
