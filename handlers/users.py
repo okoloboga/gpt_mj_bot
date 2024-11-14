@@ -600,6 +600,9 @@ async def choose_image(call: CallbackQuery):
 
     await call.answer()  # Закрываем callback уведомление
     user = await db.get_user(call.from_user.id)
+
+    logger.info(call.data)
+
     if user["mj"] <= 0 and user["free_image"] <= 0:
         await not_enough_balance(call.bot, call.from_user.id, "image")  # Проверка наличия баланса для MidJourney
         return

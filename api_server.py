@@ -211,7 +211,7 @@ async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
             image_url = data["task_result"]["image_url"]
         elif 'original_image_url' in data:
             image_url = data["original_image_url"]
-        elif data['status'] == 'processing':
+        elif data['status'] == 'processing' or data['status'] == 'starting':
             return 200
 
         if not image_url:
