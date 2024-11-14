@@ -14,6 +14,7 @@ from io import BytesIO  # Для работы с потоками байтов
 from utils import db  # Импорт функций работы с базой данных
 import requests  # Для синхронных HTTP-запросов
 import uvicorn  # Для запуска сервера FastAPI
+from typing import Optional
 
 
 logger = logging.getLogger(__name__)
