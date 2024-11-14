@@ -204,7 +204,7 @@ async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
 
     if data.get('status') != 'failed':
         # Извлекаем правильный URL изображения
-        image_url = data.get("image_url") or data.get("original_image_url")
+        image_url = data["task_result"].get("image_url") or data.get("original_image_url")
         if not image_url:
             logger.error("В ответе отсутствует image_url или original_image_url")
             raise HTTPException(status_code=400, detail="Missing image URL")
