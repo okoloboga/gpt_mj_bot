@@ -9,6 +9,7 @@ ya_folder = "none"
 bot_url = 'https://t.me/coin_gifter_bot'
 midjourney_webhook_url = "none"
 go_api_token = "none"
+APIFRAME_API_KEY = "key"
 log_on = False
 ADMINS = ["5101525651"]
 bug_id = "id"
