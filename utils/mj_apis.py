@@ -253,6 +253,12 @@ class MidJourneyAPI:
         return await self.create_request(data, action, request_id)
 
     async def variation(self, task_id, index, request_id):
+
+        if index == 'high':
+            index = 'high' if self.primary_api == "goapi" else 'strong'
+        elif index == 'low':
+            index = 'low' if self.primary_api == "goapi" else 'subtle'
+            
         action = "variation" if self.primary_api == "goapi" else "variations"
         if self.primary_api == "goapi":
             data = {
