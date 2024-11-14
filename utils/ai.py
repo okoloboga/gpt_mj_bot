@@ -80,12 +80,12 @@ async def get_gpt(messages):
     return {"status": status, "content": content, "tokens": tokens}  # Возвращаем результат
 
 
-# Функция для отправки запроса в MidJourney через GoAPI
+# Функция для отправки запроса в MidJourney
 async def get_mdjrny(prompt, user_id):
 
     translated_prompt = await get_translate(prompt)  # Переводим запрос на английский
     request_id = await db.add_action(user_id, "image", "imagine")  # Сохраняем действие в базе данных
-    response = await mj_api.imagine(translated_prompt, request_id)  # Отправляем запрос в GoAPI
+    response = await mj_api.imagine(translated_prompt, request_id)  # Отправляем запрос в Midjourney
     
     logger.info(f'Request ID: {request_id}, response: {response}')
 

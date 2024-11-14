@@ -92,9 +92,14 @@ class ApiFrame:
         await self.session.close()
 
     async def create_request(self, data, action, request_id):
+
         data["webhook_endpoint"] = midjourney_webhook_url + "/" + str(request_id)
         data["notify_progress"] = True
         url = f"{APIFRAME_URL}/{action}"
+
+        logger.info(f'Data: {data}, Action: {action}, Request ID: {request_id}')
+        logger.info(f'WebHook: {data["webhook_endpoint"]}, url: {url}')
+
         try:
             async with self.session.post(url, json=data, headers=APIFRAME_HEADERS) as response:
                 if response.status != 200:
