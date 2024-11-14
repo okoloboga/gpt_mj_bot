@@ -238,7 +238,8 @@ class MidJourneyAPI:
         return await self.create_request(data, action, request_id)
 
     async def upscale(self, task_id, index, request_id):
-        action = "upscale"
+
+        action = "upscale" if self.primary_api == "goapi" else "upscale-1x"
         if self.primary_api == "goapi":
             data = {
                 "origin_task_id": task_id,
@@ -252,7 +253,7 @@ class MidJourneyAPI:
         return await self.create_request(data, action, request_id)
 
     async def variation(self, task_id, index, request_id):
-        action = "variation"
+        action = "variation" if self.primary_api == "goapi" else "variations"
         if self.primary_api == "goapi":
             data = {
                 "origin_task_id": task_id,
