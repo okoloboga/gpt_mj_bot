@@ -42,7 +42,7 @@ async def start():
 
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS usage(id SERIAL PRIMARY KEY, user_id BIGINT, ai_type VARCHAR(10), use_time INT,"
-        "get_response BOOLEAN DEFAULT FALSE)")
+        "get_response BOOLEAN DEFAULT FALSE, external_task_id VARCHAR(1024)")
 
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS withdraws(id SERIAL PRIMARY KEY, user_id BIGINT, amount INT, withdraw_time INT)")
@@ -313,6 +313,24 @@ async def get_action(action_id):
 
     conn: Connection = await get_conn()
     row = await conn.fetchrow("SELECT * FROM usage WHERE id = $1", action_id)
+    await conn.close()
+    return row
+
+
+# Установка связи между task_id и action_id
+async def update_action_with_task_id(request_id, task_id):
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "UPDATE usage SET external_task_id = $1 WHERE id = $2",
+        task_id, request_id
+    )
+    await conn.close()
+
+
+# Получение информации о действии по task_id
+async def get_action_by_task_id(task_id):
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT * FROM usage WHERE external_task_id = $1", task_id)
     await conn.close()
     return row
 

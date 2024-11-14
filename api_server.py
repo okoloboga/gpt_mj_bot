@@ -118,8 +118,65 @@ async def check_pay_payok(payment_id: Annotated[str, Form()], amount: Annotated[
     raise HTTPException(200)
 
 
+# @app.post('/api/midjourney')
+# async def get_midjourney_test(request: Request):
+#     try:
+#         data = await request.json()
+#         logger.info(f"Получен webhook: {data}")
+
+#         if data['status'] == 'processing':
+#             pass
+#         elif data['status'] == 'finished':
+
+#     except Exception as e:
+#         logger.error(f"Не удалось разобрать JSON: {e}")
+#         raise HTTPException(status_code=400, detail="Invalid JSON")
+
+# # Обработка webhook от MidJourney
+# @app.post('/api/midjourney/{action_id}')
+# async def get_midjourney(action_id: int, request: Request):
+    
+#     action = await db.get_action(action_id)  # Получаем информацию о действии
+#     data = await request.json()  # Получаем данные из запроса
+#     user_id = action["user_id"]  # Идентификатор пользователя
+#     user = await db.get_user(user_id)  # Получаем данные о пользователе
+
+#     if data['status'] != 'failed':
+
+#         image_url = data["task_result"]["image_url"]  # URL сгенерированного изображения
+#         image_path = f'photos/{action_id}.png'  # Путь для сохранения изображения
+#         res = requests.get(image_url)  # Загружаем изображение
+#         with open(image_path, "wb") as f:
+#             f.write(res.content)  # Сохраняем изображение
+
+#         # В зависимости от типа изображения отправляем пользователю разные кнопки
+#         if action["image_type"] in ("imagine", "vary", "zoom"):
+#             await bot.send_photo(user_id, open(image_path, "rb"),
+#                                 reply_markup=user_kb.get_try_prompt_or_choose(data["task_id"],
+#                                                                             include_try=True))
+#             if user["free_image"] > 0:
+#                 await db.remove_free_image(user["user_id"])  # Уменьшаем количество бесплатных изображений
+#             else:
+#                 await db.remove_image(user["user_id"])  # Уменьшаем количество доступных изображений
+#         elif action["image_type"] == "upscale":
+#             await bot.send_photo(user_id, open(image_path, "rb"),
+#                                 reply_markup=user_kb.get_choose(data["task_id"]))
+#         return 200
+
+#     else:
+#         error_messages = ''.join(data['task_result']['error_messages'])
+#         await bot.send_message(user_id, f"Произошла ошибка, подробности ошибки:\n\n{error_messages}")
+#         return 200
+
+@app.post('/api/midjourney/{action_id}')
+async def get_midjourney_with_id(action_id: int, request: Request):
+    return await handle_midjourney_webhook(action_id=action_id, request=request)
+
 @app.post('/api/midjourney')
-async def get_midjourney_test(request: Request):
+async def get_midjourney_without_id(request: Request):
+    return await handle_midjourney_webhook(action_id=None, request=request)
+
+async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
     try:
         data = await request.json()
         logger.info(f"Получен webhook: {data}")
@@ -127,41 +184,76 @@ async def get_midjourney_test(request: Request):
         logger.error(f"Не удалось разобрать JSON: {e}")
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-# Обработка webhook от MidJourney
-@app.post('/api/midjourney/{action_id}')
-async def get_midjourney(action_id: int, request: Request):
-    
-    action = await db.get_action(action_id)  # Получаем информацию о действии
-    data = await request.json()  # Получаем данные из запроса
-    user_id = action["user_id"]  # Идентификатор пользователя
-    user = await db.get_user(user_id)  # Получаем данные о пользователе
+    if action_id:
+        action = await db.get_action(action_id)
+    else:
+        # Извлекаем task_id из тела запроса
+        task_id = data.get('task_id') or data.get('external_task_id')
+        if not task_id:
+            logger.error("В запросе отсутствует task_id")
+            raise HTTPException(status_code=400, detail="Missing task_id")
+        action = await db.get_action_by_task_id(task_id)
 
-    if data['status'] != 'failed':
+    if not action:
+        logger.error(f"Action not found для action_id: {action_id} или task_id: {task_id}")
+        raise HTTPException(status_code=404, detail="Action not found")
 
-        image_url = data["task_result"]["image_url"]  # URL сгенерированного изображения
-        image_path = f'photos/{action_id}.png'  # Путь для сохранения изображения
-        res = requests.get(image_url)  # Загружаем изображение
-        with open(image_path, "wb") as f:
-            f.write(res.content)  # Сохраняем изображение
+    user_id = action["user_id"]
+    user = await db.get_user(user_id)
 
-        # В зависимости от типа изображения отправляем пользователю разные кнопки
-        if action["image_type"] in ("imagine", "vary", "zoom"):
-            await bot.send_photo(user_id, open(image_path, "rb"),
-                                reply_markup=user_kb.get_try_prompt_or_choose(data["task_id"],
-                                                                            include_try=True))
-            if user["free_image"] > 0:
-                await db.remove_free_image(user["user_id"])  # Уменьшаем количество бесплатных изображений
-            else:
-                await db.remove_image(user["user_id"])  # Уменьшаем количество доступных изображений
-        elif action["image_type"] == "upscale":
-            await bot.send_photo(user_id, open(image_path, "rb"),
-                                reply_markup=user_kb.get_choose(data["task_id"]))
-        return 200
+    if data.get('status') != 'failed':
+        # Извлекаем правильный URL изображения
+        image_url = data.get("image_url") or data.get("original_image_url")
+        if not image_url:
+            logger.error("В ответе отсутствует image_url или original_image_url")
+            raise HTTPException(status_code=400, detail="Missing image URL")
+
+        image_path = f'photos/{action.id}.png'
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(image_url) as resp:
+                    if resp.status == 200:
+                        with open(image_path, "wb") as f:
+                            f.write(await resp.read())
+                        logger.info(f"Изображение сохранено по пути: {image_path}")
+                    else:
+                        logger.error(f"Не удалось загрузить изображение: статус {resp.status}")
+                        await bot.send_message(user_id, "Не удалось загрузить изображение.")
+                        return JSONResponse(status_code=500, content={"status": "error"})
+        except Exception as e:
+            logger.error(f"Ошибка при загрузке изображения: {e}")
+            await bot.send_message(user_id, "Произошла ошибка при загрузке изображения.")
+            return JSONResponse(status_code=500, content={"status": "error"})
+
+        # Отправка изображения пользователю
+        try:
+            with open(image_path, "rb") as photo:
+                if action["image_type"] in ("imagine", "vary", "zoom"):
+                    await bot.send_photo(
+                        user_id, photo,
+                        reply_markup=user_kb.get_try_prompt_or_choose(action.id, include_try=True)
+                    )
+                    if user["free_image"] > 0:
+                        await db.remove_free_image(user_id)
+                    else:
+                        await db.remove_image(user_id)
+                elif action["image_type"] == "upscale":
+                    await bot.send_photo(
+                        user_id, photo,
+                        reply_markup=user_kb.get_choose(action.id)
+                    )
+        except Exception as e:
+            logger.error(f"Ошибка при отправке фото: {e}")
+            await bot.send_message(user_id, "Произошла ошибка при отправке изображения.")
+            return JSONResponse(status_code=500, content={"status": "error"})
+
+        return JSONResponse(status_code=200, content={"status": "ok"})
 
     else:
-        error_messages = ''.join(data['task_result']['error_messages'])
+        error_messages = ''.join(data['task_result'].get('error_messages', []))
         await bot.send_message(user_id, f"Произошла ошибка, подробности ошибки:\n\n{error_messages}")
-        return 200
+        return JSONResponse(status_code=200, content={"status": "error"})
 
 
 @app.post('/api/midjourney/choose')

@@ -91,14 +91,36 @@ class ApiFrame:
     async def close(self):
         await self.session.close()
 
-    async def create_request(self, data, action, request_id):
+    # async def create_request(self, data, action, request_id):
 
-        data["webhook_endpoint"] = midjourney_webhook_url + "/" + str(request_id)
+    #     data["webhook_endpoint"] = midjourney_webhook_url + "/" + str(request_id)
+    #     data["notify_progress"] = True
+    #     url = f"{APIFRAME_URL}/{action}"
+
+    #     logger.info(f'Data: {data}, Action: {action}, Request ID: {request_id}')
+    #     logger.info(f'WebHook: {data["webhook_endpoint"]}, url: {url}')
+
+    #     try:
+    #         async with self.session.post(url, json=data, headers=APIFRAME_HEADERS) as response:
+    #             if response.status != 200:
+    #                 error_text = await response.text()
+    #                 logger.error(f"Ошибка ApiFrame: {response.status} - {error_text}")
+    #                 raise Exception(f"ApiFrame Error: {response.status} - {error_text}")
+    #             response_content = await response.json()
+    #             logger.info(f"Ответ ApiFrame: {response_content}")
+    #             return response_content
+    #     except Exception as e:
+    #         logger.error(f"Ошибка при запросе к ApiFrame: {e}")
+    #         raise
+
+    async def create_request(self, data, action, request_id):
+        # Используем фиксированный webhook_endpoint без request_id
+        data["webhook_endpoint"] = f"{midjourney_webhook_url}/api/midjourney"
         data["notify_progress"] = True
         url = f"{APIFRAME_URL}/{action}"
 
         logger.info(f'Data: {data}, Action: {action}, Request ID: {request_id}')
-        logger.info(f'WebHook: {data["webhook_endpoint"]}, url: {url}')
+        logger.info(f'WebHook: {data["webhook_endpoint"]}, URL: {url}')
 
         try:
             async with self.session.post(url, json=data, headers=APIFRAME_HEADERS) as response:
@@ -108,11 +130,17 @@ class ApiFrame:
                     raise Exception(f"ApiFrame Error: {response.status} - {error_text}")
                 response_content = await response.json()
                 logger.info(f"Ответ ApiFrame: {response_content}")
+                
+                # Сохраняем task_id в базе данных для сопоставления с action_id
+                task_id = response_content.get('task_id')
+                if task_id:
+                    await db.update_action_with_task_id(request_id, task_id)
+                
                 return response_content
         except Exception as e:
             logger.error(f"Ошибка при запросе к ApiFrame: {e}")
             raise
-    
+
     async def imagine(self, prompt, request_id):
         data = {
             "prompt": prompt,
