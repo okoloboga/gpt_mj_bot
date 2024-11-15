@@ -781,7 +781,7 @@ async def gen_prompt(message: Message, state: FSMContext):
 
 # Хэндлер для работы с голосовыми сообщениями
 @dp.message_handler(content_types=['voice'])
-async def handle_voice(message: Message, state: FSMContext):
+async def handle_voice(message: Message, state: FSMContext, bot: Bot):
 
     file_info = await bot.get_file(message.voice.file_id)
     file_path = file_info.file_path
