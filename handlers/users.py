@@ -670,7 +670,6 @@ async def change_image(call: CallbackQuery):
 async def clear_content(call: CallbackQuery, state: FSMContext):
 
     user = await db.get_user(call.from_user.id)
-    await state.clear()
     await state.finish()  # Завершаем текущее состояние
     await call.message.answer("Диалог завершен", reply_markup=user_kb.get_menu(user["default_ai"]))  # Сообщение о завершении диалога
     try:
@@ -687,7 +686,6 @@ async def try_prompt(call: CallbackQuery, state: FSMContext):
     if "prompt" not in data:
         await call.message.answer("Попробуйте заново ввести запрос")
         return await call.answer()  # Закрываем callback уведомление
-        await state.clear()
         await state.finish()
     await call.answer()
 
