@@ -46,7 +46,8 @@ def get_clear_or_audio():
     
     clear_and_audio = InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("Завершить диалог", callback_data="clear_content"),
-        InlineKeyboardButton("Озвучить текст", callback_data=f"text_to_audio"))
+        #InlineKeyboardButton("Озвучить текст", callback_data=f"text_to_audio")
+        )
 
 
 # Клавиатура для настройки ChatGPT
