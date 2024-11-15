@@ -683,6 +683,9 @@ async def clear_content(call: CallbackQuery, state: FSMContext):
 async def try_prompt(call: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
+
+    logger.info(f'Data: {data}')
+
     if "prompt" not in data:
         await call.message.answer("Попробуйте заново ввести запрос")
         return await call.answer()  # Закрываем callback уведомление
