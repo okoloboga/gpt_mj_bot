@@ -41,8 +41,16 @@ async def start():
     )
 
     await conn.execute(
-        "CREATE TABLE IF NOT EXISTS usage(id SERIAL PRIMARY KEY, user_id BIGINT, ai_type VARCHAR(10), image_type VARCHAR(10),use_time INT,"
-        "get_response BOOLEAN DEFAULT FALSE, external_task_id VARCHAR(1024))")
+        "CREATE TABLE IF NOT EXISTS usage("
+        "id SERIAL PRIMARY KEY,"
+        "user_id BIGINT,"
+        "ai_type VARCHAR(10),"
+        "image_type VARCHAR(10),"
+        "use_time INT,"
+        "get_response BOOLEAN DEFAULT FALSE,"
+        "create_time TIMESTAMP DEFAULT NOW(),"
+        "external_task_id VARCHAR(1024))"
+    )
 
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS withdraws(id SERIAL PRIMARY KEY, user_id BIGINT, amount INT, withdraw_time INT)")
@@ -58,18 +66,18 @@ async def start():
     await conn.execute("CREATE TABLE IF NOT EXISTS user_promocode("
                        "promocode_id SMALLINT,"  # ID промокода
                        "user_id BIGINT)")  # ID пользователя, связанного с промокодом
-
-    await conn.execute(
-        "CREATE TABLE IF NOT EXISTS sub_orders("
-        "sub_order_id SERIAL,"  # Уникальный идентификатор подписки
-        "user_id BIGINT,"  # ID пользователя
-        "amount INTEGER,"  # Сумма подписки
-        "create_time TIMESTAMP DEFAULT NOW(),"  # Время создания подписки
-        "pay_time TIMESTAMP,"  # Время оплаты подписки
-        "sub_type VARCHAR(12),"  # Тип подписки
-        "days INTEGER,"  # Количество дней подписки
-        "with_discount BOOLEAN DEFAULT FALSE)"  # Наличие скидки
-    )
+    
+    # await conn.execute(
+    #     "CREATE TABLE IF NOT EXISTS sub_orders("
+    #     "sub_order_id SERIAL,"  # Уникальный идентификатор подписки
+    #     "user_id BIGINT,"  # ID пользователя
+    #     "amount INTEGER,"  # Сумма подписки
+    #     "create_time TIMESTAMP DEFAULT NOW(),"  # Время создания подписки
+    #     "pay_time TIMESTAMP,"  # Время оплаты подписки
+    #     "sub_type VARCHAR(12),"  # Тип подписки
+    #     "days INTEGER,"  # Количество дней подписки
+    #     "with_discount BOOLEAN DEFAULT FALSE)"  # Наличие скидки
+    # )
 
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS orders("

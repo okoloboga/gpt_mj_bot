@@ -129,7 +129,7 @@ def get_pay(user_id, stock=0):
 def get_pay_urls(urls, order_id, src='acc'):
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("Банковская карта", callback_data=f'open_url:{urls["tinkoff"]}'),
+        InlineKeyboardButton("Банковская карта", url=urls["tinkoff"]),
         InlineKeyboardButton("Криптовалюта", web_app=WebAppInfo(url=urls["freekassa"])),
         InlineKeyboardButton("Telegram Stars", callback_data=f"tg_stars:{order_id}"),
         InlineKeyboardButton("Другие способы", web_app=WebAppInfo(url=urls["freekassa"])),

@@ -687,6 +687,8 @@ async def try_prompt(call: CallbackQuery, state: FSMContext):
     if "prompt" not in data:
         await call.message.answer("Попробуйте заново ввести запрос")
         return await call.answer()  # Закрываем callback уведомление
+        await state.clear()
+        await state.finish()
     await call.answer()
 
     user = await db.get_user(call.from_user.id)

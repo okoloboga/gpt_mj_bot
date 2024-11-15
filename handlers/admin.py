@@ -55,20 +55,11 @@ async def switch_api_handler(message: Message):
 async def show_stats(message: Message):
     
     stats_data = await db.get_stat()  # Получаем общую статистику
-    sub_stats_data = await db.get_sub_stat()  # Статистика по подпискам
-    today_sub_stats_data = await db.get_today_sub_stat()  # Статистика по подпискам за сегодня
+    # sub_stats_data = await db.get_sub_stat()  # Статистика по подпискам
+    # today_sub_stats_data = await db.get_today_sub_stat()  # Статистика по подпискам за сегодня
     # Отправляем админу статистику о пользователях и их активности
-    await message.answer(f"""Количество пользователей: {stats_data['users_count']}
-За сегодня: {stats_data['today_users_count']}
 
-Запросов {stats_data['chatgpt_count'] + stats_data['image_count']}
-Текст - {stats_data['chatgpt_count']}
-Изображение - {stats_data['image_count']}
-
-За сегодня {stats_data['today_chatgpt_count'] + stats_data['today_image_count']}
-Текст - {stats_data['today_chatgpt_count']}
-Изображение - {stats_data['today_image_count']}
-
+    '''
 Подписки:
 Базовая: {sub_stats_data['base']}
 Стандарт: {sub_stats_data['standard']}
@@ -80,6 +71,18 @@ async def show_stats(message: Message):
 Премиум: {today_sub_stats_data['premium']}
 
 Всего подписок: {sub_stats_data['base'] + sub_stats_data['standard'] + sub_stats_data['premium']}
+'''
+
+    await message.answer(f"""Количество пользователей: {stats_data['users_count']}
+За сегодня: {stats_data['today_users_count']}
+
+Запросов {stats_data['chatgpt_count'] + stats_data['image_count']}
+Текст - {stats_data['chatgpt_count']}
+Изображение - {stats_data['image_count']}
+
+За сегодня {stats_data['today_chatgpt_count'] + stats_data['today_image_count']}
+Текст - {stats_data['today_chatgpt_count']}
+Изображение - {stats_data['today_image_count']}
 """, reply_markup=admin_kb.admin_menu)  # Кнопки для админа
 
 
