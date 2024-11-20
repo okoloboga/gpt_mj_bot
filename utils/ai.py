@@ -5,6 +5,7 @@ import aiohttp  # Для асинхронных HTTP-запросов
 import openai  # Работа с API OpenAI
 import requests  # Для синхронных HTTP-запросов
 from aiogram import Bot  # Для работы с ботом
+fron aiogram.types.input_file import InputFile
 from midjourney_api import TNL  # Импорт библиотеки для взаимодействия с MidJourney
 from googletranslatepy import Translator  # Библиотека для перевода текста
 from gtts import gTTS  # Библиотека для синтеза речи
