@@ -69,14 +69,14 @@ async def show_stats(message: Message):
 
     stats_24h = await db.get_orders_statistics(period="24h")
     stats_month = await db.get_orders_statistics(period="month")
-    stats_all = await db.get_orders_statistics(period="all")
+    # stats_all = await db.get_orders_statistics(period="all")
 
     response = "📊 Статистика покупок:\n\n"
 
-    response += "За последние 24 часа:\n"
+    response += "За последние 24 часа:\n\n"
     response += format_statistics(stats_24h) + "\n"
 
-    response += "За текущий месяц:\n"
+    response += "За текущий месяц:\n\n"
     response += format_statistics(stats_month) + "\n"
 
     # response += "За все время:\n"
