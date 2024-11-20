@@ -8,7 +8,6 @@ from aiogram import Bot  # Для работы с ботом
 from aiogram.types.input_file import InputFile
 from midjourney_api import TNL  # Импорт библиотеки для взаимодействия с MidJourney
 from googletranslatepy import Translator  # Библиотека для перевода текста
-from gtts import gTTS  # Библиотека для синтеза речи
 
 import speech_recognition as sr  # Библиотека для распознавания речи
 from pydub import AudioSegment  # Библиотека для работы с аудио
@@ -30,6 +29,7 @@ logging.basicConfig(
 
 # Устанавливаем API-ключ для OpenAI
 openai.api_key = OPENAPI_TOKEN
+client = openai.OpenAI(api_key=OPENAPI_TOKEN)
 openai.log = "error"  # Устанавливаем уровень логирования
 
 # Инициализация MidJourneyAPI
@@ -170,6 +170,24 @@ def text_to_speech(text):
     audio_file = InputFile(temp_audio_path)
 
     os.remove(temp_audio_path)  # Удаляем временный файл после использования
+    return audio_file
+
+def text_to_speech_openai(text, model="tts-1", voice="alloy"):
+    # Создаем временный файл для аудио
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
+        temp_audio_path = temp_audio_file.name
+
+    # Запрос к OpenAI для создания аудио
+    response = client.audio.speech.create(
+        model=model,
+        voice=voice,
+        input=text
+    )
+
+    # Сохраняем результат в файл
+    response.stream_to_file(temp_audio_path)
+    audio_file = InputFile(temp_audio_path)
+
     return audio_file
 
 
