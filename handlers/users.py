@@ -11,12 +11,12 @@ from aiogram.dispatcher import FSMContext
 import tempfile
 import os
 import config
-from utils import db, ai, more_api, pay, voice_to_text, text_to_speech  # Импорт утилит для взаимодействия с БД и внешними API
+from utils import db, ai, more_api, pay # Импорт утилит для взаимодействия с БД и внешними API
 from states import user as states  # Состояния FSM для пользователя
 import keyboards.user as user_kb  # Клавиатуры для взаимодействия с пользователями
 from config import bot_url, TOKEN, NOTIFY_URL, bug_id, PHOTO_PATH, MJ_PHOTO_BASE_URL
 from create_bot import dp  # Диспетчер из create_bot.py
-from utils.ai import mj_api # text_to_speech, voice_to_text
+from utils.ai import mj_api, text_to_speech, voice_to_text
 
 
 logger = logging.getLogger(__name__)
