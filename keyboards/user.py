@@ -44,7 +44,7 @@ lang_text = {"en": "ENG", "ru": "RUS"}
 # Кнопка для завершения текущего диалога (например, с ChatGPT) и перевода текста в аудио
 def get_clear_or_audio():    
     
-    clear_and_audio = InlineKeyboardMarkup(row_width=1).add(
+    return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("Завершить диалог", callback_data="clear_content"),
         InlineKeyboardButton("Озвучить текст", callback_data=f"text_to_audio")
         )
