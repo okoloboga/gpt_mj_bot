@@ -781,11 +781,11 @@ async def gen_prompt(message: Message, state: FSMContext):
 
 # Хэндлер для работы с голосовыми сообщениями
 @dp.message_handler(content_types=['voice'])
-async def handle_voice(message: Message, state: FSMContext, bot: Bot):
+async def handle_voice(message: Message, state: FSMContext):
 
-    file_info = await bot.get_file(message.voice.file_id)
+    file_info = await message.bot.get_file(message.voice.file_id)
     file_path = file_info.file_path
-    file = await bot.download_file(file_path)
+    file = await message.bot.download_file(file_path)
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as temp_ogg_file:
         temp_ogg_file.write(file.getbuffer())

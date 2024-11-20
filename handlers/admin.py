@@ -55,14 +55,23 @@ async def switch_api_handler(message: Message):
 async def show_stats(message: Message):
     
     stats_data = await db.get_stat()  # Получаем общую статистику
-    orders_data = await db.get_orders_statistics()  # Получаем статистику по заказам
+    orders_data = await db.get_orders_statistics()  # Получаем статистику по заказа
 
+    # Формируем текст для отображения статистики
     response = "📊 Статистика покупок:\n\n"
+
     for order_type, details in orders_data.items():
-        response += f"Покупки {order_type.capitalize()}:\n"
+        response += f"Покупки для {order_type.capitalize()}:\n"
+        total_count = 0
+        total_amount = 0
+
         for quantity, data in details.items():
-            response += f"- {quantity} запросов: {data['count']} заказов, сумма: {data['total_amount']} руб.\n"
-        response += "\n"
+            total_count += data['count']
+            total_amount += data['total_amount']
+            response += f"- {quantity} запросов: {data['count']} заказов, на сумму {data['total_amount']} руб.\n"
+
+        response += f"Итого заказов: {total_count}, на общую сумму: {total_amount} руб.\n\n"
+
 
     await message.answer(f"""Количество пользователей: {stats_data['users_count']}
 За сегодня: {stats_data['today_users_count']}
