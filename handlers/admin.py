@@ -34,7 +34,7 @@ def format_statistics(stats):
         
         result += f"Покупки для {order_type.capitalize()}:\n"
         for quantity, data in details.items():
-            result += f"- {quantity} {unit}: {data['count']} заказов, на сумму {data['total_amount']} р.\n"
+            result += f"- {quantity} {unit}: {data['count']}, на сумму {data['total_amount']} р.\n"
         result += "\n"
     return result
 
