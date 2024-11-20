@@ -25,6 +25,17 @@ logging.basicConfig(
            '[%(asctime)s] - %(name)s - %(message)s')
 
 
+# Фильтрация данных из статистики
+def format_statistics(stats):
+    result = ""
+    for order_type, details in stats.items():
+        result += f"Покупки для {order_type.capitalize()}:\n"
+        for quantity, data in details.items():
+            result += f"- {quantity} запросов: {data['count']} заказов, на сумму {data['total_amount']} руб.\n"
+        result += "\n"
+    return result
+
+
 # Хендлер для переключения основного API
 @dp.message_handler(lambda message: message.from_user.id in ADMINS,
                     text=["#switch_to_goapi", "#switch_to_apiframe"]
@@ -55,23 +66,21 @@ async def switch_api_handler(message: Message):
 async def show_stats(message: Message):
     
     stats_data = await db.get_stat()  # Получаем общую статистику
-    orders_data = await db.get_orders_statistics()  # Получаем статистику по заказа
 
-    # Формируем текст для отображения статистики
+    stats_24h = await get_orders_statistics(period="24h")
+    stats_month = await get_orders_statistics(period="month")
+    stats_all = await get_orders_statistics(period="all")
+
     response = "📊 Статистика покупок:\n\n"
 
-    for order_type, details in orders_data.items():
-        response += f"Покупки для {order_type.capitalize()}:\n"
-        total_count = 0
-        total_amount = 0
+    response += "За последние 24 часа:\n"
+    response += format_statistics(stats_24h) + "\n"
 
-        for quantity, data in details.items():
-            total_count += data['count']
-            total_amount += data['total_amount']
-            response += f"- {quantity} запросов: {data['count']} заказов, на сумму {data['total_amount']} руб.\n"
+    response += "За текущий месяц:\n"
+    response += format_statistics(stats_month) + "\n"
 
-        response += f"Итого заказов: {total_count}, на общую сумму: {total_amount} руб.\n\n"
-
+    # response += "За все время:\n"
+    # response += format_statistics(stats_all) + "\n"
 
     await message.answer(f"""Количество пользователей: {stats_data['users_count']}
 За сегодня: {stats_data['today_users_count']}

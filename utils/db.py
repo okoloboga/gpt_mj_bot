@@ -628,9 +628,25 @@ async def update_used_discount_mj(user_id):
     await conn.close()
 
 
-async def get_orders_statistics():
+async def get_orders_statistics(period: str = "all"):
+    """
+    Получает статистику заказов за указанный период.
+    
+    :param period: Период статистики: '24h', 'month', или 'all'.
+    :return: Словарь с данными статистики.
+    """
     conn: Connection = await get_conn()
 
+    # Определяем временной фильтр на основе периода
+    now = datetime.now()
+    if period == "24h":
+        start_time = now - timedelta(hours=24)
+    elif period == "month":
+        start_time = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    else:
+        start_time = None  # Для 'all' нет ограничения по времени
+
+    # Основной SQL-запрос с условием времени
     query = """
     SELECT 
         order_type,
@@ -639,11 +655,20 @@ async def get_orders_statistics():
         SUM(amount) AS total_amount
     FROM orders
     WHERE pay_time IS NOT NULL
-    GROUP BY order_type, quantity
-    ORDER BY order_type, quantity;
     """
+    
+    # Добавляем фильтрацию по времени, если указано
+    if start_time:
+        query += " AND pay_time >= $1"
 
-    rows = await conn.fetch(query)
+    query += " GROUP BY order_type, quantity ORDER BY order_type, quantity;"
+
+    # Выполняем запрос
+    if start_time:
+        rows = await conn.fetch(query, start_time)
+    else:
+        rows = await conn.fetch(query)
+
     await conn.close()
     
     # Организуем данные в удобный для обработки формат
