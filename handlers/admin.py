@@ -58,7 +58,7 @@ async def show_stats(message: Message):
     orders_data = await db.get_orders_statistics()  # Получаем статистику по заказам
 
     response = "📊 Статистика покупок:\n\n"
-    for order_type, details in stats.items():
+    for order_type, details in orders_data.items():
         response += f"Покупки {order_type.capitalize()}:\n"
         for quantity, data in details.items():
             response += f"- {quantity} запросов: {data['count']} заказов, сумма: {data['total_amount']} руб.\n"
