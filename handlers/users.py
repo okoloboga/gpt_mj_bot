@@ -821,18 +821,13 @@ async def handle_voice(message: Message, state: FSMContext):
 @dp.callback_query_handler(text="text_to_audio")
 async def return_voice(call: CallbackQuery, state: FSMContext):
 
-    logger.info(f'Call: {call}')
-
     # Получаем данные из состояния
     content_raw = await state.get_data()
-    logger.info(f'Voice content raw: {content_raw}')
 
     content = content_raw.get("content")
     if not content:
         await call.message.answer("Нет текста для озвучивания.")
         return
-
-    logger.info(f'Voice content: {content}')
 
     # Генерация аудио из текста
     audio_response = text_to_speech(content)

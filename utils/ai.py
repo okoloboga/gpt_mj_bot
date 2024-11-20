@@ -167,10 +167,7 @@ def text_to_speech(text):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
         temp_audio_path = temp_audio_file.name
         tts.save(temp_audio_path)
-        
     audio_file = InputFile(temp_audio_path)
-
-    logger.info(f"Text: {text}, temp_audio_path: {temp_audio_path}")
 
     os.remove(temp_audio_path)  # Удаляем временный файл после использования
     return audio_file
