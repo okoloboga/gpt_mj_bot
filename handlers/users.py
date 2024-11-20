@@ -817,21 +817,35 @@ async def handle_voice(message: Message, state: FSMContext):
 
 
 # Перевод текста в Аудио
-@dp.message_handler(text="text_to_audio")
+# Перевод текста в Аудио
+@dp.callback_query_handler(text="text_to_audio")
 async def return_voice(call: CallbackQuery, state: FSMContext):
 
     logger.info(f'Call: {call}')
 
+    # Получаем данные из состояния
     content_raw = await state.get_data()
-
     logger.info(f'Voice content raw: {content_raw}')
 
     content = content_raw.get("content")
+    if not content:
+        await call.message.answer("Нет текста для озвучивания.")
+        return
 
     logger.info(f'Voice content: {content}')
 
+    # Генерация аудио из текста
     audio_response = text_to_speech(content)
-    await call.reply_voice(voice=audio_response)
+
+    # Отправляем голосовое сообщение
+    await call.message.answer_voice(voice=audio_response)
+
+    # Закрываем callback уведомление
+    try:
+        await call.answer()
+    except Exception as e:
+        logger.error(f"Ошибка при закрытии callback уведомления: {e}")
+
 
 # Хендлер для обработки фотографий
 @dp.message_handler(is_media_group=False, content_types="photo")
