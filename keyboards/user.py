@@ -46,7 +46,7 @@ def get_clear_or_audio():
     
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("Завершить диалог", callback_data="clear_content"),
-        InlineKeyboardButton("Озвучить текст", callback_data="text_to_audio")
+        # InlineKeyboardButton("Озвучить текст", callback_data="text_to_audio")
         )
 
 
