@@ -168,6 +168,9 @@ def text_to_speech(text):
         tts.save(temp_audio_path)
         
     audio_file = InputFile(temp_audio_path)
+
+    logger.info(f"Text: {text}, temp_audio_path: {temp_audio_path}")
+
     os.remove(temp_audio_path)  # Удаляем временный файл после использования
     return audio_file
 

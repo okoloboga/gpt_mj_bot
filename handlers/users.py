@@ -821,7 +821,13 @@ async def handle_voice(message: Message, state: FSMContext):
 async def return_voice(call: CallbackQuery, state: FSMContext):
 
     content_raw = await state.get_data()
+
+    logger.info(f'Voice content raw: {content_raw}')
+
     content = content_raw.get("content")
+
+    logger.info(f'Voice content: {content}')
+
     audio_response = text_to_speech(content)
     await call.reply_voice(voice=audio_response)
 
