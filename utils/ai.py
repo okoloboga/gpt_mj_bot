@@ -160,7 +160,7 @@ def voice_to_text(file_path):
     except sr.RequestError:
         return "Ошибка запроса к сервису распознавания"
 
-    
+'''
 # Функция для преобразования текста в аудио
 def text_to_speech(text):
     tts = gTTS(text=text, lang='ru')
@@ -173,9 +173,10 @@ def text_to_speech(text):
 
     os.remove(temp_audio_path)  # Удаляем временный файл после использования
     return audio_file
+'''
 
 
-def text_to_speech_openai(text, model="tts-1", voice="alloy"):
+def text_to_speech(text, model="tts-1", voice="alloy"):
 
     # Создаем временный файл для аудио
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
