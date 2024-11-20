@@ -4,6 +4,8 @@ import logging
 import aiohttp  # Для асинхронных HTTP-запросов
 import openai  # Работа с API OpenAI
 import requests  # Для синхронных HTTP-запросов
+from pathlib import Path
+from openai import OpenAI
 from aiogram import Bot  # Для работы с ботом
 from aiogram.types.input_file import InputFile
 from midjourney_api import TNL  # Импорт библиотеки для взаимодействия с MidJourney
@@ -29,7 +31,7 @@ logging.basicConfig(
 
 # Устанавливаем API-ключ для OpenAI
 openai.api_key = OPENAPI_TOKEN
-client = openai.OpenAI(api_key=OPENAPI_TOKEN)
+client = OpenAI(api_key=OPENAPI_TOKEN)
 openai.log = "error"  # Устанавливаем уровень логирования
 
 # Инициализация MidJourneyAPI
@@ -172,7 +174,9 @@ def text_to_speech(text):
     os.remove(temp_audio_path)  # Удаляем временный файл после использования
     return audio_file
 
+
 def text_to_speech_openai(text, model="tts-1", voice="alloy"):
+
     # Создаем временный файл для аудио
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
         temp_audio_path = temp_audio_file.name
