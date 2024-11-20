@@ -182,7 +182,7 @@ def text_to_speech_openai(text, model="tts-1", voice="alloy"):
         temp_audio_path = temp_audio_file.name
 
     # Запрос к OpenAI для создания аудио
-    response = client.audio.speech.create(
+    response = openai.Audio.create(
         model=model,
         voice=voice,
         input=text
