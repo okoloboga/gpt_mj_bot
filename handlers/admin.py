@@ -29,11 +29,15 @@ logging.basicConfig(
 def format_statistics(stats):
     result = ""
     for order_type, details in stats.items():
+        # Определяем единицу измерения в зависимости от типа заказа
+        unit = "запросов" if order_type == "midjourney" else "токенов"
+        
         result += f"Покупки для {order_type.capitalize()}:\n"
         for quantity, data in details.items():
-            result += f"- {quantity} запросов: {data['count']} заказов, на сумму {data['total_amount']} руб.\n"
+            result += f"- {quantity} {unit}: {data['count']} заказов, на сумму {data['total_amount']} р.\n"
         result += "\n"
     return result
+
 
 
 # Хендлер для переключения основного API
