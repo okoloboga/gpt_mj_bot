@@ -820,6 +820,8 @@ async def handle_voice(message: Message, state: FSMContext):
 @dp.message_handler(text="text_to_audio")
 async def return_voice(call: CallbackQuery, state: FSMContext):
 
+    logger.info(f'Call: {call}')
+
     content_raw = await state.get_data()
 
     logger.info(f'Voice content raw: {content_raw}')
