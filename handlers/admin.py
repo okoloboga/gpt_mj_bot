@@ -8,7 +8,7 @@ from aiogram.dispatcher import FSMContext
 
 import config
 import keyboards.admin as admin_kb  # Клавиатуры для админских команд
-from config import bot_url
+from config import bot_url, ADMINS
 from utils.ai import mj_api
 from create_bot import dp  # Диспетчер для регистрации хендлеров
 from tabulate import tabulate  # Модуль для форматирования данных в таблицы
@@ -26,12 +26,10 @@ logging.basicConfig(
 
 
 # Хендлер для переключения основного API
-@dp.message_handler(text=["#switch_to_goapi", "#switch_to_apiframe"])
+@dp.message_handler(lambda message: message.from_user.id in ADMINS,
+                    text=["#switch_to_goapi", "#switch_to_apiframe"]
+                    )
 async def switch_api_handler(message: Message):
-    user_id = message.from_user.id
-    if user_id not in config.ADMINS:
-        await message.reply("Неизвестная команда.")
-        return
 
     if message.text == "#switch_to_goapi":
         try:
@@ -51,27 +49,20 @@ async def switch_api_handler(message: Message):
             logging.error(f"Ошибка при переключении на ApiFrame: {e}")
 
 # Хендлер для отображения статистики по пользователям и запросам
-@dp.message_handler(is_admin=True, commands="stats")
+@dp.message_handler(lambda message: message.from_user.id in ADMINS,
+                    commands="stats"
+                    )
 async def show_stats(message: Message):
     
     stats_data = await db.get_stat()  # Получаем общую статистику
-    # sub_stats_data = await db.get_sub_stat()  # Статистика по подпискам
-    # today_sub_stats_data = await db.get_today_sub_stat()  # Статистика по подпискам за сегодня
-    # Отправляем админу статистику о пользователях и их активности
+    orders_data = await db.get_orders_statistics()  # Получаем статистику по заказам
 
-    '''
-Подписки:
-Базовая: {sub_stats_data['base']}
-Стандарт: {sub_stats_data['standard']}
-Премиум: {sub_stats_data['premium']}
-
-Оформлено сегодня:
-Базовая: {today_sub_stats_data['base']}
-Стандарт: {today_sub_stats_data['standard']}
-Премиум: {today_sub_stats_data['premium']}
-
-Всего подписок: {sub_stats_data['base'] + sub_stats_data['standard'] + sub_stats_data['premium']}
-'''
+    response = "📊 Статистика покупок:\n\n"
+    for order_type, details in stats.items():
+        response += f"Покупки {order_type.capitalize()}:\n"
+        for quantity, data in details.items():
+            response += f"- {quantity} запросов: {data['count']} заказов, сумма: {data['total_amount']} руб.\n"
+        response += "\n"
 
     await message.answer(f"""Количество пользователей: {stats_data['users_count']}
 За сегодня: {stats_data['today_users_count']}
@@ -83,6 +74,8 @@ async def show_stats(message: Message):
 За сегодня {stats_data['today_chatgpt_count'] + stats_data['today_image_count']}
 Текст - {stats_data['today_chatgpt_count']}
 Изображение - {stats_data['today_image_count']}
+
+{response}
 """, reply_markup=admin_kb.admin_menu)  # Кнопки для админа
 
 

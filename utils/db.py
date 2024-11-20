@@ -627,3 +627,34 @@ async def update_used_discount_mj(user_id):
         user_id)
     await conn.close()
 
+
+async def get_orders_statistics():
+    conn: Connection = await get_conn()
+
+    query = """
+    SELECT 
+        order_type,
+        quantity,
+        COUNT(*) AS count,
+        SUM(amount) AS total_amount
+    FROM orders
+    WHERE pay_time IS NOT NULL
+    GROUP BY order_type, quantity
+    ORDER BY order_type, quantity;
+    """
+
+    rows = await conn.fetch(query)
+    await conn.close()
+    
+    # Организуем данные в удобный для обработки формат
+    stats = {}
+    for row in rows:
+        order_type = row['order_type']
+        if order_type not in stats:
+            stats[order_type] = {}
+        stats[order_type][row['quantity']] = {
+            'count': row['count'],
+            'total_amount': row['total_amount']
+        }
+    
+    return stats
