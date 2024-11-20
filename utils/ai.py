@@ -31,7 +31,7 @@ logging.basicConfig(
 
 # Устанавливаем API-ключ для OpenAI
 openai.api_key = OPENAPI_TOKEN
-client = OpenAI(api_key=OPENAPI_TOKEN)
+#client = OpenAI(api_key=OPENAPI_TOKEN)
 openai.log = "error"  # Устанавливаем уровень логирования
 
 # Инициализация MidJourneyAPI
