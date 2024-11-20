@@ -795,6 +795,8 @@ async def handle_voice(message: Message, state: FSMContext):
     os.remove(temp_ogg_path)
     await state.update_data(prompt=text)  # Сохраняем запрос пользователя
 
+    user = await db.get_user(message.from_user.id)
+
     if user is None:
         await message.answer("Введите команду /start для перезагрузки бота")
         return await message.bot.send_message(796644977, message.from_user.id)
