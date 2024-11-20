@@ -67,9 +67,9 @@ async def show_stats(message: Message):
     
     stats_data = await db.get_stat()  # Получаем общую статистику
 
-    stats_24h = await get_orders_statistics(period="24h")
-    stats_month = await get_orders_statistics(period="month")
-    stats_all = await get_orders_statistics(period="all")
+    stats_24h = await db.get_orders_statistics(period="24h")
+    stats_month = await db.get_orders_statistics(period="month")
+    stats_all = await db.get_orders_statistics(period="all")
 
     response = "📊 Статистика покупок:\n\n"
 
