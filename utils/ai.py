@@ -3,8 +3,9 @@ import logging
 
 import aiohttp  # Для асинхронных HTTP-запросов
 import requests  # Для синхронных HTTP-запросов
-from pathlib import Path
+import openai
 from openai import OpenAI
+from pathlib import Path
 from aiogram import Bot  # Для работы с ботом
 from aiogram.types.input_file import InputFile
 from midjourney_api import TNL  # Импорт библиотеки для взаимодействия с MidJourney
