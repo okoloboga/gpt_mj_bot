@@ -82,7 +82,7 @@ async def get_gpt(messages):
         )
         logger.info(f'ChatGPT Response: {response}')
         # Используем атрибуты объекта вместо индексации
-        content = response.choices[0].message["content"]  # Получаем ответ
+        content = response.choices[0].message.content  # Получаем ответ
         tokens = response.usage.total_tokens  # Получаем количество использованных токенов
     except openai.OpenAIError as e:
         status = False
