@@ -30,9 +30,7 @@ logging.basicConfig(
 
 
 # Устанавливаем API-ключ для OpenAI
-openai.api_key = OPENAPI_TOKEN
 client = OpenAI(api_key=OPENAPI_TOKEN)
-openai.log = "error"  # Устанавливаем уровень логирования
 
 # Инициализация MidJourneyAPI
 mj_api = MidJourneyAPI(primary_api="goapi")  # Начнем с GoAPI
@@ -78,7 +76,7 @@ async def get_gpt(messages):
     tokens = 0
     content = ""
     try:
-        response = await client.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4",  # Проверь корректность модели
             messages=messages[-10:]  # Последние 10 сообщений
         )
