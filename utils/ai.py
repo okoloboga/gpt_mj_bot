@@ -84,7 +84,7 @@ async def get_gpt(messages):
         )
         content = response["choices"][0]["message"]["content"]  # Получаем ответ
         tokens = response["usage"]["total_tokens"]  # Получаем количество использованных токенов
-    except openai.error.OpenAIError as e:
+    except openai.OpenAIError as e:
         status = False
         content = "Генерация текста временно недоступна, повторите запрос позднее"  # Сообщение об ошибке
     return {"status": status, "content": content, "tokens": tokens}  # Возвращаем результат
