@@ -80,7 +80,6 @@ async def get_gpt(messages):
             model="gpt-4",  # Убедись, что модель корректна
             messages=messages[-10:]  # Последние 10 сообщений
         )
-        logger.info(f'ChatGPT Response: {response}')
         # Используем атрибуты объекта вместо индексации
         content = response.choices[0].message.content  # Получаем ответ
         tokens = response.usage.total_tokens  # Получаем количество использованных токенов
