@@ -77,7 +77,7 @@ async def get_gpt(messages):
     content = ""
     try:
         response = client.chat.completions.create(
-            model="gpt-4",  # Убедись, что модель корректна
+            model="gpt-4o-mini",  # Убедись, что модель корректна
             messages=messages[-10:]  # Последние 10 сообщений
         )
         # Используем атрибуты объекта вместо индексации
@@ -178,7 +178,7 @@ def text_to_speech(text):
 '''
 
 
-def text_to_speech(text, model="tts-1", voice="alloy"):
+def text_to_speech(text, model="tts-1", voice="onyx"):
 
     # Создаем временный файл для аудио
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
