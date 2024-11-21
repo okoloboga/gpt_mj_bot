@@ -5,7 +5,7 @@ import aiohttp  # Для асинхронных HTTP-запросов
 import openai  # Работа с API OpenAI
 import requests  # Для синхронных HTTP-запросов
 from pathlib import Path
-# from openai import OpenAI
+from openai import OpenAI
 from aiogram import Bot  # Для работы с ботом
 from aiogram.types.input_file import InputFile
 from midjourney_api import TNL  # Импорт библиотеки для взаимодействия с MidJourney
@@ -31,7 +31,7 @@ logging.basicConfig(
 
 # Устанавливаем API-ключ для OpenAI
 openai.api_key = OPENAPI_TOKEN
-#client = OpenAI(api_key=OPENAPI_TOKEN)
+client = OpenAI(api_key=OPENAPI_TOKEN)
 openai.log = "error"  # Устанавливаем уровень логирования
 
 # Инициализация MidJourneyAPI
@@ -74,18 +74,19 @@ async def get_translate(text):
 
 # Функция для отправки запроса в ChatGPT
 async def get_gpt(messages):
-
     status = True
     tokens = 0
+    content = ""
     try:
-        response = await openai.ChatCompletion.acreate(model="gpt-4o-mini",  # Модель GPT-4
-                                                       messages=messages[-10:])  # Последние 10 сообщений
-    except (openai.error.ServiceUnavailableError, openai.error.APIError):
-        status = False
-        content = "Генерация текста временно недоступна, повторите запрос позднее"  # Сообщение об ошибке
-    if status:
+        response = await openai.ChatCompletion.acreate(
+            model="gpt-4",  # Проверь корректность модели
+            messages=messages[-10:]  # Последние 10 сообщений
+        )
         content = response["choices"][0]["message"]["content"]  # Получаем ответ
         tokens = response["usage"]["total_tokens"]  # Получаем количество использованных токенов
+    except (ServiceUnavailableError, APIError):
+        status = False
+        content = "Генерация текста временно недоступна, повторите запрос позднее"  # Сообщение об ошибке
     return {"status": status, "content": content, "tokens": tokens}  # Возвращаем результат
 
 
@@ -183,7 +184,7 @@ def text_to_speech(text, model="tts-1", voice="alloy"):
         temp_audio_path = temp_audio_file.name
 
     # Запрос к OpenAI для создания аудио
-    response = openai.Audio.create(
+    response = client.audio.speech.create(
         model=model,
         voice=voice,
         input=text
