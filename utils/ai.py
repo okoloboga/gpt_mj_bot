@@ -78,7 +78,7 @@ async def get_gpt(messages):
     tokens = 0
     content = ""
     try:
-        response = await openai.ChatCompletion.acreate(
+        response = await client.chat.completions.create(
             model="gpt-4",  # Проверь корректность модели
             messages=messages[-10:]  # Последние 10 сообщений
         )
