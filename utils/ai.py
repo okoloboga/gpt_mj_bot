@@ -87,6 +87,7 @@ async def get_gpt(messages):
     except openai.OpenAIError as e:
         status = False
         content = "Генерация текста временно недоступна, повторите запрос позднее"  # Сообщение об ошибке
+        logger.info(f'ChatGPT Error {e}')
     return {"status": status, "content": content, "tokens": tokens}  # Возвращаем результат
 
 
