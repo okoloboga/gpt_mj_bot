@@ -77,16 +77,18 @@ async def get_gpt(messages):
     content = ""
     try:
         response = client.chat.completions.create(
-            model="gpt-4",  # Проверь корректность модели
+            model="gpt-4",  # Убедись, что модель корректна
             messages=messages[-10:]  # Последние 10 сообщений
         )
-        content = response["choices"][0]["message"]["content"]  # Получаем ответ
-        tokens = response["usage"]["total_tokens"]  # Получаем количество использованных токенов
+        # Используем атрибуты объекта вместо индексации
+        content = response.choices[0].message["content"]  # Получаем ответ
+        tokens = response.usage.total_tokens  # Получаем количество использованных токенов
     except openai.OpenAIError as e:
         status = False
         content = "Генерация текста временно недоступна, повторите запрос позднее"  # Сообщение об ошибке
         logger.info(f'ChatGPT Error {e}')
     return {"status": status, "content": content, "tokens": tokens}  # Возвращаем результат
+
 
 
 # Функция для отправки запроса в MidJourney
