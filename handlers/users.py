@@ -898,7 +898,7 @@ async def handle_albums(message: Message, album: List[Message], state: FSMContex
 @dp.callback_query_handler(text="voice_menu")
 async def voice_menu(call: CallbackQuery):
     user_id = call.from_user.id
-    
+
     # Пытаемся получить текущий голос пользователя
     try:
         user_voice = await db.get_voice(user_id)
@@ -908,7 +908,7 @@ async def voice_menu(call: CallbackQuery):
         user_voice = await db.create_voice(user_id)  # Создаем запись
     
     # Динамическое создание клавиатуры с выбранным голосом
-    keyboard = voice_keyboard(selected_voice=user_voice)
+    keyboard = user_kb.voice_keyboard(selected_voice=user_voice)
     
     await call.message.answer("🔊 Выбрать голос\nChatGPT:", reply_markup=keyboard)
 
