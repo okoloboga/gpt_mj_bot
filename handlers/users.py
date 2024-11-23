@@ -5,6 +5,7 @@ from typing import List
 import requests
 from aiogram import Bot
 from aiogram.types import Message, CallbackQuery, ChatActions, ContentType
+from aiogram.types.input_file import InputFile
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 
@@ -821,6 +822,16 @@ async def handle_voice(message: Message, state: FSMContext):
 @dp.callback_query_handler(text="text_to_audio")
 async def return_voice(call: CallbackQuery, state: FSMContext):
 
+    user_id = call.from_user.id
+
+    # Пытаемся получить текущий голос пользователя
+    try:
+        user_voice = await db.get_voice(user_id)
+        if not user_voice:  # Если результат пустой
+            raise ValueError("User voice not found")
+    except (ValueError, Exception):  # Если строки нет или другая ошибка
+        user_voice = await db.create_voice(user_id)  # Создаем запись
+
     # Получаем данные из состояния
     content_raw = await state.get_data()
 
@@ -830,7 +841,7 @@ async def return_voice(call: CallbackQuery, state: FSMContext):
         return
 
     # Генерация аудио из текста
-    audio_response = text_to_speech(content)
+    audio_response = text_to_speech(content, voice=user_voice)
 
     # Отправляем голосовое сообщение
     await call.message.answer_voice(voice=audio_response)
@@ -882,5 +893,60 @@ async def handle_albums(message: Message, album: List[Message], state: FSMContex
     await state.update_data(prompt=prompt)
     await get_mj(prompt, message.from_user.id, message.bot)  # Генерация изображения через MidJourney
 
+
+# Вход в меню выбора голоса
+@dp.callback_query_handler(text="voice_menu")
+async def voice_menu(call: CallbackQuery):
+    user_id = call.from_user.id
+    
+    # Пытаемся получить текущий голос пользователя
+    try:
+        user_voice = await db.get_voice(user_id)
+        if not user_voice:  # Если результат пустой
+            raise ValueError("User voice not found")
+    except (ValueError, Exception):  # Если строки нет или другая ошибка
+        user_voice = await db.create_voice(user_id)  # Создаем запись
+    
+    # Динамическое создание клавиатуры с выбранным голосом
+    keyboard = voice_keyboard(selected_voice=user_voice)
+    
+    await call.message.answer("🔊 Выбрать голос\nChatGPT:", reply_markup=keyboard)
+
+
+# Выбор голоса
+@dp.callback_query_handler(text_contains="select_voice")
+async def select_voice(call: CallbackQuery):
+
+    selected_voice = call.data.split(":")[1]  # Извлечение выбранного голоса из данных
+    await db.set_voice(call.from_user.id, selected_voice)  # Запись выбранного голоса в базу данных
+    await call.message.answer(f"Выбран голос: {selected_voice}")
+
+
+# Хэндлер для отправки всех голосов
+@dp.callback_query_handler(text="check_voice")
+async def check_voice(call: CallbackQuery):
+    # Путь к папке с файлами
+    voices_path = "voices"
+    
+    # Проверяем, что папка существует
+    if not os.path.exists(voices_path):
+        await call.message.answer("⚠️ Папка с голосами не найдена.")
+        return
+    
+    # Получаем список файлов .mp3
+    voice_files = [f for f in os.listdir(voices_path) if f.endswith(".mp3")]
+    
+    # Если файлов нет, отправляем сообщение
+    if not voice_files:
+        await call.message.answer("⚠️ В папке 'voices' нет доступных файлов.")
+        return
+    
+    # Отправляем файлы по очереди
+    for voice_file in voice_files:
+        file_path = os.path.join(voices_path, voice_file)
+        audio = InputFile(file_path)
+        await call.message.answer_audio(audio, caption=f"🎵 {voice_file}")
+    
+    await call.answer()
 
 

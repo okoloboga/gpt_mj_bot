@@ -46,7 +46,7 @@ def get_clear_or_audio():
     
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("Завершить диалог", callback_data="clear_content"),
-        InlineKeyboardButton("Озвучить текст", callback_data="text_to_audio")
+        InlineKeyboardButton("📢 Озвучить текст", callback_data="text_to_audio")
         )
 
 
@@ -65,9 +65,27 @@ def get_account(lang, from_msg):
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("💰Выбрать тариф", callback_data="buy_sub"),
         InlineKeyboardButton(f"Ответы ChatGPT: {lang_text[lang]}", callback_data=f"change_lang:{lang}:{from_msg}"),
+        InlineKeyboardButton("📢Выбрать голос ChatGPT", callback_data="voice_menu"),
         InlineKeyboardButton("Сбросить настройки ChatGPT", callback_data="reset_chatgpt_settings"),
         InlineKeyboardButton("Инструкция для Midjourney", url="https://telegra.ph/Kak-polzovatsya-MidJourney-podrobnaya-instrukciya-10-16")
     )
+
+# Выбор голоса для ChatGPT
+def voice_keyboard(selected_voice: str):
+    voices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+    buttons = [
+        InlineKeyboardButton(
+            f"{voice}✅" if voice == selected_voice else voice, 
+            callback_data=f"select_voice:{voice}"
+        )
+        for voice in voices
+    ]
+    
+    return InlineKeyboardMarkup(row_width=2).add(*buttons).add(
+        InlineKeyboardButton("📢Прослушать голоса", callback_data="check_voice"),
+        InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
+    )
+
 
 
 # Кнопка для вариации запроса (например, в MidJourney)

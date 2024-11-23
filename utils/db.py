@@ -41,6 +41,12 @@ async def start():
     )
 
     await conn.execute(
+        "CREATE TABLE IF NOT EXISTS voice("
+        "user_id BIGINT PRIMARY KEY,"
+        "voice VARCHAR(64) DEFAULT 'onyx')"
+    )
+
+    await conn.execute(
         "CREATE TABLE IF NOT EXISTS usage("
         "id SERIAL PRIMARY KEY,"
         "user_id BIGINT,"
@@ -130,6 +136,31 @@ async def get_user(user_id):
     await conn.close()
     return row
 
+
+# Получение информации о выранном голосе
+async def get_voice(user_id):
+
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT voice FROM voice WHERE user_id = $1", user_id)
+    await conn.close()
+    return row
+
+# Записываем выбранный голос в базу данных
+async def set_voice(user_id, voice):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE voice SET voice = $2 WHERE user_id = $1", user_id, voice)
+    await conn.close()
+
+# Записываем нового пользователя с голосами в базу данных
+async def create_voice(user_id, voice='onyx'):
+
+    conn: Connection = await get_conn()
+    await conn.execute(
+        "INSERT INTO voice(user_id, voice) VALUES ($1, $2)", 
+        user_id, voice)
+    await conn.close()
+    return "onyx"
 
 # Функция для добавления нового пользователя
 async def add_user(user_id, username, first_name, inviter_id):
