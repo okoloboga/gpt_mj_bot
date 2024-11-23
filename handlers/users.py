@@ -4,7 +4,7 @@ from typing import List
 
 import requests
 from aiogram import Bot
-from aiogram.types import Message, CallbackQuery, ChatActions, ContentType
+from aiogram.types import Message, CallbackQuery, ChatActions, ContentType, MediaGroup
 from aiogram.types.input_file import InputFile
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
@@ -818,7 +818,6 @@ async def handle_voice(message: Message, state: FSMContext):
 
 
 # Перевод текста в Аудио
-# Перевод текста в Аудио
 @dp.callback_query_handler(text="text_to_audio")
 async def return_voice(call: CallbackQuery, state: FSMContext):
 
@@ -831,6 +830,8 @@ async def return_voice(call: CallbackQuery, state: FSMContext):
             raise ValueError("User voice not found")
     except (ValueError, Exception):  # Если строки нет или другая ошибка
         user_voice = await db.create_voice(user_id)  # Создаем запись
+
+    logger.info(user_voice)
 
     # Получаем данные из состояния
     content_raw = await state.get_data()
@@ -906,11 +907,14 @@ async def voice_menu(call: CallbackQuery):
             raise ValueError("User voice not found")
     except (ValueError, Exception):  # Если строки нет или другая ошибка
         user_voice = await db.create_voice(user_id)  # Создаем запись
+
+    logger.info(user_voice)
     
     # Динамическое создание клавиатуры с выбранным голосом
     keyboard = user_kb.voice_keyboard(selected_voice=user_voice)
     
     await call.message.answer("🔊 Выбрать голос\nChatGPT:", reply_markup=keyboard)
+    await call.answer()
 
 
 # Выбор голоса
@@ -920,7 +924,7 @@ async def select_voice(call: CallbackQuery):
     selected_voice = call.data.split(":")[1]  # Извлечение выбранного голоса из данных
     await db.set_voice(call.from_user.id, selected_voice)  # Запись выбранного голоса в базу данных
     await call.message.answer(f"Выбран голос: {selected_voice}")
-
+    await call.answer()
 
 # Хэндлер для отправки всех голосов
 @dp.callback_query_handler(text="check_voice")
@@ -941,12 +945,16 @@ async def check_voice(call: CallbackQuery):
         await call.message.answer("⚠️ В папке 'voices' нет доступных файлов.")
         return
     
-    # Отправляем файлы по очереди
+    # Создаем медиа-группу
+    media_group = MediaGroup()
     for voice_file in voice_files:
         file_path = os.path.join(voices_path, voice_file)
         audio = InputFile(file_path)
-        await call.message.answer_audio(audio, caption=f"🎵 {voice_file}")
+        media_group.attach_audio(audio)
     
+    # Отправляем файлы одним сообщением
+    await call.message.answer_media_group(media_group)
     await call.answer()
+
 
 
