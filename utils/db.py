@@ -139,11 +139,11 @@ async def get_user(user_id):
 
 # Получение информации о выранном голосе
 async def get_voice(user_id):
-
     conn: Connection = await get_conn()
     row = await conn.fetchrow("SELECT voice FROM voice WHERE user_id = $1", user_id)
     await conn.close()
-    return row
+    return row["voice"] if row else 'onyx'  # Возвращаем только значение или None
+
 
 # Записываем выбранный голос в базу данных
 async def set_voice(user_id, voice):
