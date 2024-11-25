@@ -816,7 +816,7 @@ async def handle_voice(message: Message, state: FSMContext):
     elif user["default_ai"] == "image":
         await get_mj(text, message.from_user.id, message.bot)  # Генерация изображения через MidJourney
 
-'''
+
 # Перевод текста в Аудио
 @dp.callback_query_handler(text="text_to_audio")
 async def return_voice(call: CallbackQuery, state: FSMContext):
@@ -894,7 +894,7 @@ async def return_audio_file(call: CallbackQuery, state: FSMContext):
         await call.answer()
     except Exception as e:
         logger.error(f"Ошибка при закрытии callback уведомления: {e}")
-
+'''
 
 
 # Хендлер для обработки фотографий
