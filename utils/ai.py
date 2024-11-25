@@ -175,7 +175,6 @@ def text_to_speech(text):
 
     os.remove(temp_audio_path)  # Удаляем временный файл после использования
     return audio_file
-'''
 
 
 def text_to_speech(text, model="tts-1", voice="onyx"):
@@ -196,5 +195,24 @@ def text_to_speech(text, model="tts-1", voice="onyx"):
     audio_file = InputFile(temp_audio_path)
 
     return audio_file
+'''
+
+def text_to_speech(text, model="tts-1", voice="onyx"):
+
+    # Создаем временный файл для аудио
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
+        temp_audio_path = temp_audio_file.name
+
+    # Запрос к OpenAI для создания аудио
+    response = client.audio.speech.create(
+        model=model,
+        voice=voice,
+        input=text
+    )
+
+    # Сохраняем результат в файл
+    response.stream_to_file(temp_audio_path)
+
+    return temp_audio_path  # Возвращаем путь к файлу
 
 
