@@ -857,6 +857,8 @@ async def return_voice(call: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text="text_to_audio")
 async def return_audio_file(call: CallbackQuery, state: FSMContext):
 
+    user_id = call.from_user.id
+
     # Пытаемся получить текущий голос пользователя
     try:
         user_voice = await db.get_voice(user_id)
