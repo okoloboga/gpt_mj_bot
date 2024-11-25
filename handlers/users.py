@@ -963,11 +963,25 @@ async def voice_menu(call: CallbackQuery):
 # Выбор голоса
 @dp.callback_query_handler(text_contains="select_voice")
 async def select_voice(call: CallbackQuery):
-
+    user_id = call.from_user.id
     selected_voice = call.data.split(":")[1]  # Извлечение выбранного голоса из данных
-    await db.set_voice(call.from_user.id, selected_voice)  # Запись выбранного голоса в базу данных
-    await call.message.answer(f"Выбран голос: {selected_voice}")
-    await call.answer()
+
+    try:
+        # Записываем выбранный голос в базу данных
+        await db.set_voice(user_id, selected_voice)
+
+        # Получаем обновлённую клавиатуру с выбранным голосом
+        updated_keyboard = user_kb.voice_keyboard(selected_voice=selected_voice)
+
+        # Редактируем текущее сообщение с новой клавиатурой
+        await call.message.edit_reply_markup(reply_markup=updated_keyboard)
+
+        # Отправляем уведомление об успешном выборе
+        await call.answer(f"Выбран голос: {selected_voice} ✅")
+    except Exception as e:
+        logger.error(f"Ошибка при выборе голоса: {e}")
+        await call.answer("Произошла ошибка. Попробуйте снова.", show_alert=True)
+
 
 # Хэндлер для отправки всех голосов
 @dp.callback_query_handler(text="check_voice")
