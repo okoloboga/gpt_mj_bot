@@ -176,7 +176,7 @@ def text_to_speech(text):
     os.remove(temp_audio_path)  # Удаляем временный файл после использования
     return audio_file
 
-
+'''
 def text_to_speech(text, model="tts-1", voice="onyx"):
 
     # Создаем временный файл для аудио
@@ -195,8 +195,8 @@ def text_to_speech(text, model="tts-1", voice="onyx"):
     audio_file = InputFile(temp_audio_path)
 
     return audio_file
-'''
 
+'''
 def text_to_speech(text, model="tts-1", voice="onyx"):
 
     # Создаем временный файл для аудио
@@ -214,5 +214,5 @@ def text_to_speech(text, model="tts-1", voice="onyx"):
     response.stream_to_file(temp_audio_path)
 
     return temp_audio_path  # Возвращаем путь к файлу
-
+'''
 
