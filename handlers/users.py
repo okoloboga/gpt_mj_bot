@@ -816,7 +816,7 @@ async def handle_voice(message: Message, state: FSMContext):
     elif user["default_ai"] == "image":
         await get_mj(text, message.from_user.id, message.bot)  # Генерация изображения через MidJourney
 
-
+'''
 # Перевод текста в Аудио
 @dp.callback_query_handler(text="text_to_audio")
 async def return_voice(call: CallbackQuery, state: FSMContext):
@@ -846,6 +846,56 @@ async def return_voice(call: CallbackQuery, state: FSMContext):
 
     # Отправляем голосовое сообщение
     await call.message.answer_voice(voice=audio_response)
+
+    # Закрываем callback уведомление
+    try:
+        await call.answer()
+    except Exception as e:
+        logger.error(f"Ошибка при закрытии callback уведомления: {e}")
+'''
+
+# Перевод текста в аудио и отправка MP3 файла
+@dp.callback_query_handler(text="text_to_audio")
+async def return_audio_file(call: CallbackQuery, state: FSMContext):
+
+    user_id = call.from_user.id
+
+    # Пытаемся получить текущий голос пользователя
+    try:
+        user_voice = await db.get_voice(user_id)
+        if not user_voice:  # Если результат пустой
+            raise ValueError("User voice not found")
+    except (ValueError, Exception):  # Если строки нет или другая ошибка
+        user_voice = await db.create_voice(user_id)  # Создаем запись
+
+    logger.info(user_voice)
+
+    # Получаем данные из состояния
+    content_raw = await state.get_data()
+
+    content = content_raw.get("content")
+    if not content:
+        await call.message.answer("Нет текста для озвучивания.")
+        return
+
+    # Генерация аудио из текста
+    audio_path = text_to_speech(content, voice=user_voice)
+
+    # Проверяем, что файл сгенерирован
+    if not audio_path:
+        await call.message.answer("Ошибка при генерации аудио.")
+        return
+
+    # Отправляем MP3 файл
+    try:
+        with open(audio_path, "rb") as audio_file:
+            await call.message.answer_document(
+                document=audio_file,
+                caption="Ваш файл с озвучкой"
+            )
+    except Exception as e:
+        logger.error(f"Ошибка при отправке файла: {e}")
+        await call.message.answer("Произошла ошибка при отправке файла.")
 
     # Закрываем callback уведомление
     try:
