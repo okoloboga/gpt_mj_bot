@@ -72,7 +72,7 @@ def get_account(lang, from_msg):
 
 # Выбор голоса для ChatGPT
 def voice_keyboard(selected_voice: str):
-    voices = ["vale", "maple", "sol", "spruce", "arbor", "cove"]
+    voices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
     buttons = [
         InlineKeyboardButton(
             f"{voice}✅" if voice == selected_voice else voice, 

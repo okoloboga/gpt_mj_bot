@@ -853,7 +853,6 @@ async def return_voice(call: CallbackQuery, state: FSMContext):
     except Exception as e:
         logger.error(f"Ошибка при закрытии callback уведомления: {e}")
 '''
-
 # Перевод текста в аудио и отправка MP3 файла
 @dp.callback_query_handler(text="text_to_audio")
 async def return_audio_file(call: CallbackQuery, state: FSMContext):
