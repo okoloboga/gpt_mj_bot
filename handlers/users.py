@@ -964,7 +964,7 @@ async def select_voice(call: CallbackQuery):
 async def check_voice(call: CallbackQuery):
     
     user_id = call.from_user.id
-    user_lang = await get_chat_gpt_lang(user_id)
+    user_lang = await db.get_chat_gpt_lang(user_id)
 
     # Путь к папке с файлами
     if user_lang == "ru":
