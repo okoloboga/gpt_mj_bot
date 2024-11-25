@@ -1003,6 +1003,7 @@ async def check_voice(call: CallbackQuery):
         media_group.attach_audio(audio)
     
     # Отправляем файлы одним сообщением
+    await call.message.answer(f"Ответы ChatGPT:{'RUS' if user_lang == 'ru' else 'ENG'}")
     await call.message.answer_media_group(media_group)
     await call.answer()
 
