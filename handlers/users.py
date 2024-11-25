@@ -816,7 +816,7 @@ async def handle_voice(message: Message, state: FSMContext):
     elif user["default_ai"] == "image":
         await get_mj(text, message.from_user.id, message.bot)  # Генерация изображения через MidJourney
 
-
+'''
 # Перевод текста в Аудио
 @dp.callback_query_handler(text="text_to_audio")
 async def return_voice(call: CallbackQuery, state: FSMContext):
@@ -857,6 +857,14 @@ async def return_voice(call: CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text="text_to_audio")
 async def return_audio_file(call: CallbackQuery, state: FSMContext):
 
+    # Пытаемся получить текущий голос пользователя
+    try:
+        user_voice = await db.get_voice(user_id)
+        if not user_voice:  # Если результат пустой
+            raise ValueError("User voice not found")
+    except (ValueError, Exception):  # Если строки нет или другая ошибка
+        user_voice = await db.create_voice(user_id)  # Создаем запись
+
     # Получаем текст для озвучки
     content_raw = await state.get_data()
     content = content_raw.get("content")
@@ -866,7 +874,7 @@ async def return_audio_file(call: CallbackQuery, state: FSMContext):
 
     # Генерация аудио
     try:
-        audio_path = text_to_speech(content)
+        audio_path = text_to_speech(content, voice=user_voice)
 
         # Отправляем файл как документ
         with open(audio_path, "rb") as audio_file:
@@ -884,7 +892,7 @@ async def return_audio_file(call: CallbackQuery, state: FSMContext):
         await call.answer()
     except Exception as e:
         logger.error(f"Ошибка при закрытии callback уведомления: {e}")
-'''
+
 
 
 # Хендлер для обработки фотографий
