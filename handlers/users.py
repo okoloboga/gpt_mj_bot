@@ -962,9 +962,16 @@ async def select_voice(call: CallbackQuery):
 # Хэндлер для отправки всех голосов
 @dp.callback_query_handler(text="check_voice")
 async def check_voice(call: CallbackQuery):
-    # Путь к папке с файлами
-    voices_path = "voices"
     
+    user_id = call.from_user.id
+    user_lang = await get_chat_gpt_lang(user_id)
+
+    # Путь к папке с файлами
+    if user_lang == "ru":
+        voices_path = "voices_ru"
+    elif user_lang == "en":
+        voices_path = "voices_en"
+
     # Проверяем, что папка существует
     if not os.path.exists(voices_path):
         await call.message.answer("⚠️ Папка с голосами не найдена.")

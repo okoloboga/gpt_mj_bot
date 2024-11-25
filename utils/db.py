@@ -314,6 +314,25 @@ async def change_chat_gpt_lang(user_id, new_lang):
                        user_id, new_lang)
     await conn.close()
 
+
+# Получение языка ChatGPT для пользователя
+async def get_chat_gpt_lang(user_id):
+    conn: Connection = await get_conn()
+    
+    try:
+        # Выполняем запрос для получения языка
+        result = await conn.fetchval(
+            "SELECT chat_gpt_lang FROM users WHERE user_id = $1",
+            user_id
+        )
+        return result  # Возвращаем язык
+    except Exception as e:
+        logger.error(f"Ошибка при получении языка пользователя {user_id}: {e}")
+        raise e
+    finally:
+        await conn.close()
+
+
 # Получение статистики по рефералам для пользователя
 async def get_ref_stat(user_id):
     conn: Connection = await get_conn()
