@@ -129,11 +129,11 @@ async def process_purchase(bot, order_id):
     if order["order_type"] == "chatgpt":
         new_tokens = user["tokens"] + order["quantity"]
         await db.update_tokens(user_id, new_tokens)
-        await bot.send_message(user_id, f"💰 Вы успешно приобрели {order['quantity']} токенов для ChatGPT.")
+        await bot.send_message(user_id, f"✅Добавлено {order['quantity']} токенов для ChatGPT.")
     elif order["order_type"] == "midjourney":
         new_requests = user["mj"] + order["quantity"]
         await db.update_requests(user_id, new_requests)
-        await bot.send_message(user_id, f"💰 Вы успешно приобрели {order['quantity']} запросов для MidJourney.")
+        await bot.send_message(user_id, f"✅Добавлено {order['quantity']} запросов для MidJourney.")
 
 
 """ Старая функция обработки оплаты подписки

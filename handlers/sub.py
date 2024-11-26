@@ -117,7 +117,7 @@ async def handle_chatgpt_tokens_purchase(call: CallbackQuery):
         urls = get_pay_urls('s'+str(order_id), amount)
     
         # Отправляем пользователю сообщение с выбором способа оплаты
-        await call.message.edit_text(f"Вы выбрали {tokens} токенов для 💬ChatGPT, стоимость {amount}₽.",
+        await call.message.edit_text(f"✅{tokens} токенов для ChatGPT\n💰Сумма: {amount}₽.",
                                      reply_markup=user_kb.get_pay_urls(urls, order_id, src))
     
     else:
@@ -146,7 +146,7 @@ async def handle_midjourney_requests_purchase(call: CallbackQuery):
         urls = get_pay_urls('s'+str(order_id), amount)
 
         # Отправляем пользователю сообщение с выбором способа оплаты
-        await call.message.edit_text(f"Вы выбрали {requests_count} запросов для 🎨MidJourney, стоимость {amount}₽.",
+        await call.message.edit_text(f"✅{requests_count} запросов для 🎨MidJourney\n💰Сумма: {amount}₽.",
                                      reply_markup=user_kb.get_pay_urls(urls, order_id, src))
     else:
         await call.message.edit_text("Вы уже использовали скидку")
