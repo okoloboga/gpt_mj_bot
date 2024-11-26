@@ -381,6 +381,8 @@ async def show_profile(message: Message, state: FSMContext):
     user = await db.get_user(user_id)  # Получаем данные пользователя
     user_lang = user['chat_gpt_lang']
 
+    logger.info(user_lang)
+
     mj = int(user['mj']) + int(user['free_image']) if int(user['mj']) + int(user['free_image']) >= 0 else 0
     gpt = int(user['tokens']) + int(user['free_chatgpt']) if int(user['tokens']) + int(user['free_chatgpt']) >= 0 else 0
 
@@ -388,8 +390,6 @@ async def show_profile(message: Message, state: FSMContext):
 
     # Формируем текст с количеством доступных генераций и токенов
     sub_text = f"""
-🆔: {user_id}
-
 Вам доступно⤵️
 
 Генерации 🎨Midjourney:  {format(mj, ',').replace(',', ' ')}

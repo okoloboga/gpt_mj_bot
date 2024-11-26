@@ -62,9 +62,11 @@ def get_chat_gpt_keyboard(lang, from_msg):
 # Клавиатура с настройками аккаунта пользователя (выбор тарифа, смена языка, сброс настроек)
 def get_account(lang, from_msg):
 
+    flag = '🇷🇺' if lang_text[lang] == 'ru' else '🇬🇧'
+
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("💰Выбрать тариф", callback_data="buy_sub"),
-        InlineKeyboardButton(f"Ответы ChatGPT: {'🇷🇺' if lang_text[lang] == 'ru' else '🇬🇧'}", callback_data=f"change_lang:{lang}:{from_msg}"),
+        InlineKeyboardButton(f"Ответы ChatGPT: {flag}", callback_data=f"change_lang:{lang}:{from_msg}"),
         InlineKeyboardButton("🗣Изменить голос ChatGPT", callback_data="voice_menu"),
         InlineKeyboardButton("🔄Сбросить настройки ChatGPT", callback_data="reset_chatgpt_settings")
     )

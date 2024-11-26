@@ -21,7 +21,7 @@ async def start():
         "first_name VARCHAR(64),"  # Имя пользователя
         "balance INT DEFAULT 0,"  # Баланс пользователя
         "reg_time INT,"  # Время регистрации в формате timestamp
-        "free_chatgpt SMALLINT DEFAULT 10000,"  # Количество бесплатных токенов для ChatGPT
+        "free_chatgpt SMALLINT DEFAULT 5000,"  # Количество бесплатных токенов для ChatGPT
         "free_image SMALLINT DEFAULT 3,"  # Количество бесплатных изображений в MidJourney
         "default_ai VARCHAR(10) DEFAULT 'empty',"  # Выбранный по умолчанию AI
         "inviter_id BIGINT,"  # ID пригласившего пользователя
