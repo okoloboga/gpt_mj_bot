@@ -77,7 +77,7 @@ async def get_gpt(messages):
     content = ""
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",  # Убедись, что модель корректна
+            model="gpt-4o-mini",  # Убедись, что модель корректна
             messages=messages[-10:]  # Последние 10 сообщений
         )
         # Используем атрибуты объекта вместо индексации
