@@ -377,20 +377,28 @@ async def ref_menu(message: Message):
 async def show_profile(message: Message, state: FSMContext):
 
     await state.finish()
-    user = await db.get_user(message.from_user.id)  # Получаем данные пользователя
+    user_id = message.from_user.id
+    user = await db.get_user(user_id)  # Получаем данные пользователя
+    user_lang = user['chat_gpt_lang']
 
     mj = int(user['mj']) + int(user['free_image']) if int(user['mj']) + int(user['free_image']) >= 0 else 0
     gpt = int(user['tokens']) + int(user['free_chatgpt']) if int(user['tokens']) + int(user['free_chatgpt']) >= 0 else 0
 
+    keyboard = user_kb.get_account(user_lang, "account")
+
     # Формируем текст с количеством доступных генераций и токенов
     sub_text = f"""
-Доступно генераций для 🎨Midjourney:  {format(mj, ',').replace(',', ' ')}
-Доступно токенов для 💬ChatGPT:  {format(gpt, ',').replace(',', ' ')}
+🆔: {user_id}
+
+Вам доступно⤵️
+
+Генерации 🎨Midjourney:  {format(mj, ',').replace(',', ' ')}
+Токены для 💬ChatGPT:  {format(gpt, ',').replace(',', ' ')}
         """
     
     # Отправляем сообщение с обновленными данными аккаунта
-    await message.answer(f"""🆔: <code>{message.from_user.id}</code>
-{sub_text}""", reply_markup=user_kb.get_account(user["chat_gpt_lang"], "account"))
+    await message.answer(f"""🆔: <code>{user_id}</code>
+{sub_text}""", reply_markup=keyboard)
 
 ''' Старая функция для показа профиля пользователя
 
@@ -941,6 +949,7 @@ async def handle_albums(message: Message, album: List[Message], state: FSMContex
 # Вход в меню выбора голоса
 @dp.callback_query_handler(text="voice_menu")
 async def voice_menu(call: CallbackQuery):
+
     user_id = call.from_user.id
 
     # Пытаемся получить текущий голос пользователя
@@ -950,13 +959,11 @@ async def voice_menu(call: CallbackQuery):
             raise ValueError("User voice not found")
     except (ValueError, Exception):  # Если строки нет или другая ошибка
         user_voice = await db.create_voice(user_id)  # Создаем запись
-
-    logger.info(user_voice)
     
     # Динамическое создание клавиатуры с выбранным голосом
     keyboard = user_kb.voice_keyboard(selected_voice=user_voice)
     
-    await call.message.answer("🔊 Выбрать голос\nChatGPT:", reply_markup=keyboard)
+    await call.message.answer("Выберите голос для ChatGPT⤵️:", reply_markup=keyboard)
     await call.answer()
 
 

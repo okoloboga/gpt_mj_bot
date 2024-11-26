@@ -45,8 +45,8 @@ lang_text = {"en": "ENG", "ru": "RUS"}
 def get_clear_or_audio():    
     
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("Завершить диалог", callback_data="clear_content"),
-        InlineKeyboardButton("📢 Озвучить текст", callback_data="text_to_audio")
+        InlineKeyboardButton("🗣Озвучить текст", callback_data="text_to_audio"),
+        InlineKeyboardButton("✖️Завершить диалог", callback_data="clear_content")
         )
 
 
@@ -54,8 +54,8 @@ def get_clear_or_audio():
 def get_chat_gpt_keyboard(lang, from_msg):
 
     return InlineKeyboardMarkup(row_width=2).add(
-        InlineKeyboardButton("Рассказать о себе", callback_data="chatgpt_about_me"),
-        InlineKeyboardButton("Настроить ChatGPT", callback_data="chatgpt_settings")
+        InlineKeyboardButton("✍🏻Рассказать о себе", callback_data="chatgpt_about_me"),
+        InlineKeyboardButton("⚙️Настроить ChatGPT", callback_data="chatgpt_settings")
     )
 
 
@@ -64,25 +64,29 @@ def get_account(lang, from_msg):
 
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("💰Выбрать тариф", callback_data="buy_sub"),
-        InlineKeyboardButton(f"Ответы ChatGPT: {lang_text[lang]}", callback_data=f"change_lang:{lang}:{from_msg}"),
-        InlineKeyboardButton("📢Выбрать голос ChatGPT", callback_data="voice_menu"),
-        InlineKeyboardButton("Сбросить настройки ChatGPT", callback_data="reset_chatgpt_settings"),
-        InlineKeyboardButton("Инструкция для Midjourney", url="https://telegra.ph/Kak-polzovatsya-MidJourney-podrobnaya-instrukciya-10-16")
+        InlineKeyboardButton(f"Ответы ChatGPT: {'🇷🇺' if lang_text[lang] == 'ru' else '🇬🇧'}", callback_data=f"change_lang:{lang}:{from_msg}"),
+        InlineKeyboardButton("🗣Изменить голос ChatGPT", callback_data="voice_menu"),
+        InlineKeyboardButton("🔄Сбросить настройки ChatGPT", callback_data="reset_chatgpt_settings")
     )
 
 # Выбор голоса для ChatGPT
 def voice_keyboard(selected_voice: str):
-    voices = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+    voices = {"alloy": "Даниэль(Alloy)",
+              "echo": "Антоний(Echo)",
+              "fable": "Чарли(Fable)",
+              "onyx": "Михаил(Onyx)", 
+              "nova": "Эмилия(Nova)", 
+              "shimmer": "Сидни(Shimmer)"}
     buttons = [
         InlineKeyboardButton(
-            f"{voice}✅" if voice == selected_voice else voice, 
-            callback_data=f"select_voice:{voice}"
+            f"{value}✅" if key == selected_voice else value, 
+            callback_data=f"select_voice:{key}"
         )
-        for voice in voices
+        for key, value in voices.items()
     ]
     
     return InlineKeyboardMarkup(row_width=2).add(*buttons).add(
-        InlineKeyboardButton("📢Прослушать голоса", callback_data="check_voice"),
+        InlineKeyboardButton("🔉Прослушать голоса", callback_data="check_voice"),
         InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
     )
 
