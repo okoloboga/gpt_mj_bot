@@ -62,7 +62,7 @@ def get_chat_gpt_keyboard(lang, from_msg):
 # Клавиатура с настройками аккаунта пользователя (выбор тарифа, смена языка, сброс настроек)
 def get_account(lang, from_msg):
 
-    flag = '🇷🇺' if lang_text[lang] == 'ru' else '🇬🇧'
+    flag = '🇷🇺' if lang == 'ru' else '🇬🇧'
 
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("💰Выбрать тариф", callback_data="buy_sub"),
