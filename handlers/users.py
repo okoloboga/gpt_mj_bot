@@ -773,6 +773,8 @@ async def gen_prompt(message: Message, state: FSMContext):
         await message.answer("Введите команду /start для перезагрузки бота")
         return await message.bot.send_message(796644977, message.from_user.id)
 
+    logger.info(f'User: {user} , AI: {user["default_ai"]}, Prompt: {message.text}')
+
     if user["default_ai"] == "chatgpt":
         if user["tokens"] <= 0 and user["free_chatgpt"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
