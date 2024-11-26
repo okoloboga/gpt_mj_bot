@@ -911,6 +911,8 @@ async def return_audio_file(call: CallbackQuery, state: FSMContext):
 @dp.message_handler(is_media_group=False, content_types="photo")
 async def photo_imagine(message: Message, state: FSMContext):
 
+    user_id = message.from_user.id
+
     if message.caption is None:
         await message.answer("Добавьте описание к фотографии")
         return
@@ -923,7 +925,22 @@ async def photo_imagine(message: Message, state: FSMContext):
         return
     prompt = ds_photo_url + " " + message.caption  # Создаем запрос на основе фотографии и описания
     await state.update_data(prompt=prompt)
-    await get_mj(prompt, message.from_user.id, message.bot)
+
+    user = await db.get_user(user_id)
+
+    if user["default_ai"] == "chatgpt":
+        if user["tokens"] <= 0 and user["free_chatgpt"] <= 0:
+            return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
+
+        data = await state.get_data()
+        system_msg = user["chatgpt_about_me"] + "\n" + user["chatgpt_settings"]
+        messages = [{"role": "system", "content": system_msg}] if "messages" not in data else data["messages"]
+        update_messages = await get_gpt(prompt=message.text, messages=messages, user_id=message.from_user.id,
+                                        bot=message.bot, state=state)  # Генерация ответа от ChatGPT
+        await state.update_data(messages=update_messages)
+
+    elif user["default_ai"] == "image":
+        await get_mj(prompt, message.from_user.id, message.bot)
 
 
 # Хендлер для обработки альбомов (групповых фото)
