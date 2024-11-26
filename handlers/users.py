@@ -935,7 +935,7 @@ async def photo_imagine(message: Message, state: FSMContext):
         data = await state.get_data()
         system_msg = user["chatgpt_about_me"] + "\n" + user["chatgpt_settings"]
         messages = [{"role": "system", "content": system_msg}] if "messages" not in data else data["messages"]
-        update_messages = await get_gpt(prompt=message.text, messages=messages, user_id=message.from_user.id,
+        update_messages = await get_gpt(prompt, messages=messages, user_id=message.from_user.id,
                                         bot=message.bot, state=state)  # Генерация ответа от ChatGPT
         await state.update_data(messages=update_messages)
 
