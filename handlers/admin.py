@@ -38,7 +38,8 @@ def format_statistics(stats):
             "500000": "500к"
             }
 
-        result += f"{order_type.capitalize()}:\n" 
+        order_type = "ChatGPT" if order_type == "chatgpt" else "MidJourney"
+        result += f"**{order_type}:**\n" 
 
         for quantity, data in details.items():
             if str(quantity) in quantity_map:
@@ -84,18 +85,16 @@ async def show_stats(message: Message):
     # stats_month = await db.get_orders_statistics(period="month")
     stats_all = await db.get_orders_statistics(period="all")
 
-    response = "📊 Статистика покупок:\n\n"
-
-    response += "За последние 24 часа:\n\n"
+    response = "**За 24 часа:**\n\n"
     response += format_statistics(stats_24h) + "\n"
 
     # response += "За текущий месяц:\n\n"
     # response += format_statistics(stats_month) + "\n"
 
-    response += "За все время:\n"
+    response += "**За все время:**\n"
     response += format_statistics(stats_all) + "\n"
 
-    await message.answer(f"""За все время
+    await message.answer(f"""**За все время:**
 Количество пользователей: {stats_data['users_count']}
 Запросов {stats_data['chatgpt_count'] + stats_data['image_count']}
 ChatGPT - {stats_data['chatgpt_count']}
