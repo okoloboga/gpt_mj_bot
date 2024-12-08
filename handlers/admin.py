@@ -115,7 +115,7 @@ ChatGPT - {stats_data['today_chatgpt_count']}
 Midjourney - {stats_data['today_image_count']}
 
 {response}
-""", reply_markup=admin_kb.admin_menu)  # Кнопки для админа
+""", reply_markup=admin_kb.admin_menu, parse_mode="MarkdownV2")  # Кнопки для админа
 
 
 # Хендлер для отображения реферальной статистики
