@@ -38,12 +38,11 @@ def format_statistics(stats):
             "500000": "500к"
             }
 
-        if quantity in quantity_map:
-            quantity = quantity_map[quantity]
-            
         result += f"{order_type.capitalize()}:\n" 
 
         for quantity, data in details.items():
+            if quantity in quantity_map:
+                quantity = quantity_map[quantity]
             result += f"{quantity} {unit}: {data['count']}, на сумму {data['total_amount']}₽.\n"
         result += "\n"
     return result
