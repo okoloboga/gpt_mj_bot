@@ -50,7 +50,7 @@ def format_statistics(stats):
 
             if str(quantity) in quantity_map:
                 quantity = quantity_map[str(quantity)]
-            result += f"{quantity} {unit}: {data['count']}, на сумму {data['total_amount']}₽.\n"
+            result += f"{quantity} {unit}: {data['count']}, на сумму {data['total_amount']}₽\n"
             result += f"**Всего: {total_requests}, на сумму {total_sum}₽**"
         result += "\n"
     return result
