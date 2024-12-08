@@ -414,10 +414,10 @@ async def set_action_get_response(usage_id):
 async def get_stat():
 
     end = datetime.now()
-    start = datetime.combine(date.today(), time())
-    print(start, end)
-    old_end = int(datetime.now().timestamp())
-    old_start = int(datetime.combine(date.today(), time()).timestamp())
+    start = datetime.combine(date.today(), datetime.min.time())
+
+    old_end = int(end.timestamp())
+    old_start = int(start.timestamp())
 
     conn: Connection = await get_conn()
     row = await conn.fetchrow("SELECT (SELECT COUNT(*) FROM users) as users_count,"

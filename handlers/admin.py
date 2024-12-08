@@ -32,9 +32,19 @@ def format_statistics(stats):
         # Определяем единицу измерения в зависимости от типа заказа
         unit = "запросов" if order_type == "midjourney" else "токенов"
         
-        result += f"Покупки для {order_type.capitalize()}:\n"
+        quantity_map = {
+            "100000": "100к",
+            "200000": "200к",
+            "500000": "500к"
+            }
+
+        if quantity in quantity_map:
+            quantity = quantity_map[quantity]
+            
+        result += f"{order_type.capitalize()}:\n" 
+
         for quantity, data in details.items():
-            result += f"- {quantity} {unit}: {data['count']}, на сумму {data['total_amount']} р.\n"
+            result += f"{quantity} {unit}: {data['count']}, на сумму {data['total_amount']}₽.\n"
         result += "\n"
     return result
 
@@ -72,33 +82,31 @@ async def show_stats(message: Message):
     stats_data = await db.get_stat()  # Получаем общую статистику
 
     stats_24h = await db.get_orders_statistics(period="24h")
-    stats_month = await db.get_orders_statistics(period="month")
-    # stats_all = await db.get_orders_statistics(period="all")
+    # stats_month = await db.get_orders_statistics(period="month")
+    stats_all = await db.get_orders_statistics(period="all")
 
     response = "📊 Статистика покупок:\n\n"
 
     response += "За последние 24 часа:\n\n"
     response += format_statistics(stats_24h) + "\n"
 
-    response += "За текущий месяц:\n\n"
-    response += format_statistics(stats_month) + "\n"
+    # response += "За текущий месяц:\n\n"
+    # response += format_statistics(stats_month) + "\n"
 
-    # response += "За все время:\n"
-    # response += format_statistics(stats_all) + "\n"
+    response += "За все время:\n"
+    response += format_statistics(stats_all) + "\n"
 
-    await message.answer(f"""За все время:
-
-Пользователей: {stats_data['users_count']}
+    await message.answer(f"""За все время
+Количество пользователей: {stats_data['users_count']}
 Запросов {stats_data['chatgpt_count'] + stats_data['image_count']}
-Текст - {stats_data['chatgpt_count']}
-Изображение - {stats_data['image_count']}
+ChatGPT - {stats_data['chatgpt_count']}
+Midjourney - {stats_data['image_count']}
  
-За сегодня:
-
+За 24 часа:
 Пользователей - {stats_data['today_users_count']}
 Запросов - {stats_data['today_chatgpt_count'] + stats_data['today_image_count']}
-Текст - {stats_data['today_chatgpt_count']}
-Изображение - {stats_data['today_image_count']}
+ChatGPT - {stats_data['today_chatgpt_count']}
+Midjourney - {stats_data['today_image_count']}
 
 {response}
 """, reply_markup=admin_kb.admin_menu)  # Кнопки для админа
