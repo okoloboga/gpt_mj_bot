@@ -40,11 +40,18 @@ def format_statistics(stats):
 
         order_type = "ChatGPT" if order_type == "chatgpt" else "MidJourney"
         result += f"**{order_type}:**\n" 
+        total_requests = 0
+        total_sum = 0
 
         for quantity, data in details.items():
+
+            total_sum += data['total_amount']
+            total_requests += data['count']
+
             if str(quantity) in quantity_map:
                 quantity = quantity_map[str(quantity)]
             result += f"{quantity} {unit}: {data['count']}, на сумму {data['total_amount']}₽.\n"
+            result += f"**Всего: {total_requests}, на сумму {total_sum}₽**"
         result += "\n"
     return result
 
@@ -73,6 +80,7 @@ async def switch_api_handler(message: Message):
             await message.reply(f"Ошибка: {e}")
             logging.error(f"Ошибка при переключении на ApiFrame: {e}")
 
+
 # Хендлер для отображения статистики по пользователям и запросам
 @dp.message_handler(lambda message: message.from_user.id in ADMINS,
                     commands="stats"
@@ -100,7 +108,7 @@ async def show_stats(message: Message):
 ChatGPT - {stats_data['chatgpt_count']}
 Midjourney - {stats_data['image_count']}
  
-За 24 часа:
+**За 24 часа:**
 Пользователей - {stats_data['today_users_count']}
 Запросов - {stats_data['today_chatgpt_count'] + stats_data['today_image_count']}
 ChatGPT - {stats_data['today_chatgpt_count']}
