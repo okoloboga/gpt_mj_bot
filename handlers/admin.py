@@ -39,7 +39,7 @@ def format_statistics(stats):
             }
 
         order_type = "ChatGPT" if order_type == "chatgpt" else "MidJourney"
-        result += f"**{order_type}:**\n" 
+        result += f"{order_type}:\n" 
         total_requests = 0
         total_sum = 0
 
@@ -51,7 +51,7 @@ def format_statistics(stats):
             if str(quantity) in quantity_map:
                 quantity = quantity_map[str(quantity)]
             result += f"{quantity} {unit}: {data['count']}, на сумму {data['total_amount']}₽\n"
-            result += f"**Всего: {total_requests}, на сумму {total_sum}₽**"
+            result += f"Всего: {total_requests}, на сумму {total_sum}₽"
         result += "\n"
     return result
 
@@ -93,29 +93,29 @@ async def show_stats(message: Message):
     # stats_month = await db.get_orders_statistics(period="month")
     stats_all = await db.get_orders_statistics(period="all")
 
-    response = "**За 24 часа:**\n\n"
+    response = "За 24 часа:\n\n"
     response += format_statistics(stats_24h) + "\n"
 
     # response += "За текущий месяц:\n\n"
     # response += format_statistics(stats_month) + "\n"
 
-    response += "**За все время:**\n"
+    response += "За все время:\n"
     response += format_statistics(stats_all) + "\n"
 
-    await message.answer(f"""**За все время:**
+    await message.answer(f"""За все время:
 Количество пользователей: {stats_data['users_count']}
 Запросов {stats_data['chatgpt_count'] + stats_data['image_count']}
-ChatGPT \- {stats_data['chatgpt_count']}
-Midjourney \- {stats_data['image_count']}
+ChatGPT - {stats_data['chatgpt_count']}
+Midjourney - {stats_data['image_count']}
  
-**За 24 часа:**
-Пользователей \- {stats_data['today_users_count']}
-Запросов \- {stats_data['today_chatgpt_count'] + stats_data['today_image_count']}
-ChatGPT \- {stats_data['today_chatgpt_count']}
-Midjourney \- {stats_data['today_image_count']}
+За 24 часа:
+Пользователей - {stats_data['today_users_count']}
+Запросов - {stats_data['today_chatgpt_count'] + stats_data['today_image_count']}
+ChatGPT - {stats_data['today_chatgpt_count']}
+Midjourney - {stats_data['today_image_count']}
 
 {response}
-""", reply_markup=admin_kb.admin_menu, parse_mode="MarkdownV2")  # Кнопки для админа
+""", reply_markup=admin_kb.admin_menu)  # Кнопки для админа
 
 
 # Хендлер для отображения реферальной статистики
