@@ -105,14 +105,14 @@ async def show_stats(message: Message):
     await message.answer(f"""**За все время:**
 Количество пользователей: {stats_data['users_count']}
 Запросов {stats_data['chatgpt_count'] + stats_data['image_count']}
-ChatGPT - {stats_data['chatgpt_count']}
-Midjourney - {stats_data['image_count']}
+ChatGPT \- {stats_data['chatgpt_count']}
+Midjourney \- {stats_data['image_count']}
  
 **За 24 часа:**
-Пользователей - {stats_data['today_users_count']}
-Запросов - {stats_data['today_chatgpt_count'] + stats_data['today_image_count']}
-ChatGPT - {stats_data['today_chatgpt_count']}
-Midjourney - {stats_data['today_image_count']}
+Пользователей \- {stats_data['today_users_count']}
+Запросов \- {stats_data['today_chatgpt_count'] + stats_data['today_image_count']}
+ChatGPT \- {stats_data['today_chatgpt_count']}
+Midjourney \- {stats_data['today_image_count']}
 
 {response}
 """, reply_markup=admin_kb.admin_menu, parse_mode="MarkdownV2")  # Кнопки для админа
