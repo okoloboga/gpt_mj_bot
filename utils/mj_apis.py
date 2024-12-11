@@ -207,16 +207,14 @@ class MidJourneyAPI:
                 return response
             except Exception as e:
                 logger.error(f"GoAPI недоступен: {e}.")
-                
-                # Преобразуем исключение в строку
-                error_str = str(e)
-    
-                # Найдем часть строки после "GoAPI Error: 500 - "
-                json_str = error_str.split("GoAPI Error: 500 - ")[-1]
-                error_info = json.loads(json_str)
-                message = error_info.get('message')
-
-                return message
+                try:
+                    error_data = json.loads(str(e).split(":", 1)[1].strip())  # Парсим JSON из строки ошибки
+                    message = error_data.get("message", "Нет сообщения в ошибке")
+                    return message
+                except (json.JSONDecodeError, IndexError) as parse_error:
+                    # Если не удаётся распарсить, логируем ошибку
+                    logger.error(f"Ошибка при парсинге ответа GoAPI: {parse_error}")
+                    return str(e)  # Возвращаем саму ошибку, если не удалось распарсить
 
         if self.primary_api == "apiframe":
             try:
