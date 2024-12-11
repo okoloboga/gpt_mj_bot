@@ -95,7 +95,10 @@ async def show_stats(message: Message):
     stats_all = await db.get_orders_statistics(period="all")
 
     response = "За 24 часа:\n\n"
-    response += format_statistics(stats_24h) + "\n"
+    response += format_statistics(stats_today) + "\n"
+
+    # response = "За 24 часа:\n\n"
+    # response += format_statistics(stats_24h) + "\n"
 
     # response += "За текущий месяц:\n\n"
     # response += format_statistics(stats_month) + "\n"
