@@ -208,8 +208,7 @@ class MidJourneyAPI:
             except Exception as e:
                 logger.error(f"GoAPI недоступен: {e}.")
                 try:
-                    error_data = str(e).split(":", 1)[1]
-                    # error_data = json.loads(str(e).split(":", 1)[1].strip())  # Парсим JSON из строки ошибки
+                    error_data = json.loads((str(e)[19:]).strip())  # Парсим JSON из строки ошибки
                     logger.info(f"Ошибка GoAPI: {error_data}")
                     message = error_data.get("message", "Нет сообщения в ошибке")
                     return message
