@@ -206,7 +206,17 @@ class MidJourneyAPI:
                 return response
             except Exception as e:
                 logger.error(f"GoAPI недоступен: {e}.")
-                return e.message
+                
+                # Преобразуем исключение в строку
+                error_str = str(e)
+    
+                # Найдем часть строки после "GoAPI Error: 500 - "
+                json_str = error_str.split("GoAPI Error: 500 - ")[-1]
+                error_info = json.loads(json_str)
+                message = error_info.get('message')
+
+                return message
+
         if self.primary_api == "apiframe":
             try:
                 response = await self.apiframe.create_request(data, action, request_id)
