@@ -193,6 +193,9 @@ async def get_mj(prompt, user_id, bot: Bot):
     elif ('Banned' in res):
         await bot.send_message(user_id, f"Запрещенное слово в запросе:\n\n{res}")
         return
+    elif ('Invalid image prompt position' in res):
+        await bot.send_message(user_id, f"Некорректная структура запроса:\n\n{res}")
+        return
     elif ('status' in res) and (res['status'] == "failed"):
         await bot.send_message(user_id, f"Произошла ошибка, подробности ошибки:\n\n{res['message']}")
         return
