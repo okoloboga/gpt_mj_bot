@@ -410,29 +410,6 @@ async def set_action_get_response(usage_id):
     await conn.close()
 
 
-# Получение общей статистики
-async def get_stat():
-
-    end = datetime.now()
-    start = datetime.combine(date.today(), datetime.min.time())
-
-    old_end = int(end.timestamp())
-    old_start = int(start.timestamp())
-
-    conn: Connection = await get_conn()
-    row = await conn.fetchrow("SELECT (SELECT COUNT(*) FROM users) as users_count,"
-                              "(SELECT COUNT(*) FROM users where reg_time between $3 and $4) as today_users_count,"
-                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt') as chatgpt_count,"
-                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'image') as image_count,"
-                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt' and create_time between $1 and $2) "
-                              "as today_chatgpt_count,"
-                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'image' and create_time between $1 and $2) "
-                              "as today_image_count",
-                              start, end, old_start, old_end)
-    await conn.close()
-    return row
-
-
 # Получение IAM токена из таблицы конфигурации
 async def get_iam_token():
 
@@ -677,12 +654,33 @@ async def update_used_discount_mj(user_id):
         user_id)
     await conn.close()
 
+# Получение общей статистики
+async def get_stat():
+
+    end = datetime.now()
+    start = datetime.combine(date.today(), datetime.min.time())
+
+    old_end = int(end.timestamp())
+    old_start = int(start.timestamp())
+
+    conn: Connection = await get_conn()
+    row = await conn.fetchrow("SELECT (SELECT COUNT(*) FROM users) as users_count,"
+                              "(SELECT COUNT(*) FROM users where reg_time between $3 and $4) as today_users_count,"
+                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt') as chatgpt_count,"
+                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'image') as image_count,"
+                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt' and create_time between $1 and $2) "
+                              "as today_chatgpt_count,"
+                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'image' and create_time between $1 and $2) "
+                              "as today_image_count",
+                              start, end, old_start, old_end)
+    await conn.close()
+    return row
 
 async def get_orders_statistics(period: str = "all"):
     """
     Получает статистику заказов за указанный период.
     
-    :param period: Период статистики: '24h', 'month', или 'all'.
+    :param period: Период статистики: '24h', 'month', 'all' или 'today'.
     :return: Словарь с данными статистики.
     """
     conn: Connection = await get_conn()
@@ -693,6 +691,9 @@ async def get_orders_statistics(period: str = "all"):
         start_time = now - timedelta(hours=24)
     elif period == "month":
         start_time = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif period == "today":
+        # Получаем начало текущих суток
+        start_time = datetime.combine(date.today(), datetime.min.time())
     else:
         start_time = None  # Для 'all' нет ограничения по времени
 
@@ -733,3 +734,4 @@ async def get_orders_statistics(period: str = "all"):
         }
     
     return stats
+

@@ -187,6 +187,8 @@ async def get_mj(prompt, user_id, bot: Bot):
     if res is None:
         await bot.send_message(user_id, f"Произошла ошибка, повторите попытку позже")
         return
+    elif res is str:
+        await bot.send_message(user_id, f"Произошла ошибка, подробности ошибки:\n\n{res}")
     elif ('status' in res) and (res['status'] == "failed"):
         await bot.send_message(user_id, f"Произошла ошибка, подробности ошибки:\n\n{res['message']}")
         return
