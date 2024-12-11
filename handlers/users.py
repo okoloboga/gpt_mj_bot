@@ -187,8 +187,9 @@ async def get_mj(prompt, user_id, bot: Bot):
     if res is None:
         await bot.send_message(user_id, f"Произошла ошибка, повторите попытку позже")
         return
-    elif res is str:
-        await bot.send_message(user_id, f"Произошла ошибка, подробности ошибки:\n\n{res}")
+    elif ('Banned' in res):
+        await bot.send_message(user_id, f"Запрещенное слово в запросе:\n\n{res}")
+        return
     elif ('status' in res) and (res['status'] == "failed"):
         await bot.send_message(user_id, f"Произошла ошибка, подробности ошибки:\n\n{res['message']}")
         return
