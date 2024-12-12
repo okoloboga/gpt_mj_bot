@@ -658,7 +658,7 @@ async def update_used_discount_mj(user_id):
 async def get_stat():
 
     end = datetime.now()
-    start = datetime.combine(date.today(), datetime.min.time() + timedelta(hours=21))
+    start = datetime.combine(date.today(), datetime.min.time()) - timedelta(hours=3)
 
     old_end = int(end.timestamp())
     old_start = int(start.timestamp())
@@ -693,7 +693,7 @@ async def get_orders_statistics(period: str = "all"):
         start_time = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     elif period == "today":
         # Получаем начало текущих суток
-        start_time = datetime.combine(date.today(), datetime.min.time() + timedelta(hours=21))
+        start_time = datetime.combine(date.today(), datetime.min.time()) - timedelta(hours=3)
     else:
         start_time = None  # Для 'all' нет ограничения по времени
 
