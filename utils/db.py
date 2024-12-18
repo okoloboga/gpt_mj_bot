@@ -681,6 +681,8 @@ async def get_stat():
     start_utc = start_moscow.astimezone(utc_tz)
     end_utc = end_moscow.astimezone(utc_tz)
 
+    logger.info(f'Получение статистики в {end_moscow} по МСК, {end_utc} по UTC')
+
     conn = await get_conn()
     try:
         row = await conn.fetchrow("""
@@ -691,7 +693,7 @@ async def get_stat():
                 (SELECT COUNT(*) FROM usage WHERE ai_type = 'image') AS image_count,
                 (SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt' AND create_time BETWEEN $1 AND $2) AS today_chatgpt_count,
                 (SELECT COUNT(*) FROM usage WHERE ai_type = 'image' AND create_time BETWEEN $1 AND $2) AS today_image_count
-            """, start_timestamp, end_timestamp)
+            """, start_utc, end_utc)
     finally:
         await conn.close()
 
