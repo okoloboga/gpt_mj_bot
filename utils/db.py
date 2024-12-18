@@ -681,10 +681,6 @@ async def get_stat():
     start_utc = start_moscow.astimezone(utc_tz)
     end_utc = end_moscow.astimezone(utc_tz)
 
-    # Получение меток времени (timestamp)
-    start_timestamp = int(start_utc.timestamp())
-    end_timestamp = int(end_utc.timestamp())
-
     conn = await get_conn()
     try:
         row = await conn.fetchrow("""
