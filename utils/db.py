@@ -723,7 +723,7 @@ async def get_orders_statistics(period: str = "all"):
     moscow_tz = ZoneInfo("Europe/Moscow")  # Часовой пояс Москвы
     utc_tz = ZoneInfo("UTC")  # Часовой пояс UTC
 
-    # Текущее время в Москве
+    # Текущее время в Москве и UTC
     now_moscow = datetime.now(moscow_tz)
     now_utc = datetime.now(utc_tz)
 
@@ -734,20 +734,21 @@ async def get_orders_statistics(period: str = "all"):
         start_moscow = now_moscow.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     elif period == "today":
         # Начало текущих суток в Москве (00:00)
-        start_moscow = datetime.combine(now_moscow.date(), datetime.min.time(), tzinfo=moscow_tz)
+        start_moscow = datetime.combine(now_moscow.date(), time.min, tzinfo=moscow_tz)
     else:
         start_moscow = None  # Для 'all' нет ограничения по времени
 
     # Конвертация start_time в UTC, если он определён
     if start_moscow:
         start_utc = start_moscow.astimezone(utc_tz)
-        # В зависимости от требований к базе данных, можно передавать datetime с timezone или UNIX timestamp
-        # Здесь будем использовать UTC datetime
-        start_time = start_utc
+        # Удаляем информацию о часовом поясе, делая datetime наивным
+        start_time = start_utc.replace(tzinfo=None)
     else:
         start_time = None
 
     logger.info(f'Получение статистики в {now_moscow} по МСК, {now_utc} по UTC')
+    if start_time:
+        logger.info(f'start_time: {start_time} (type: {type(start_time)})')
 
     conn = await get_conn()
     try:
@@ -762,17 +763,18 @@ async def get_orders_statistics(period: str = "all"):
         WHERE pay_time IS NOT NULL
         """
 
+        # Список параметров для запроса
+        params = []
+
         # Добавляем фильтрацию по времени, если указано
         if start_time:
             query += " AND pay_time >= $1"
+            params.append(start_time)
 
         query += " GROUP BY order_type, quantity ORDER BY order_type, quantity;"
 
         # Выполняем запрос
-        if start_time:
-            rows = await conn.fetch(query, start_time)
-        else:
-            rows = await conn.fetch(query)
+        rows = await conn.fetch(query, *params)
     finally:
         await conn.close()
 
