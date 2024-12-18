@@ -672,7 +672,7 @@ async def get_stat():
     now_moscow = datetime.now(moscow_tz)
 
     # Начало текущего дня в Москве (00:00)
-    start_moscow = datetime.combine(now_moscow.date(), datetime.min.time(), tzinfo=moscow_tz)
+    start_moscow = datetime.combine(now_moscow.date(), time.min, tzinfo=moscow_tz)
 
     # Конец периода — текущее время
     end_moscow = now_moscow
@@ -681,7 +681,14 @@ async def get_stat():
     start_utc = start_moscow.astimezone(utc_tz)
     end_utc = end_moscow.astimezone(utc_tz)
 
+    # Преобразование в naive datetime (без tzinfo)
+    start_utc_naive = start_utc.replace(tzinfo=None)
+    end_utc_naive = end_utc.replace(tzinfo=None)
+
+    # Логирование для отладки
     logger.info(f'Получение статистики в {end_moscow} по МСК, {end_utc} по UTC')
+    logger.info(f'start_utc_naive: {start_utc_naive} (type: {type(start_utc_naive)})')
+    logger.info(f'end_utc_naive: {end_utc_naive} (type: {type(end_utc_naive)})')
 
     conn = await get_conn()
     try:
@@ -693,7 +700,7 @@ async def get_stat():
                 (SELECT COUNT(*) FROM usage WHERE ai_type = 'image') AS image_count,
                 (SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt' AND create_time BETWEEN $1 AND $2) AS today_chatgpt_count,
                 (SELECT COUNT(*) FROM usage WHERE ai_type = 'image' AND create_time BETWEEN $1 AND $2) AS today_image_count
-            """, start_utc, end_utc)
+            """, start_utc_naive, end_utc_naive)
     finally:
         await conn.close()
 
