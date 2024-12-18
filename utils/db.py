@@ -681,12 +681,18 @@ async def get_stat():
     start_utc = start_moscow.astimezone(utc_tz)
     end_utc = end_moscow.astimezone(utc_tz)
 
-    # Преобразование в naive datetime (без tzinfo)
+    # Получение Unix timestamps для таблицы users
+    start_timestamp = int(start_utc.timestamp())
+    end_timestamp = int(end_utc.timestamp())
+
+    # Преобразование в naive datetime (без tzinfo) для таблицы usage
     start_utc_naive = start_utc.replace(tzinfo=None)
     end_utc_naive = end_utc.replace(tzinfo=None)
 
     # Логирование для отладки
     logger.info(f'Получение статистики в {end_moscow} по МСК, {end_utc} по UTC')
+    logger.info(f'start_timestamp: {start_timestamp} (type: {type(start_timestamp)})')
+    logger.info(f'end_timestamp: {end_timestamp} (type: {type(end_timestamp)})')
     logger.info(f'start_utc_naive: {start_utc_naive} (type: {type(start_utc_naive)})')
     logger.info(f'end_utc_naive: {end_utc_naive} (type: {type(end_utc_naive)})')
 
@@ -698,9 +704,9 @@ async def get_stat():
                 (SELECT COUNT(*) FROM users WHERE reg_time BETWEEN $1 AND $2) AS today_users_count,
                 (SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt') AS chatgpt_count,
                 (SELECT COUNT(*) FROM usage WHERE ai_type = 'image') AS image_count,
-                (SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt' AND create_time BETWEEN $1 AND $2) AS today_chatgpt_count,
-                (SELECT COUNT(*) FROM usage WHERE ai_type = 'image' AND create_time BETWEEN $1 AND $2) AS today_image_count
-            """, start_utc_naive, end_utc_naive)
+                (SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt' AND create_time BETWEEN $3 AND $4) AS today_chatgpt_count,
+                (SELECT COUNT(*) FROM usage WHERE ai_type = 'image' AND create_time BETWEEN $3 AND $4) AS today_image_count
+            """, start_timestamp, end_timestamp, start_utc_naive, end_utc_naive)
     finally:
         await conn.close()
 
