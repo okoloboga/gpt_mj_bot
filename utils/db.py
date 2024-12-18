@@ -1,7 +1,16 @@
 from datetime import datetime, date, time, timedelta
 import asyncpg
+import logging
+from zoneinfo import ZoneInfo
 from asyncpg import Connection
 from config import DB_USER, DB_HOST, DB_DATABASE, DB_PASSWORD
+
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(filename)s:%(lineno)d #%(levelname)-8s '
+           '[%(asctime)s] - %(name)s - %(message)s')
 
 
 # Функция для установления соединения с базой данных
@@ -656,26 +665,43 @@ async def update_used_discount_mj(user_id):
 
 # Получение общей статистики
 async def get_stat():
+    moscow_tz = ZoneInfo("Europe/Moscow")  # Часовой пояс Москвы
+    utc_tz = ZoneInfo("UTC")  # Часовой пояс UTC
 
-    end = datetime.now()
-    start = datetime.combine(date.today(), datetime.min.time()) - timedelta(hours=3)
+    # Текущее время в Москве
+    now_moscow = datetime.now(moscow_tz)
 
-    old_end = int(end.timestamp())
-    old_start = int(start.timestamp())
+    # Начало текущего дня в Москве (00:00)
+    start_moscow = datetime.combine(now_moscow.date(), datetime.min.time(), tzinfo=moscow_tz)
 
-    conn: Connection = await get_conn()
-    row = await conn.fetchrow("SELECT (SELECT COUNT(*) FROM users) as users_count,"
-                              "(SELECT COUNT(*) FROM users where reg_time between $3 and $4) as today_users_count,"
-                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt') as chatgpt_count,"
-                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'image') as image_count,"
-                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt' and create_time between $1 and $2) "
-                              "as today_chatgpt_count,"
-                              "(SELECT COUNT(*) FROM usage WHERE ai_type = 'image' and create_time between $1 and $2) "
-                              "as today_image_count",
-                              start, end, old_start, old_end)
-    await conn.close()
+    # Конец периода — текущее время
+    end_moscow = now_moscow
+
+    # Конвертация в UTC
+    start_utc = start_moscow.astimezone(utc_tz)
+    end_utc = end_moscow.astimezone(utc_tz)
+
+    # Получение меток времени (timestamp)
+    start_timestamp = int(start_utc.timestamp())
+    end_timestamp = int(end_utc.timestamp())
+
+    conn = await get_conn()
+    try:
+        row = await conn.fetchrow("""
+            SELECT 
+                (SELECT COUNT(*) FROM users) AS users_count,
+                (SELECT COUNT(*) FROM users WHERE reg_time BETWEEN $1 AND $2) AS today_users_count,
+                (SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt') AS chatgpt_count,
+                (SELECT COUNT(*) FROM usage WHERE ai_type = 'image') AS image_count,
+                (SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt' AND create_time BETWEEN $1 AND $2) AS today_chatgpt_count,
+                (SELECT COUNT(*) FROM usage WHERE ai_type = 'image' AND create_time BETWEEN $1 AND $2) AS today_image_count
+            """, start_timestamp, end_timestamp)
+    finally:
+        await conn.close()
+
     return row
 
+# Получение статистики заказов
 async def get_orders_statistics(period: str = "all"):
     """
     Получает статистику заказов за указанный период.
@@ -683,45 +709,62 @@ async def get_orders_statistics(period: str = "all"):
     :param period: Период статистики: '24h', 'month', 'all' или 'today'.
     :return: Словарь с данными статистики.
     """
-    conn: Connection = await get_conn()
+    moscow_tz = ZoneInfo("Europe/Moscow")  # Часовой пояс Москвы
+    utc_tz = ZoneInfo("UTC")  # Часовой пояс UTC
 
-    # Определяем временной фильтр на основе периода
-    now = datetime.now()
+    # Текущее время в Москве
+    now_moscow = datetime.now(moscow_tz)
+    now_utc = datatime.now(utc_tz)
+
+    # Определяем начало периода на основе выбранного периода
     if period == "24h":
-        start_time = now - timedelta(hours=24)
+        start_moscow = now_moscow - timedelta(hours=24)
     elif period == "month":
-        start_time = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_moscow = now_moscow.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     elif period == "today":
-        # Получаем начало текущих суток
-        start_time = datetime.combine(date.today(), datetime.min.time()) - timedelta(hours=3)
+        # Начало текущих суток в Москве (00:00)
+        start_moscow = datetime.combine(now_moscow.date(), datetime.min.time(), tzinfo=moscow_tz)
     else:
-        start_time = None  # Для 'all' нет ограничения по времени
+        start_moscow = None  # Для 'all' нет ограничения по времени
 
-    # Основной SQL-запрос с условием времени
-    query = """
-    SELECT 
-        order_type,
-        quantity,
-        COUNT(*) AS count,
-        SUM(amount) AS total_amount
-    FROM orders
-    WHERE pay_time IS NOT NULL
-    """
-    
-    # Добавляем фильтрацию по времени, если указано
-    if start_time:
-        query += " AND pay_time >= $1"
-
-    query += " GROUP BY order_type, quantity ORDER BY order_type, quantity;"
-
-    # Выполняем запрос
-    if start_time:
-        rows = await conn.fetch(query, start_time)
+    # Конвертация start_time в UTC, если он определён
+    if start_moscow:
+        start_utc = start_moscow.astimezone(utc_tz)
+        # В зависимости от требований к базе данных, можно передавать datetime с timezone или UNIX timestamp
+        # Здесь будем использовать UTC datetime
+        start_time = start_utc
     else:
-        rows = await conn.fetch(query)
+        start_time = None
 
-    await conn.close()
-    
+    logger.info(f'Получение статистики в {now_moscow} по МСК, {now_utc} по UTC')
+
+    conn = await get_conn()
+    try:
+        # Основной SQL-запрос с условием времени
+        query = """
+        SELECT 
+            order_type,
+            quantity,
+            COUNT(*) AS count,
+            SUM(amount) AS total_amount
+        FROM orders
+        WHERE pay_time IS NOT NULL
+        """
+
+        # Добавляем фильтрацию по времени, если указано
+        if start_time:
+            query += " AND pay_time >= $1"
+
+        query += " GROUP BY order_type, quantity ORDER BY order_type, quantity;"
+
+        # Выполняем запрос
+        if start_time:
+            rows = await conn.fetch(query, start_time)
+        else:
+            rows = await conn.fetch(query)
+    finally:
+        await conn.close()
+
     # Организуем данные в удобный для обработки формат
     stats = {}
     for row in rows:
@@ -732,6 +775,6 @@ async def get_orders_statistics(period: str = "all"):
             'count': row['count'],
             'total_amount': row['total_amount']
         }
-    
+
     return stats
 
