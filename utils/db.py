@@ -725,7 +725,7 @@ async def get_orders_statistics(period: str = "all"):
 
     # Текущее время в Москве
     now_moscow = datetime.now(moscow_tz)
-    now_utc = datatime.now(utc_tz)
+    now_utc = datetime.now(utc_tz)
 
     # Определяем начало периода на основе выбранного периода
     if period == "24h":
