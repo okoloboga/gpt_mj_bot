@@ -254,7 +254,7 @@ async def notify_low_midjourney_requests(user_id, bot: Bot):
 
 
 @dp.errors_handler()
-async def log_all_updates(update: types.Update, exception: Exception = None):
+async def log_all_updates(update: Update, exception: Exception = None):
     logging.debug(f"Update received: {update.to_python()}")
     if exception:
         logging.error(f"Exception: {exception}")
