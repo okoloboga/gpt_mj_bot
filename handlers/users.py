@@ -260,12 +260,12 @@ async def log_all_updates(update: Update, exception: Exception = None):
         logging.error(f"Exception: {exception}")
     return True
 
-
+'''
 @dp.callback_query_handler()
 async def all_callback_handler(call: CallbackQuery):
     logging.info(f"Received callback_data: {call.data}")
     await call.message.answer("Callback received")
-
+'''
 
 # Хэндлер команды /start
 @dp.message_handler(state="*", commands='start')
