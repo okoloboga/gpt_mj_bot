@@ -183,12 +183,13 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     user = await db.get_user(user_id)
     lang_text = {"en": "compose an answer in English", "ru": "составь ответ на русском языке"}
     prompt += f"\n{lang_text[user['chat_gpt_lang']]}"
-    model = (user['gpt_model']).replace('-', '_')
+    model = user['gpt_model']
+    model_dashed = model.replace("-", "_")
     messages.append({"role": "user", "content": prompt})
 
     await bot.send_chat_action(user_id, ChatActions.TYPING)
 
-    logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model}']}")
+    logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model_dashed}']}")
 
     res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPT
 
@@ -212,7 +213,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     user_notified = await db.get_user_notified_gpt(user_id)
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
     
-    if 0 < user[f"tokens_{model}"] <= 3000:  # Если осталось 3 тыс или меньше токенов
+    if 0 < user[f"tokens_{model_dashed}"] <= 3000:  # Если осталось 3 тыс или меньше токенов
         if user_notified is None:
             await db.create_user_notification_gpt(user_id)
             await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов
