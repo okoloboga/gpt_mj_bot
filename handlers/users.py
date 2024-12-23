@@ -253,14 +253,11 @@ async def notify_low_midjourney_requests(user_id, bot: Bot):
     """, reply_markup=user_kb.get_midjourney_discount_notification())
 
 
-@dp.update_handler()
-async def log_all_updates(update: Update):
-    logging.штащ(f"Received update: {update}")
-
-
 @dp.errors_handler()
-async def handle_errors(update: Update, exception: Exception):
-    logging.error(f"Update: {update} \n{exception}")
+async def log_all_updates(update: types.Update, exception: Exception = None):
+    logging.debug(f"Update received: {update.to_python()}")
+    if exception:
+        logging.error(f"Exception: {exception}")
     return True
 
 
