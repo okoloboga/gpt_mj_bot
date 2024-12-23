@@ -65,47 +65,47 @@ def escape_markdown_v2(text):
     return re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', text)
 
 
-def remove_latex(text):
+# Проверка на наличие LaTeX формул
+def contains_latex(text):
     """
-    Удаляет LaTeX разметку (\( ... \) и \[ ... \]), заменяет формулы на читаемый текст.
+    Проверяет, содержит ли текст LaTeX формулы.
     """
-    # Удаляем \( ... \) и \[ ... \], оставляя содержимое
-    text = re.sub(r'\\\((.*?)\\\)', r'\1', text)  # Форматы \( ... \)
-    text = re.sub(r'\\\[(.*?)\\\]', r'\1', text)  # Форматы \[ ... \]
-
-    # Заменяем {,} на запятую
-    text = text.replace('{,}', ',')
-
-    # Преобразуем m_{\text{H}_2} в H2
-    text = re.sub(r'm_{\\text{([A-Za-z0-9_]+)}}', r'\1', text)
-
-    # Заменяем ^\circ на ° (градусы)
-    text = text.replace('^\\circ', '°')
-
-    # Убираем лишние обратные слеши, но сохраняем переносы строк
-    text = text.replace('\\', '')
-
-    # Сохраняем переносы строк, удаляя лишние пробелы вокруг них
-    text = re.sub(r' *\n *', '\n', text)
-
-    # Убираем потенциальные избыточные пробелы
-    text = re.sub(r' +', ' ', text)
-
-    return text.strip()
+    return re.search(r'\\\((.*?)\\\)|\\\[(.*?)\\\]', text)
 
 
-# Функция для обработки ответа GPT
+# Генерация изображения из LaTeX формулы
+def generate_formula_image(formula):
+    """
+    Генерирует изображение из LaTeX формулы.
+    """
+    fig, ax = plt.subplots(figsize=(5, 1))
+    ax.text(0.5, 0.5, f"${formula}$", fontsize=20, ha='center', va='center')
+    ax.axis('off')
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    plt.close(fig)
+    return buf
+
+
+# Универсальная обработка ответа
 async def process_gpt_response(user_id, bot: Bot, gpt_response, reply_markup=None):
     """
     Универсальная обработка ответа от GPT и отправка его пользователю через Bot.
     """
     try:
-        # Удаляем LaTeX формулы
-        cleaned_response = remove_latex(gpt_response)
+        # Проверяем на наличие LaTeX
+        if contains_latex(gpt_response):
+            formulas = re.findall(r'\\\((.*?)\\\)|\\\[(.*?)\\\]', gpt_response)
+            for formula in formulas:
+                latex_code = formula[0] or formula[1]  # Берём формулу из групп
+                image = generate_formula_image(latex_code)
+                await bot.send_photo(chat_id=user_id, photo=image)
+            return
 
         # Проверяем возможность отправки через MarkdownV2
         try:
-            escaped_text = escape_markdown_v2(cleaned_response)
+            escaped_text = escape_markdown_v2(gpt_response)
             await bot.send_message(chat_id=user_id, text=escaped_text, parse_mode="MarkdownV2", reply_markup=reply_markup)
             return
         except Exception as markdown_error:
@@ -114,18 +114,17 @@ async def process_gpt_response(user_id, bot: Bot, gpt_response, reply_markup=Non
 
         # Попробуем отправить как HTML
         try:
-            await bot.send_message(chat_id=user_id, text=cleaned_response, parse_mode="HTML", reply_markup=reply_markup)
+            await bot.send_message(chat_id=user_id, text=gpt_response, parse_mode="HTML", reply_markup=reply_markup)
             return
         except Exception as html_error:
             print(f"HTML ошибка: {html_error}")
             pass
 
         # Если ничего не подошло, отправляем как простой текст
-        await bot.send_message(chat_id=user_id, text=cleaned_response, reply_markup=reply_markup)
+        await bot.send_message(chat_id=user_id, text=gpt_response, reply_markup=reply_markup)
     except Exception as e:
         await bot.send_message(chat_id=user_id, text="Ошибка при обработке сообщения.")
         print(f"Ошибка: {e}")
-
 
 
 # Снижение баланса пользователя
@@ -271,10 +270,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     logger.info(f"Ответ от ChatGPT-{model}: {res}")
 
     await state.update_data(content=res["content"])
-    keyboard = user_kb.get_clear_or_audio()
-    await process_gpt_response(user_id, bot, res["content"], keyboard)
-
-    # await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
+    await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
 
     if not res["status"]:
         return
