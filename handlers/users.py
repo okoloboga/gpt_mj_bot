@@ -4,7 +4,7 @@ from typing import List
 
 import requests
 from aiogram import Bot
-from aiogram.types import Message, CallbackQuery, ChatActions, ContentType, MediaGroup
+from aiogram.types import Message, CallbackQuery, ChatActions, ContentType, MediaGroup, Update
 from aiogram.types.input_file import InputFile
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
@@ -197,7 +197,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
     await state.update_data(content=res["content"])
 
-    await bot.send_message(user_iНасd, res["content"], reply_markup=user_kb.get_clear_or_audio())
+    await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
 
     if not res["status"]:
         return
@@ -252,6 +252,16 @@ async def notify_low_midjourney_requests(user_id, bot: Bot):
 Успейте приобрести запросы со скидкой, предложение актуально <b>24 часа</b>⤵️
     """, reply_markup=user_kb.get_midjourney_discount_notification())
 
+
+@dp.update_handler()
+async def log_all_updates(update: Update):
+    logging.штащ(f"Received update: {update}")
+
+
+@dp.errors_handler()
+async def handle_errors(update: Update, exception: Exception):
+    logging.error(f"Update: {update} \n{exception}")
+    return True
 
 
 @dp.callback_query_handler()
