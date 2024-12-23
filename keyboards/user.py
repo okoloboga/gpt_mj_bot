@@ -206,7 +206,7 @@ def get_chatgpt_models():
         InlineKeyboardButton("GPT-4o", callback_data="buy_chatgpt_tokens:4o"),
         InlineKeyboardButton("GPT-o1-preview", callback_data="buy_chatgpt_tokens:o1-preview"),
         InlineKeyboardButton("GPT-o1-mini", callback_data="buy_chatgpt_tokens:o1-mini"),
-        InlineKeyboardButton("📋Отличия моделей GPT", url=""),
+        InlineKeyboardButton("📋Отличия моделей GPT", url="https://google.com"),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
@@ -216,7 +216,7 @@ def get_chatgpt_models_noback():
         InlineKeyboardButton("GPT-4o", callback_data="buy_chatgpt_tokens:4o"),
         InlineKeyboardButton("GPT-o1-preview", callback_data="buy_chatgpt_tokens:o1-preview"),
         InlineKeyboardButton("GPT-o1-mini", callback_data="buy_chatgpt_tokens:o1-mini"),
-        InlineKeyboardButton("📋Отличия моделей GPT", url=""),
+        InlineKeyboardButton("📋Отличия моделей GPT", url="https://google.com"),
     )
 
 

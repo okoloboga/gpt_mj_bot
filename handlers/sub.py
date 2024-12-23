@@ -34,8 +34,6 @@ def get_pay_urls(order_id, amount):
 # Меню для выбора между ChatGPT и MidJourney
 @dp.callback_query_handler(text="buy_sub") 
 async def choose_neural_network(call: CallbackQuery):
-
-    logger.info(f'Хэндлер {call.data}')
     
     await call.message.edit_text("""
 Выберите нейросеть⤵️""", 
