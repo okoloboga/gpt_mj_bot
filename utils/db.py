@@ -242,6 +242,9 @@ async def remove_chatgpt(user_id, tokens, model):
     conn: Connection = await get_conn()
     dashed_model = model.replace("-", "_")
     column = f'tokens_{model}'
+
+    logger.info('Model: {model}, column: {column}')
+
     if column not in {'tokens_4o', 'tokens_4o_mini', 'tokens_o1_preview', 'tokens_o1_mini'}:
         raise ValueError("Invalid model name")
 
