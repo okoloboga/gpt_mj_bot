@@ -421,7 +421,8 @@ async def back_to_profile(call: CallbackQuery, state: FSMContext):
 
     if src == "acc":
         await state.finish()
-        user = await db.get_user(call.from_user.id)  # Получаем данные пользователя
+        user_id = call.from_user.id
+        user = await db.get_user(user_id)  # Получаем данные пользователя
         user_lang = user['chat_gpt_lang']
 
         # Формируем текст с количеством доступных генераций и токенов
