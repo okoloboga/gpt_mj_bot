@@ -9,6 +9,9 @@ from aiogram.types.input_file import InputFile
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 
+import matplotlib.pyplot as plt
+import io
+import re
 import tempfile
 import os
 import config
@@ -52,6 +55,77 @@ async def check_promocode(user_id, code, bot: Bot):
         elif len(all_user_promocode) >= promocode["uses_count"]:
             await bot.send_message(user_id, "<b>Ссылка исчерпала максимальное количество активаций.</b>")
 '''
+
+
+# Экранирование для MarkdownV2
+def escape_markdown_v2(text):
+    """
+    Экранирует текст для использования в MarkdownV2.
+    """
+    return re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', text)
+
+
+# Проверка на наличие LaTeX формул
+def contains_latex(text):
+    """
+    Проверяет, содержит ли текст LaTeX формулы.
+    """
+    return re.search(r'\\\((.*?)\\\)|\\\[(.*?)\\\]', text)
+
+
+# Генерация изображения из LaTeX формулы
+def generate_formula_image(formula):
+    """
+    Генерирует изображение из LaTeX формулы.
+    """
+    fig, ax = plt.subplots(figsize=(5, 1))
+    ax.text(0.5, 0.5, f"${formula}$", fontsize=20, ha='center', va='center')
+    ax.axis('off')
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    plt.close(fig)
+    return buf
+
+
+# Универсальная обработка ответа
+async def process_gpt_response(user_id, bot: Bot, gpt_response, reply_markup=None):
+    """
+    Универсальная обработка ответа от GPT и отправка его пользователю через Bot.
+    """
+    try:
+        # Проверяем на наличие LaTeX
+        if contains_latex(gpt_response):
+            formulas = re.findall(r'\\\((.*?)\\\)|\\\[(.*?)\\\]', gpt_response)
+            for formula in formulas:
+                latex_code = formula[0] or formula[1]  # Берём формулу из групп
+                image = generate_formula_image(latex_code)
+                await bot.send_photo(chat_id=user_id, photo=image)
+            return
+
+        # Проверяем возможность отправки через MarkdownV2
+        try:
+            escaped_text = escape_markdown_v2(gpt_response)
+            await bot.send_message(chat_id=user_id, text=escaped_text, parse_mode="MarkdownV2", reply_markup=reply_markup)
+            return
+        except Exception as markdown_error:
+            print(f"MarkdownV2 ошибка: {markdown_error}")
+            pass  # Если MarkdownV2 не прошёл, переходим к HTML
+
+        # Попробуем отправить как HTML
+        try:
+            await bot.send_message(chat_id=user_id, text=gpt_response, parse_mode="HTML", reply_markup=reply_markup)
+            return
+        except Exception as html_error:
+            print(f"HTML ошибка: {html_error}")
+            pass
+
+        # Если ничего не подошло, отправляем как простой текст
+        await bot.send_message(chat_id=user_id, text=gpt_response, reply_markup=reply_markup)
+    except Exception as e:
+        await bot.send_message(chat_id=user_id, text="Ошибка при обработке сообщения.")
+        print(f"Ошибка: {e}")
+
 
 # Снижение баланса пользователя
 async def remove_balance(bot: Bot, user_id):
@@ -196,7 +270,10 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     logger.info(f"Ответ от ChatGPT-{model}: {res}")
 
     await state.update_data(content=res["content"])
-    await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
+    keyboard = user_kb.get_clear_or_audio()
+    await process_gpt_response(user_id, bot, res["content"], keyboard)
+
+    # await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
 
     if not res["status"]:
         return
