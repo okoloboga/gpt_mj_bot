@@ -32,7 +32,7 @@ def get_pay_urls(order_id, amount):
 '''Новые функции выбора покупки токенов - GPT или MJ'''
 
 # Меню для выбора между ChatGPT и MidJourney
-@dp.callback_query_handler(text="buy_sub")
+@dp.callback_query_handler(Text(equals="buy_sub")) 
 async def choose_neural_network(call: CallbackQuery):
 
     logger.info(f'Хэндлер {call.data}')
@@ -45,7 +45,7 @@ async def choose_neural_network(call: CallbackQuery):
 # Меню выбора модели для покупки токенов ChatGPT
 @dp.callback_query_handler(text="select_gpt_tokens")
 async def choose_gpt_tokens(call: CallbackQuery):
-    
+
     user_id = call.from_user.id
     
     await call.message.edit_text("""
