@@ -255,7 +255,7 @@ async def notify_low_midjourney_requests(user_id, bot: Bot):
 
 
 @dp.callback_query_handler()
-async def all_callback_handler(call: types.CallbackQuery):
+async def all_callback_handler(call: CallbackQuery):
     logging.info(f"Received callback_data: {call.data}")
     await call.answer("Callback received")
 
