@@ -250,7 +250,7 @@ def get_chatgpt_tokens_menu(mode, model):
 
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton(
-            f"20 тыс токенов, {prices[model][mode]['price'][0]}₽{'' if mode == 'normal' else f' (-{prices[model][mode]["percent"][0]}%)'}", 
+            f"20 тыс токенов, {prices[model][mode]['price'][0]}₽" + ('' if mode == 'normal' else f' (-{prices[model][mode]["percent"][0]}%)'), 
             callback_data=f"tokens:20000:{model}:{prices[model][mode]['price'][0] if mode == 'normal' else prices[model][mode]['price_data'][0]}:{source}"),
         InlineKeyboardButton(
             f"40 тыс токенов, {prices[model][mode]['price'][1]}₽ (-{prices[model][mode]['percent'][1]}%)", 
