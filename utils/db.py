@@ -32,7 +32,7 @@ async def start():
         "reg_time INT,"  # Время регистрации в формате timestamp
         
         # УДАЛИТЬ КОЛОНКУ
-        "free_chatgpt SMALLINT DEFAULT 5000,"  # Количество бесплатных токенов для ChatGPT
+        # "free_chatgpt SMALLINT DEFAULT 5000,"  # Количество бесплатных токенов для ChatGPT
         
         "free_image SMALLINT DEFAULT 3,"  # Количество бесплатных изображений в MidJourney
         "default_ai VARCHAR(10) DEFAULT 'empty',"  # Выбранный по умолчанию AI
