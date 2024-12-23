@@ -230,23 +230,23 @@ def get_chatgpt_tokens_menu(mode, model):
     else:
         source = 'not_gpt'
 
-    prices = {'4o': {'normal': {'price': [199, 349, 469, 739],
-                                'percent': [0, 12, 21, 25]},
-                     'discount': {'price': ['199 > 189', '349 > 315', '469 > 412', '739 > 628'],
-                                  'price_data' : [189, 315, 412, 628],
-                                  'percent': [5, 10, 12, 15]}},
+    prices = {'4o': {'normal': {'price': [199, 349, 469, 739, 10],
+                                'percent': [0, 12, 21, 25, 0]},
+                     'discount': {'price': ['199 > 189', '349 > 315', '469 > 412', '739 > 628', '10 > 5'],
+                                  'price_data' : [189, 315, 412, 628, 5],
+                                  'percent': [5, 10, 12, 15, 0]}},
 
-              'o1-preview': {'normal': {'price': [999, 1799, 2549, 3999],
-                                        'percent': [0, 10, 15, 20]},
-                             'discount': {'price': ['999 > 949', '1799 > 1619', '2549 > 2166', '3999 > 3199'],
-                                          'price_data' : [949, 1619, 2166, 3199],
-                                          'percent': [5, 10, 15, 20]}},
+              'o1-preview': {'normal': {'price': [999, 1799, 2549, 3999, 10],
+                                        'percent': [0, 10, 15, 20, 0]},
+                             'discount': {'price': ['999 > 949', '1799 > 1619', '2549 > 2166', '3999 > 3199', '10 > 5'],
+                                          'price_data' : [949, 1619, 2166, 3199, 5],
+                                          'percent': [5, 10, 15, 20, 0]}},
 
-              'o1-mini': {'normal': {'price': [239, 429, 599, 949],
-                                     'percent': [0, 10, 15, 20]},
-                         'discount': {'price': ['239 > 227', '429 > 386', '599 > 509', '949 > 757'],
-                                      'price_data' : [227, 386, 509, 757],
-                                      'percent': [5, 10, 15, 20]}}}
+              'o1-mini': {'normal': {'price': [239, 429, 599, 949, 10],
+                                     'percent': [0, 10, 15, 20, 0]},
+                         'discount': {'price': ['239 > 227', '429 > 386', '599 > 509', '949 > 757', '10 > 5'],
+                                      'price_data' : [227, 386, 509, 757, 5],
+                                      'percent': [5, 10, 15, 20, 0]}}}
 
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton(
@@ -261,6 +261,9 @@ def get_chatgpt_tokens_menu(mode, model):
         InlineKeyboardButton(
             f"100 тыс токенов, {prices[model][mode]['price'][3]}₽ (-{prices[model][mode]['percent'][3]}%)",
             callback_data=f"tokens:100000:{model}:{prices[model][mode]['price'][3] if mode == 'normal' else prices[model][mode]['price_data'][3]}:{source}"),
+        InlineKeyboardButton(
+            f"1 тыс токенов, {prices[model][mode]['price'][4]}₽ (-{prices[model][mode]['percent'][4]}%)", 
+            callback_data=f"tokens:20000:{model}:{prices[model][mode]['price'][4] if mode == 'normal' else prices[model][mode]['price_data'][4]}:{source}"),            
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
