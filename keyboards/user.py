@@ -80,7 +80,7 @@ def model_keyboard(selected_model: str):
               "o1-mini": "GPT-o1-mini"}
     buttons = [
         InlineKeyboardButton(
-            f"{value}✅" if key == selected_voice else value,
+            f"{value}✅" if key == selected_model else value,
             callback_data=f"select_model:{key}"
         )
         for key, value in models.items()
