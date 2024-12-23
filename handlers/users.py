@@ -104,6 +104,7 @@ async def process_gpt_response(user_id, bot: Bot, gpt_response, reply_markup=Non
         try:
             escaped_text = escape_markdown_v2(cleaned_response)
             await bot.send_message(chat_id=user_id, text=escaped_text, parse_mode="MarkdownV2", reply_markup=reply_markup)
+            return
         except Exception as markdown_error:
             print(f"MarkdownV2 ошибка: {markdown_error}")
             pass  # Если MarkdownV2 не прошёл, переходим к HTML
@@ -111,6 +112,7 @@ async def process_gpt_response(user_id, bot: Bot, gpt_response, reply_markup=Non
         # Попробуем отправить как HTML
         try:
             await bot.send_message(chat_id=user_id, text=cleaned_response, parse_mode="HTML", reply_markup=reply_markup)
+            return
         except Exception as html_error:
             print(f"HTML ошибка: {html_error}")
             pass
