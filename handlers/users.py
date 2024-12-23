@@ -875,7 +875,7 @@ async def handle_voice(message: Message, state: FSMContext):
     if user["default_ai"] == "chatgpt":
         model = (user["gpt_model"]).replace("-", "_")
 
-        if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
+        if user[f"tokens_{model}"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
 
         data = await state.get_data()
@@ -948,7 +948,7 @@ async def photo_imagine(message: Message, state: FSMContext):
     if user["default_ai"] == "chatgpt":
         model = (user["gpt_model"]).replace('-', '_')
 
-        if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
+        if user[f"tokens_{model}"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
 
         data = await state.get_data()
