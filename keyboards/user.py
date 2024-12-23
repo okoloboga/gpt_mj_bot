@@ -263,7 +263,7 @@ def get_chatgpt_tokens_menu(mode, model):
             callback_data=f"tokens:100000:{model}:{prices[model][mode]['price'][3] if mode == 'normal' else prices[model][mode]['price_data'][3]}:{source}"),
         InlineKeyboardButton(
             f"1 тыс токенов, {prices[model][mode]['price'][4]}₽ (-{prices[model][mode]['percent'][4]}%)", 
-            callback_data=f"tokens:20000:{model}:{prices[model][mode]['price'][4] if mode == 'normal' else prices[model][mode]['price_data'][4]}:{source}"),            
+            callback_data=f"tokens:1000:{model}:{prices[model][mode]['price'][4] if mode == 'normal' else prices[model][mode]['price_data'][4]}:{source}"),            
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
