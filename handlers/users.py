@@ -198,6 +198,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     await state.update_data(content=res["content"])
 
     await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
+    
     if not res["status"]:
         return
     messages.append({"role": "assistant", "content": res["content"]})
@@ -205,6 +206,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     # Списывание токенов
     if user["tokens_4o_mini"] > 0:
         await db.remove_free_chatgpt(user_id, res["tokens"])  # Уменьшаем бесплатные токены
+        free_request = True
     else:
         await db.remove_chatgpt(user_id, res["tokens"], model)  # Уменьшаем платные токены
 
@@ -214,11 +216,11 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
     
     if 0 < user[f"tokens_{model_dashed}"] <= 3000:  # Если осталось 3 тыс или меньше токенов
-        if user_notified is None:
+        if user_notified is None and free_request:
             await db.create_user_notification_gpt(user_id)
             await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов
             # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
-        else:
+        elif not free_request and user_notified is not None:
             last_notification = user_notified['last_notification']
             if last_notification is None or now > last_notification + timedelta(days=30):
                 await db.update_user_notification_gpt(user_id)
@@ -377,8 +379,6 @@ async def show_profile(message: Message, state: FSMContext):
 
     logger.info(f"Колиество токенов и запросов для {user_id}:mj: {mj}, gpt_4o: {gpt_4o}, gpt_4o_mini: {gpt_4o_mini}, gpt_o1_preview: {gpt_o1_preview}, gpt_o1_mini: {gpt_o1_mini}")
 
-    keyboard = user_kb.get_account(user_lang, "account")
-
     # Формируем текст с количеством доступных генераций и токенов
     sub_text = f"""
 Вам доступно⤵️
@@ -392,7 +392,7 @@ async def show_profile(message: Message, state: FSMContext):
     
     # Отправляем сообщение с обновленными данными аккаунта
     await message.answer(f"""🆔: <code>{user_id}</code>
-{sub_text}""", reply_markup=keyboard)
+{sub_text}""", reply_markup=user_kb.get_account(user_lang, "account"))
 
 
 
