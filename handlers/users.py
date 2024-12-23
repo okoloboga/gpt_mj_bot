@@ -415,7 +415,7 @@ async def show_profile(message: Message, state: FSMContext):
 @dp.callback_query_handler(Text(startswith="back_to_profile"))
 async def back_to_profile(call: CallbackQuery, state: FSMContext):
 
-    logger.info('Back To Profile:', call.data)
+    logger.info(f"Back To Profile {call.data}")
 
     src = call.data.split(":")[1]
 
