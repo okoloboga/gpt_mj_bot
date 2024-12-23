@@ -65,56 +65,6 @@ async def remove_balance(bot: Bot, user_id):
 Успей пополнить в течении 24 часов и получи на счёт +10% от суммы пополнения ⤵️""", 
                                reply_markup=user_kb.get_pay(user_id, 10))  # Кнопка пополнения баланса
 
-'''
-# Тексты для разных типов подписок
-sub_types_texts = {
-    "standard": """Тариф <b>«Стандарт»</b>
-2 млн токенов для ChatGPT
-20 запросов в Midjourney в день""",
-    "premium": """Тариф <b>«Премиум»</b>
-5 млн токенов для ChatGPT
-40 запросов в Midjourney в день""",
-    "illustrator": """Тариф <b>«Иллюстратор»</b>
-50 тыс токенов для ChatGPT
-100 запросов в Midjourney в день""",
-    "author": """Тариф <b>«Автор»</b>
-10 млн токенов для ChatGPT
-5 запросов в Midjourney в день"""
-}
-
-
-# Уведомление о недостатке средств на балансе
-async def not_enough_balance(bot: Bot, user_id, ai_type="chatgpt"):
-
-    text = """К сожалению ваш суточный лимит исчерпан
-Вы можете выбрать тариф с бо́льшим количество запросов⤵️\n\n"""
-    user = await db.get_user(user_id)
-    if user["sub_time"] and user["sub_time"] < datetime.now():
-        # Уведомление о необходимости подписки, если лимит исчерпан
-        if ai_type == "chatgpt":
-            text = """К сожалению лимит запросов исчерпан
-Больше запросов для ChatGPT доступно по подписке⤵️"""
-        else:
-            text = """К сожалению лимит запросов исчерпан
-Больше запросов для Midjourney доступно по подписке⤵️"""
-        kb = user_kb.top_up_balance  # Кнопка для пополнения баланса
-    else:
-        showed_sub_types = ()
-        if user["sub_type"] == "base":
-            showed_sub_types = ("standard", "premium", "illustrator", "author")
-        elif user["sub_type"] == "standard":
-            showed_sub_types = ("premium", "illustrator", "author")
-        elif user["sub_type"] == "premium":
-            showed_sub_types = ("illustrator", "author")
-        for sub_type in showed_sub_types:
-            text += f"{sub_types_texts[sub_type]}\n\n"
-        kb = user_kb.top_up_balance  # Кнопка для пополнения
-        if user["sub_type"] in ("illustrator", "author"):
-            kb = None  # Для этих типов тарифов кнопка пополнения не нужна
-            text = "К сожалению ваш суточный лимит исчерпан"
-    await bot.send_message(user_id, text, reply_markup=kb)
-'''
-
 
 # Функция для уведомления пользователя о недостатке средств
 async def not_enough_balance(bot: Bot, user_id: int, ai_type: str):
@@ -122,7 +72,19 @@ async def not_enough_balance(bot: Bot, user_id: int, ai_type: str):
     now = datetime.now()
 
     if ai_type == "chatgpt":
+        user = await db.get_user(user_id)
+        model = user["gpt_model"]
+        model_map = {'4o-mini': 'ChatGPT',
+                     '4o': 'GPT-4o',
+                     'o1-preview': 'GPT-o1-preview',
+                     'o1-mini': 'GPT-o1-mini'}
+
         user_data = await db.get_user_notified_gpt(user_id)
+
+        keyboard = user_kb.get_сhatgpt_models_noback() if model == "4o-mini" else user_kb.get_сhatgpt_tokens_menu('normal', model)
+        
+        '''
+        # Нас больше не интресует, что была скидка или нет.
 
         if user_data and user_data['last_notification']:
             last_notification = user_data['last_notification']
@@ -134,15 +96,13 @@ async def not_enough_balance(bot: Bot, user_id: int, ai_type: str):
 
 Выберите интересующий вас вариант⤵️
                 """,
-                    reply_markup=user_kb.get_сhatgpt_discount_tokens_menu()
+                    reply_markup=user_kb.get_сhatgpt_models_noback()
                 )
                 return
+        '''
 
-        await bot.send_message(user_id, """
-⚠️Токены для ChatGPT закончились!
-
-Выберите интересующий вас вариант⤵️
-        """, reply_markup=user_kb.get_chatgpt_tokens_menu())  # Отправляем уведомление с клавиатурой для пополнения токенов
+        await bot.send_message(user_id, f"⚠️Токены для {model_map[model]} закончились!\n\nВыберите интересующий вас вариант⤵️", 
+            reply_markup=keyboard)  # Отправляем уведомление с клавиатурой для пополнения токенов
 
     elif ai_type == "image":
         user_data = await db.get_user_notified_mj(user_id)
@@ -223,11 +183,17 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     user = await db.get_user(user_id)
     lang_text = {"en": "compose an answer in English", "ru": "составь ответ на русском языке"}
     prompt += f"\n{lang_text[user['chat_gpt_lang']]}"
+    model = user['gpt_model']
     messages.append({"role": "user", "content": prompt})
 
     await bot.send_chat_action(user_id, ChatActions.TYPING)
 
-    res = await ai.get_gpt(messages)  # Отправляем запрос в ChatGPT
+    logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model}']}")
+
+    res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPT
+
+    logger.info(f"Ответ от ChatGPT-{model}: {res}")
+
     await state.update_data(content=res["content"])
 
     await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
@@ -236,17 +202,17 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     messages.append({"role": "assistant", "content": res["content"]})
 
     # Списывание токенов
-    if user["free_chatgpt"] > 0:
+    if user["tokens_4o_mini"] > 0:
         await db.remove_free_chatgpt(user_id, res["tokens"])  # Уменьшаем бесплатные токены
     else:
-        await db.remove_chatgpt(user_id, res["tokens"])  # Уменьшаем платные токены
+        await db.remove_chatgpt(user_id, res["tokens"], model)  # Уменьшаем платные токены
 
     # Проверка на количество оставшихся токенов
     now = datetime.now()
     user_notified = await db.get_user_notified_gpt(user_id)
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
     
-    if 0 < user["tokens"] <= 30000:  # Если осталось 30 тыс или меньше токенов
+    if 0 < user[f"tokens_{model}"] <= 3000:  # Если осталось 3 тыс или меньше токенов
         if user_notified is None:
             await db.create_user_notification_gpt(user_id)
             await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов
@@ -266,12 +232,12 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 # Уведомение о низком количестве токенов GPT
 async def notify_low_chatgpt_tokens(user_id, bot: Bot):
 
+    user = await db.get_user(call.from_user.id)
     await bot.send_message(user_id, """
-У вас заканчиваются токены для 💬ChatGPT
+У вас заканчиваются запросы для 💬ChatGPT
 Специально для вас мы подготовили <b>персональную скидку</b>!
-
-Успейте приобрести токены со скидкой, предложение актуально <b>24 часа</b>⤵️
-    """, reply_markup=user_kb.get_chatgpt_discount_nofication())
+Выберите интересующую Вас модель⤵️
+    """, reply_markup=user_kb.get_chatgpt_models_noback())
 
 # Уведомление о низком количестве запросов MidJourney
 async def notify_low_midjourney_requests(user_id, bot: Bot):
@@ -320,6 +286,16 @@ async def start_message(message: Message, state: FSMContext):
     if code is not None:
         await check_promocode(message.from_user.id, code, message.bot)
 
+
+# Хендлер настроек ChatGPT
+@dp.callback_query_handler(text="settings")
+async def settings(call: CallbackQuery):
+
+    user = await db.get_user(call.from_user.id)
+
+    await call.message.answer("""Здесь Вы можете изменить настройки 
+ChatGPT⤵️""", reply_markup=user_kb.settings)
+    await call.answer()
 
 
 # Хендлер для проверки подписки через callback-запрос
@@ -395,7 +371,12 @@ async def show_profile(message: Message, state: FSMContext):
     logger.info(user_lang)
 
     mj = int(user['mj']) + int(user['free_image']) if int(user['mj']) + int(user['free_image']) >= 0 else 0
-    gpt = int(user['tokens']) + int(user['free_chatgpt']) if int(user['tokens']) + int(user['free_chatgpt']) >= 0 else 0
+    gpt_4o_mini = int(user['tokens_4o-mini']) if int(user['tokens_4o-mini']) >= 0 else 0
+    gpt_4o = int(user['tokens_4o']) if int(user['tokens_4o']) >= 0 else 0
+    gpt_o1_preview = int(user['tokens_o1-preview']) if int(user['tokens_o1-preview']) >= 0 else 0
+    gpt_o1_mini = int(user['tokens_o1-mini']) if int(user['tokens_o1-mini']) >= 0 else 0
+
+    logger.info(f"Колиество токенов и запросов для {user_id}:mj: {mj}, gpt_4o: {gpt_4o}, gpt_4o_mini: {gpt_4o_mini}, gpt_o1_preview: {gpt_o1_preview}, gpt_o1_mini: {gpt_o1_mini}")
 
     keyboard = user_kb.get_account(user_lang, "account")
 
@@ -404,26 +385,16 @@ async def show_profile(message: Message, state: FSMContext):
 Вам доступно⤵️
 
 Генерации 🎨Midjourney:  {format(mj, ',').replace(',', ' ')}
-Токены для 💬ChatGPT:  {format(gpt, ',').replace(',', ' ')}
+Токены 💬GPT-4o:  {format(gpt_4o, ',').replace(',', ' ')}
+Токены 💬GPT-4o-mini:  {format(gpt_4o_mini, ',').replace(',', ' ')}
+Токены 💬GPT-o1-preview:  {format(gpt_o1_preview, ',').replace(',', ' ')}
+Токены 💬GPT-o1-mini:  {format(gpt_o1_mini, ',').replace(',', ' ')}
         """
     
     # Отправляем сообщение с обновленными данными аккаунта
     await message.answer(f"""🆔: <code>{user_id}</code>
 {sub_text}""", reply_markup=keyboard)
 
-''' Старая функция для показа профиля пользователя
-
-# Хендлер для показа профиля пользователя (страница аккаунта)
-@dp.message_handler(state="*", text="⚙Аккаунт")
-async def show_profile(message: Message, state: FSMContext):
-    await state.finish()
-    user = await db.get_user(message.from_user.id)  # Получаем данные пользователя
-    sub_text = "У вас нет активной подписки"
-    if user["sub_type"] and user["sub_time"] > datetime.now():
-        sub_text = "Действующий тариф - " + config.sub_types[user["sub_type"]]["title"]  # Отображение текущей подписки
-    await message.answer(f"""🆔: <code>{message.from_user.id}</code>
-{sub_text}""", reply_markup=user_kb.get_account(user["chat_gpt_lang"], "account"))
-'''
 
 
 # Хендлер для возврата к профилю пользователя через callback-запрос
@@ -435,16 +406,33 @@ async def back_to_profile(call: CallbackQuery, state: FSMContext):
     if src == "acc":
         await state.finish()
         user = await db.get_user(call.from_user.id)  # Получаем данные пользователя
+        user_lang = user['chat_gpt_lang']
+
+        # Формируем текст с количеством доступных генераций и токенов
+        mj = int(user['mj']) + int(user['free_image']) if int(user['mj']) + int(user['free_image']) >= 0 else 0
+        gpt_4o_mini = int(user['tokens_4o-mini']) if int(user['tokens_4o-mini']) >= 0 else 0
+        gpt_4o = int(user['tokens_4o']) if int(user['tokens_4o']) >= 0 else 0
+        gpt_o1_preview = int(user['tokens_o1-preview']) if int(user['tokens_o1-preview']) >= 0 else 0
+        gpt_o1_mini = int(user['tokens_o1-mini']) if int(user['tokens_o1-mini']) >= 0 else 0
+
+        logger.info(f"Колиество токенов и запросов для {user_id}:mj: {mj}, gpt_4o: {gpt_4o}, gpt_4o_mini: {gpt_4o_mini}, gpt_o1_preview: {gpt_o1_preview}, gpt_o1_mini: {gpt_o1_mini}")
+
+        keyboard = user_kb.get_account(user_lang, "account")
 
         # Формируем текст с количеством доступных генераций и токенов
         sub_text = f"""
-Доступно генераций для 🎨Midjourney:  {format(int(user['mj']) + int(user['free_image']), ',').replace(',', ' ')}
-Доступно токенов для 💬ChatGPT:  {format(int(user['tokens']) + int(user['free_chatgpt']), ',').replace(',', ' ')}
-        """
-    
+Вам доступно⤵️
+
+Генерации 🎨Midjourney:  {format(mj, ',').replace(',', ' ')}
+Токены 💬GPT-4o:  {format(gpt_4o, ',').replace(',', ' ')}
+Токены 💬GPT-4o-mini:  {format(gpt_4o_mini, ',').replace(',', ' ')}
+Токены 💬GPT-o1-preview:  {format(gpt_o1_preview, ',').replace(',', ' ')}
+Токены 💬GPT-o1-mini:  {format(gpt_o1_mini, ',').replace(',', ' ')}
+            """
+        
         # Отправляем сообщение с обновленными данными аккаунта
-        await call.message.edit_text(f"""🆔: <code>{call.from_user.id}</code>
-    {sub_text}""", reply_markup=user_kb.get_account(user["chat_gpt_lang"], "account"))
+        await message.answer(f"""🆔: <code>{user_id}</code>
+    {sub_text}""", reply_markup=keyboard)
 
     else:
         await state.finish()
@@ -456,7 +444,7 @@ async def back_to_profile(call: CallbackQuery, state: FSMContext):
 Специально для вас мы подготовили <b>персональную скидку</b>!
 
 Успейте приобрести токены со скидкой, предложение актуально <b>24 часа</b>⤵️
-            """, reply_markup=user_kb.get_chatgpt_discount_nofication())
+            """, reply_markup=user_kb.get_chatgpt_tokens_menu('disount', user["gpt_model"]))
 
         if src == "not_mj":
             await call.message.edit_text("""
@@ -486,31 +474,6 @@ async def change_lang(call: CallbackQuery):
     await call.message.edit_reply_markup(reply_markup=kb)  # Обновляем клавиатуру
 
 
-'''
-# Хендлер для выбора суммы пополнения
-@dp.callback_query_handler(text="top_up_balance")
-async def choose_amount(call: CallbackQuery):
-
-    await call.message.edit_text("Выберите сумму пополнения", reply_markup=user_kb.get_pay(call.from_user.id))  # Меню оплаты
-
-
-# Хендлер для возврата к выбору суммы пополнения через callback-запрос
-@dp.callback_query_handler(text="back_to_choose_balance", state="*")
-async def back_to_choose_balance(call: CallbackQuery):
-
-    await call.message.edit_text("Выберите сумму пополнения", reply_markup=user_kb.get_pay(call.from_user.id))  # Меню оплаты
-
-
-# Хендлер для ввода другой суммы пополнения через callback-запрос
-@dp.callback_query_handler(text="other_amount")
-async def enter_other_amount(call: CallbackQuery):
-
-    await call.message.edit_text("""Введите сумму пополнения баланса в рублях:
-
-<b>Минимальный платеж 200 рублей</b>""", reply_markup=user_kb.back_to_choose)  # Меню с кнопкой "Назад"
-    await states.EnterAmount.enter_amount.set()  # Устанавливаем состояние для ввода суммы
-'''
-
 # Хендлер для ChatGPT
 @dp.message_handler(state="*", text="💬ChatGPT✅")
 @dp.message_handler(state="*", text="💬ChatGPT")
@@ -520,9 +483,10 @@ async def ask_question(message: Message, state: FSMContext):
     await state.finish()  # Завершаем текущее состояние
     await db.change_default_ai(message.from_user.id, "chatgpt")  # Устанавливаем ChatGPT как основной AI
     user = await db.get_user(message.from_user.id)  # Получаем данные пользователя
+    model = user["gpt_model"]
 
     # Проверяем наличие токенов и подписки
-    if user["tokens"] <= 0 and user["free_chatgpt"] <= 0:
+    if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
         return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")  # Сообщаем об исчерпании лимита
 
     # Сообщение с запросом ввода
@@ -582,32 +546,6 @@ async def select_amount(call: CallbackQuery):
 
 ♻️ Средства зачислятся автоматически</b>""", reply_markup=user_kb.get_pay_urls(urls))  # Кнопки с ссылками на оплату
     await call.answer()
-
-
-'''
-# Хендлер для ввода суммы пополнения
-@dp.message_handler(state=states.EnterAmount.enter_amount)
-async def create_other_order(message: Message, state: FSMContext):
-
-    try:
-        amount = int(message.text)  # Проверка, что введено число
-    except ValueError:
-        await message.answer("Введите целое число!")
-        return
-    if amount < 10:
-        await message.answer("Минимальная сумма платежа 200 рублей")
-    else:
-        # Генерация ссылок для пополнения
-        urls = {
-            "tinkoff": pay.get_pay_url_tinkoff(message.from_user.id, amount),
-            "freekassa": pay.get_pay_url_freekassa(message.from_user.id, amount),
-            "payok": pay.get_pay_url_payok(message.from_user.id, amount),
-        }
-        await message.answer(f"""💰 Сумма: <b>{amount} рублей
-
-♻️ Средства зачислятся автоматически</b>""", reply_markup=user_kb.get_pay_urls(urls))  # Кнопки с ссылками на оплату
-        await state.finish()  # Завершаем состояние
-'''
 
 
 # Хендлер для отмены текущего состояния
@@ -725,7 +663,7 @@ async def chatgpt_about_me(call: CallbackQuery, state: FSMContext):
     await call.message.answer(
         '<b>Введите запрос</b>\n\nПоделитесь с ChatGPT любой информацией о себе, чтобы получить более качественные ответы⤵️\n\n<u><a href="https://telegra.ph/Tonkaya-nastrojka-ChatGPT-06-30">Инструкция.</a></u>',
         disable_web_page_preview=True,
-        reply_markup=user_kb.get_menu(user["default_ai"]))
+        reply_markup=user_kb.clear_description())
     await state.set_state(states.ChangeChatGPTAboutMe.text)  # Устанавливаем состояние ввода данных
     await call.answer()
 
@@ -737,7 +675,30 @@ async def change_profile_info(message: Message, state: FSMContext):
     if len(message.text) > 256:
         return await message.answer("Максимальная длина 256 символов")
     await db.update_chatgpt_about_me(message.from_user.id, message.text)  # Обновляем данные в базе
-    await message.answer("Описание обновлено!")
+    await message.answer("✅Описание обновлено!")
+    await state.finish()
+
+
+# Хэндлер ввода характерий ChatGPT
+@dp.callback_query_handler(text="character_menu", state="*")
+async def character_menu(call: CallbackQuery, state: FSMContext):
+
+    user = await db.get_user(call.from_user.id)
+    await call.message.answer(
+        '<b>Введите запрос</b>\n\nНастройте ChatGPT как Вам удобно - тон, настроение, эмоциональный окрас сообщений⤵️\nИнструкция <u><a href="https://telegra.ph/Tonkaya-nastrojka-ChatGPT-06-30"</a></u>',
+        disable_web_page_preview=True,
+        reply_markup=user_kb.clear_description())
+    await state.set_state(states.ChangeChatGPTCharacter.text)
+
+
+# Хендлер для сохранения характера ChatGPT
+@dp.message_handler(state=states.ChangeChatGPTCharacter.text)
+async def change_character(message: Message, state: FSMContext):
+
+    if len(message.text) > 256:
+        return await message.answer("Максимальная длина 256 символов")
+    await db.update_chatgpt_character(message.from_user.id, message.text)  # Обновляем данные в базе
+    await message.answer("✅Описание обновлено!")
     await state.finish()
 
 
@@ -745,9 +706,9 @@ async def change_profile_info(message: Message, state: FSMContext):
 @dp.callback_query_handler(text="reset_chatgpt_settings", state="*")
 async def reset_chatgpt_settings(call: CallbackQuery, state: FSMContext):
 
-    await db.update_chatgpt_settings(call.from_user.id, "")
+    await db.update_chatgpt_character(call.from_user.id, "")
     await db.update_chatgpt_about_me(call.from_user.id, "")  # Сброс данных
-    await call.answer("Данные обновлены", show_alert=True)
+    await call.answer("Описание удалено", show_alert=True)
 
 
 # Хендлер для изменения настроек ChatGPT
@@ -787,11 +748,15 @@ async def gen_prompt(message: Message, state: FSMContext):
     logger.info(f'User: {user} , AI: {user["default_ai"]}, Prompt: {message.text}')
 
     if user["default_ai"] == "chatgpt":
-        if user["tokens"] <= 0 and user["free_chatgpt"] <= 0:
+        model = user["gpt_model"]
+
+        logger.info(f'Текстоавый запрос к GPT. User: {user}, Model: {model}, tokens: {user[f"tokens_{model}"]}')
+
+        if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
 
         data = await state.get_data()
-        system_msg = user["chatgpt_about_me"] + "\n" + user["chatgpt_settings"]
+        system_msg = user["chatgpt_about_me"] + "\n" + user["chatgpt_character"]
         messages = [{"role": "system", "content": system_msg}] if "messages" not in data else data["messages"]
         update_messages = await get_gpt(prompt=message.text, messages=messages, user_id=message.from_user.id,
                                         bot=message.bot, state=state)  # Генерация ответа от ChatGPT
@@ -824,7 +789,9 @@ async def handle_voice(message: Message, state: FSMContext):
         return await message.bot.send_message(796644977, message.from_user.id)
 
     if user["default_ai"] == "chatgpt":
-        if user["tokens"] <= 0 and user["free_chatgpt"] <= 0:
+        model = user["gpt_model"]
+
+        if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
 
         data = await state.get_data()
@@ -873,49 +840,6 @@ async def return_voice(call: CallbackQuery, state: FSMContext):
         await call.answer()
     except Exception as e:
         logger.error(f"Ошибка при закрытии callback уведомления: {e}")
-'''
-
-@dp.callback_query_handler(text="text_to_audio")
-async def return_audio_file(call: CallbackQuery, state: FSMContext):
-
-    user_id = call.from_user.id
-
-    # Пытаемся получить текущий голос пользователя
-    try:
-        user_voice = await db.get_voice(user_id)
-        if not user_voice:  # Если результат пустой
-            raise ValueError("User voice not found")
-    except (ValueError, Exception):  # Если строки нет или другая ошибка
-        user_voice = await db.create_voice(user_id)  # Создаем запись
-
-    # Получаем текст для озвучки
-    content_raw = await state.get_data()
-    content = content_raw.get("content")
-    if not content:
-        await call.message.answer("Нет текста для озвучивания.")
-        return
-
-    # Генерация аудио
-    try:
-        audio_path = text_to_speech(content, voice=user_voice)
-
-        # Отправляем файл как документ
-        with open(audio_path, "rb") as audio_file:
-            await call.message.answer_document(
-                document=audio_file,
-                caption="Ваш файл с озвучкой"
-            )
-
-    except Exception as e:
-        logger.error(f"Ошибка при отправке файла: {e}")
-        await call.message.answer("Произошла ошибка при создании или отправке файла.")
-
-    # Закрываем callback уведомление
-    try:
-        await call.answer()
-    except Exception as e:
-        logger.error(f"Ошибка при закрытии callback уведомления: {e}")
-'''
 
 
 # Хендлер для обработки фотографий
@@ -940,7 +864,9 @@ async def photo_imagine(message: Message, state: FSMContext):
     user = await db.get_user(user_id)
 
     if user["default_ai"] == "chatgpt":
-        if user["tokens"] <= 0 and user["free_chatgpt"] <= 0:
+        model = user["gpt_model"]
+
+        if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
 
         data = await state.get_data()
@@ -976,19 +902,50 @@ async def handle_albums(message: Message, album: List[Message], state: FSMContex
     await get_mj(prompt, message.from_user.id, message.bot)  # Генерация изображения через MidJourney
 
 
+# Вход в меню выбора модели GPT
+@dp.callback_query_handler(text="model_menu")
+async def model_menu(call: CallbackQuery):
+
+    user_id = call.from_user.id
+    user_model = await db.get_model(user_id)
+    
+    logger.info(f"User ID: {user_id}, текущая модель: {user_model}")
+
+    # Динамическое создание клавиатуры с выбранным моделью
+    keyboard = user_kb.model_keyboard(selected_model=user_model)
+    
+    await call.message.answer("Выберите модель GPT для диалогов⤵️:", reply_markup=keyboard)
+    await call.answer()
+
+# Выбор модели GPT
+@dp.callback_query_handler(text_contains="select_model")
+async def select_model(call: CallbackQuery):
+
+    user_id = call.from_user.id
+    selected_model = call.data.split(":")[1]  # Извлечение выбранной модели из данных 
+
+    logger.info(f"User ID: {user_id}, выбранная модель: {selected_model}")
+
+    try:
+        # Записываем выбранную модель в базу данных
+        await db.set_model(user_id, selected_model)
+
+        # Получаем обновленную клавиатуру с выбранной моделью
+        keyboard = user_kb.model_keyboard(selected_model=selected_model)
+
+        await call.message.edit_text("Выберите модель GPT для диалогов⤵️:", reply_markup=keyboard)
+        await call.answer(f"Выбрана модель: {selected_model} ✅")   
+    except Exception as e:
+        logger.error(f"Ошибка при выборе модели GPT: {e}")
+        await call.answer("Произошла ошибка. Попробуйте снова.", show_alert=True)
+
+
 # Вход в меню выбора голоса
 @dp.callback_query_handler(text="voice_menu")
 async def voice_menu(call: CallbackQuery):
 
     user_id = call.from_user.id
-
-    # Пытаемся получить текущий голос пользователя
-    try:
-        user_voice = await db.get_voice(user_id)
-        if not user_voice:  # Если результат пустой
-            raise ValueError("User voice not found")
-    except (ValueError, Exception):  # Если строки нет или другая ошибка
-        user_voice = await db.create_voice(user_id)  # Создаем запись
+    user_voice = await db.get_voice(user_id)
     
     # Динамическое создание клавиатуры с выбранным голосом
     keyboard = user_kb.voice_keyboard(selected_voice=user_voice)

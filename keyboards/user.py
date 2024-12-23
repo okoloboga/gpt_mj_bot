@@ -50,25 +50,44 @@ def get_clear_or_audio():
         )
 
 
-# Клавиатура для настройки ChatGPT
-def get_chat_gpt_keyboard(lang, from_msg):
-
-    return InlineKeyboardMarkup(row_width=2).add(
-        InlineKeyboardButton("✍🏻Рассказать о себе", callback_data="chatgpt_about_me"),
-        InlineKeyboardButton("⚙️Настроить ChatGPT", callback_data="chatgpt_settings")
-    )
-
-
 # Клавиатура с настройками аккаунта пользователя (выбор тарифа, смена языка, сброс настроек)
 def get_account(lang, from_msg):
+
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton("💰Выбрать тариф", callback_data="buy_sub"),
+        InlineKeyboardButton("⚙️Настройки ChatGPT", callback_data="settings")
+    )
+
+# Настройки ChatGPT
+def settings(lang, from_msg):
 
     flag = '🇷🇺' if lang == 'ru' else '🇬🇧'
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("💰Выбрать тариф", callback_data="buy_sub"),
+        InlineKeyboardButton("🤖Выбрать модель ChatGPT", callback_data="model_menu"),
         InlineKeyboardButton(f"Ответы ChatGPT: {flag}", callback_data=f"change_lang:{lang}:{from_msg}"),
+        InlineKeyboardButton("✍🏻Рассказать о себе", callback_data="chatgpt_about_me"),
+        InlineKeyboardButton("🎭Характер ChatGPT", callback_data="character_menu"),
         InlineKeyboardButton("🗣Изменить голос ChatGPT", callback_data="voice_menu"),
-        InlineKeyboardButton("🔄Сбросить настройки ChatGPT", callback_data="reset_chatgpt_settings")
+        InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
+    )
+
+# Выбор модели GPT для диалогов
+def model_keyboard(selected_model: str):
+    models = {"4o-mini": "GPT-4o-mini",
+              "4o": "GPT-4o",
+              "o1-preview": "GPT-o1-preview",
+              "o1-mini": "GPT-o1-mini"}
+    buttons = [
+        InlineKeyboardButton(
+            f"{value}✅" if key == selected_voice else value,
+            callback_data=f"select_model:{key}"
+        )
+        for key, value in voices.items()
+    ]
+    return InlineKeyboardMarkup(row_width=2).add(*buttons).add(
+        InlineKeyboardButton("📋Отличия моделей GPT", url=""),
+        InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
     )
 
 # Выбор голоса для ChatGPT
@@ -86,12 +105,19 @@ def voice_keyboard(selected_voice: str):
         )
         for key, value in voices.items()
     ]
-    
     return InlineKeyboardMarkup(row_width=2).add(*buttons).add(
         InlineKeyboardButton("🔉Прослушать голоса", callback_data="check_voice"),
         InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
     )
 
+
+# Удалить описание или вернуться назад
+def clear_description():
+
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton("✖️Удалить описание", callback_data="reset_chatgpt_settings"),
+        InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
+    )
 
 
 # Кнопка для вариации запроса (например, в MidJourney)
@@ -104,51 +130,12 @@ def get_try_prompt(ai_type):
 # Главное меню бота, где пользователь выбирает, с каким AI он хочет работать (ChatGPT или MidJourney)
 def get_menu(default_ai):
 
-    if default_ai == "chatgpt":
-        return ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(KeyboardButton("💬ChatGPT✅"),
-                                                                          KeyboardButton("🎨Midjourney"),
-                                                                          KeyboardButton("⚙Аккаунт"),
-                                                                          KeyboardButton("👨🏻‍💻Поддержка"),
-                                                                          KeyboardButton("🤝Партнерская программа"))
-    elif default_ai == "image":
-        return ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(KeyboardButton("💬ChatGPT"),
-                                                                          KeyboardButton("🎨Midjourney✅"),
-                                                                          KeyboardButton("⚙Аккаунт"),
-                                                                          KeyboardButton("👨🏻‍💻Поддержка"),
-                                                                          KeyboardButton("🤝Партнерская программа"))
-    else:
-        return ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(KeyboardButton("💬ChatGPT"),
-                                                                          KeyboardButton("🎨Midjourney"),
-                                                                          KeyboardButton("⚙Аккаунт"),
-                                                                          KeyboardButton("👨🏻‍💻Поддержка"),
-                                                                          KeyboardButton("🤝Партнерская программа"))
+    return ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(KeyboardButton(f"{'💬ChatGPT✅' if default_ai == 'chatgpt' else '💬ChatGPT'}"),
+                                                                      KeyboardButton(f"{'🎨Midjourney✅' if default_ai == 'image' else '🎨Midjourney'}"),
+                                                                      KeyboardButton("⚙Аккаунт"),
+                                                                      KeyboardButton("👨🏻‍💻Поддержка"),
+                                                                      KeyboardButton("🤝Партнерская программа"))
 
-'''
-# Кнопки для выбора типа подписки
-sub_types = InlineKeyboardMarkup(row_width=3).add(
-    InlineKeyboardButton("Базовый", callback_data="sub_type:base"),
-    InlineKeyboardButton("Стандарт", callback_data="sub_type:standard"),
-    InlineKeyboardButton("Премиум", callback_data="sub_type:premium"),
-    InlineKeyboardButton("Иллюстратор", callback_data="sub_type:illustrator"),
-    InlineKeyboardButton("Автор", callback_data="sub_type:author"),
-)
-
-
-# Клавиатура для выбора суммы пополнения баланса
-def get_pay(user_id, stock=0):
-
-    if stock == 0:
-        stock_text = ""
-    else:
-        stock_text = f" (+{stock}%)"  # Если действует акция на бонусные средства
-    return InlineKeyboardMarkup(row_width=3).add(
-        InlineKeyboardButton("200₽" + stock_text, callback_data="select_amount:200"),
-        InlineKeyboardButton("500₽" + stock_text, callback_data="select_amount:500"),
-        InlineKeyboardButton("1000₽" + stock_text, callback_data="select_amount:1000")).add(
-        InlineKeyboardButton("💰Другая сумма" + stock_text, callback_data="other_amount")).add(
-        InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
-    )
-'''
 
 # Кнопки для выбора способа оплаты (Tinkoff, криптовалюта и т.д.)
 def get_pay_urls(urls, order_id, src='acc'):
@@ -202,46 +189,6 @@ def get_choose(task_id):
         InlineKeyboardButton("🔍 Zoom Out 2x", callback_data=f"change_image:zoom:2:{task_id}"),
         InlineKeyboardButton("🔍 Zoom Out 1.5x", callback_data=f"change_image:zoom:1.5:{task_id}"))
 
-'''
-# Клавиатура для уведомлений о скидках на оплату
-def get_notify_pay(with_discount):
-
-    if with_discount:
-        buttons = [
-            InlineKeyboardButton("Базовый", callback_data="sub_type:base:discount"),
-            InlineKeyboardButton("Стандарт", callback_data="sub_type:standard:discount"),
-            InlineKeyboardButton("Премиум", callback_data="sub_type:premium:discount"),
-            InlineKeyboardButton("Иллюстратор", callback_data="sub_type:illustrator:discount"),
-            InlineKeyboardButton("Автор", callback_data="sub_type:author:discount"),
-        ]
-    else:
-        buttons = [
-            InlineKeyboardButton("Базовый", callback_data="sub_type:base"),
-            InlineKeyboardButton("Стандарт", callback_data="sub_type:standard"),
-            InlineKeyboardButton("Премиум", callback_data="sub_type:premium"),
-            InlineKeyboardButton("Иллюстратор", callback_data="sub_type:illustrator"),
-            InlineKeyboardButton("Автор", callback_data="sub_type:author"),
-        ]
-    return InlineKeyboardMarkup(row_width=3).add(
-        *buttons
-    )
-
-
-# Кнопки для выбора периода подписки
-def get_sub_period(sub_type, prices, with_discount):
-
-    btns = []
-    for i, price in enumerate(prices):
-        callback_data = f"sub_period:{sub_type}:{i}"
-        if i != 0 and with_discount:
-            callback_data += ":discount"  # Если действует скидка на определенный период
-        btns.append(InlineKeyboardButton(text=price["text"], callback_data=callback_data))
-    kb = InlineKeyboardMarkup(row_width=1).add(
-        *btns,
-        InlineKeyboardButton(text="🔙Назад", callback_data="buy_sub")
-    )
-    return kb
-'''
 
 ''' Новые кнопки для выбора покупки токенов для GPT или MJ '''
 
@@ -249,18 +196,71 @@ def get_sub_period(sub_type, prices, with_discount):
 def get_neural_network_menu():
 
     return InlineKeyboardMarkup(row_width=2).add(
-        InlineKeyboardButton("💬ChatGPT", callback_data="buy_chatgpt_tokens"),
+        InlineKeyboardButton("💬ChatGPT", callback_data="select_gpt_tokens"),
         InlineKeyboardButton("🎨Midjourney", callback_data="buy_midjourney_requests")
+    )
+
+def get_chatgpt_models():
+
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton("GPT-4o", callback_data="buy_chatgpt_tokens:4o"),
+        InlineKeyboardButton("GPT-o1-preview", callback_data="buy_chatgpt_tokens:o1-preview"),
+        InlineKeyboardButton("GPT-o1-mini", callback_data="buy_chatgpt_tokens:o1-mini"),
+        InlineKeyboardButton("📋Отличия моделей GPT", url=""),
+        InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
+    )
+
+def get_chatgpt_models_noback():
+
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton("GPT-4o", callback_data="buy_chatgpt_tokens:4o"),
+        InlineKeyboardButton("GPT-o1-preview", callback_data="buy_chatgpt_tokens:o1-preview"),
+        InlineKeyboardButton("GPT-o1-mini", callback_data="buy_chatgpt_tokens:o1-mini"),
+        InlineKeyboardButton("📋Отличия моделей GPT", url=""),
     )
 
 
 # Кнопки выбора количества токенов для ChatGPT
-def get_chatgpt_tokens_menu():
+# Mode - Normal - пользователь решил купить токены, Discount - у него действует скидка, Notification - перешел из уведомления о скидке
+# Model - 4o, o1-preview, o1-mini
+def get_chatgpt_tokens_menu(mode, model):
+
+    if mode in {'normal', 'discount'}:
+        source = 'acc'
+    else:
+        source = 'not_gpt'
+
+    prices = {'4o': {'normal': {'price': [199, 349, 469, 739],
+                                'percent': [0, 12, 21, 25]},
+                     'discount': {'price': ['199 > 189', '349 > 315', '469 > 412', '739 > 628'],
+                                  'price_data' : [189, 315, 412, 628],
+                                  'percent': [5, 10, 12, 15]}},
+
+              'o1-preview': {'normal': {'price': [999, 1799, 2549, 3999],
+                                        'percent': [0, 10, 15, 20]},
+                             'discount': {'price': ['999 > 949', '1799 > 1619', '2549 > 2166', '3999 > 3199'],
+                                          'price_data' : [949, 1619, 2166, 3199],
+                                          'percent': [5, 10, 15, 20]}},
+
+              'o1-mini': {'normal': {'price': [239, 429, 599, 949],
+                                     'percent': [0, 10, 15, 20]},
+                         'discount': {'price': ['239 > 227', '429 > 386', '599 > 509', '949 > 757'],
+                                      'price_data' : [227, 386, 509, 757],
+                                      'percent': [5, 10, 15, 20]}}}
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("100 тыс токенов, 149₽", callback_data="select_chatgpt_tokens:100000:149:acc"),
-        InlineKeyboardButton("200 тыс токенов, 249₽ (-20%)", callback_data="select_chatgpt_tokens:200000:249:acc"),
-        InlineKeyboardButton("500 тыс токенов, 449₽ (-40%)", callback_data="select_chatgpt_tokens:500000:449:acc"),
+        InlineKeyboardButton(
+            f"20 тыс токенов, {prices[model][mode]['price'][0]}₽{'' if mode == 'normal' else f' (-{prices[model][mode]['percent'][0]}%)'}", 
+            callback_data=f"tokens:20000:{model}:{prices[model][mode]['price'][0] if mode == 'normal' else prices[model][mode]['price_data'][0]}:{source}"),
+        InlineKeyboardButton(
+            f"40 тыс токенов, {prices[model][mode]['price'][1]}₽ (-{prices[model][mode]['percent'][1]}%)", 
+            callback_data=f"tokens:40000:{model}:{prices[model][mode]['price'][1] if mode == 'normal' else prices[model][mode]['price_data'][1]}:{source}"),
+        InlineKeyboardButton(
+            f"60 тыс токенов, {prices[model][mode]['price'][2]}₽ (-{prices[model][mode]['percent'][2]}%)",
+            callback_data=f"tokens:60000:{model}:{prices[model][mode]['price'][2] if mode == 'normal' else prices[model][mode]['price_data'][2]}:{source}"),
+        InlineKeyboardButton(
+            f"100 тыс токенов, {prices[model][mode]['price'][3]}₽ (-{prices[model][mode]['percent'][3]}%)",
+            callback_data=f"tokens:100000:{model}:{prices[model][mode]['price'][3] if mode == 'normal' else prices[model][mode]['price_data'][3]}:{source}"),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
@@ -276,6 +276,7 @@ def get_midjourney_requests_menu():
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
+'''
 # Кнопки выбора количества токенов для ChatGPT СО СКИДКОЙ
 def get_chatgpt_discount_tokens_menu():
 
@@ -285,6 +286,7 @@ def get_chatgpt_discount_tokens_menu():
         InlineKeyboardButton("500 тыс токенов, 449₽ > 381₽ (-15%)", callback_data="select_chatgpt_tokens:500000:381:acc"),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
+'''
 
 # Кнопки выбора количества запросов для Midjourney СО СКИДКОЙ
 def get_midjourney_discount_requests_menu():
@@ -297,7 +299,7 @@ def get_midjourney_discount_requests_menu():
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
-    
+'''    
 # Кнопки выбора количества токенов для ChatGPT СО СКИДКОЙ при уведомлении
 def get_chatgpt_discount_nofication():
 
@@ -306,6 +308,7 @@ def get_chatgpt_discount_nofication():
         InlineKeyboardButton("200 тыс токенов, 249₽ > 224₽ (-10%)", callback_data="select_chatgpt_tokens:200000:224:not_gpt"),
         InlineKeyboardButton("500 тыс токенов, 449₽ > 381₽ (-15%)", callback_data="select_chatgpt_tokens:500000:381:not_gpt")
     )
+'''
 
 # Кнопки выбора количества запросов для Midjourney СО СКИДКОЙ при уведомлении
 def get_midjourney_discount_notification():

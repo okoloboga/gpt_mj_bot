@@ -124,48 +124,20 @@ async def process_purchase(bot, order_id):
 
     user_id = order["user_id"]  # Получаем ID пользователя
     user = await db.get_user(user_id)  # Получаем информацию о пользователе
+    model = order["order_type"]
+
+    logger.info(f"Оплата пользователя {user_id} успешно обработан. Тип заказа: {model}, количество: {order['quantity']}")
+
+    # Начисление бонусных токенов 4o-mini
+    bounus = 20000 if int(order["quantity"]) == 100000 else int(order["quantity"]) / 4 
 
     # Обновляем токены или запросы в зависимости от типа заказа
-    if order["order_type"] == "chatgpt":
-        new_tokens = user["tokens"] + order["quantity"]
-        await db.update_tokens(user_id, new_tokens)
-        await bot.send_message(user_id, f"✅Добавлено {order['quantity']} токенов для ChatGPT.")
+    if model in {'4o', 'o1-preview', 'o1-mini'}:
+        new_tokens = int(user[f"tokens_{model}"]) + int(order["quantity"])
+        await db.update_tokens(user_id, new_tokens, model)
+        await db.update_tokens(user_id, bounus, "4o-mini")
+        await bot.send_message(user_id, f"✅Добавлено {int(order['quantity']) / 1000} тыс. токенов для GPT-{model}.\nБлагодарим за покупку!\nВ качестве бонуса 🎁 дарим Вам {bonus / 1000} тыс. токенов GPT-4o-mini")
     elif order["order_type"] == "midjourney":
         new_requests = user["mj"] + order["quantity"]
         await db.update_requests(user_id, new_requests)
         await bot.send_message(user_id, f"✅Добавлено {order['quantity']} запросов для MidJourney.")
-
-
-""" Старая функция обработки оплаты подписки
-
-# Функция для обработки успешной оплаты подписки
-async def process_sub(bot, order_id):
-    # Получаем информацию о заказе подписки из базы данных
-    sub_order = await db.get_sub_order(order_id)
-    # Если подписка уже была оплачена, выходим
-    if sub_order["pay_time"]:
-        return
-    # Обновляем статус оплаты в базе данных
-    await db.set_sub_order_pay(order_id)
-    
-    user_id = sub_order["user_id"]  # Получаем ID пользователя
-    user = await db.get_user(user_id)  # Получаем информацию о пользователе
-
-    # Вычисляем новое время окончания подписки
-    if user["sub_time"] < datetime.now():
-        base_sub_time = datetime.now()
-    else:
-        base_sub_time = user["sub_time"]
-    sub_time = base_sub_time + timedelta(days=sub_order["days"])  # Добавляем количество дней подписки
-
-    sub_type = sub_order["sub_type"]  # Получаем тип подписки
-    tokens = config.sub_types[sub_type]["tokens"]  # Количество токенов для данной подписки
-    mj = config.sub_types[sub_type]["mj"]  # Количество запросов MidJourney для данной подписки
-    
-    # Обновляем информацию о подписке в базе данных
-    await db.update_sub_info(user_id, sub_time, sub_type, tokens, mj)
-    
-    # Отправляем сообщение пользователю о успешной покупке подписки
-    await bot.send_message(user_id, f"💰 Вы успешно приобрели подписку.")
-
-"""

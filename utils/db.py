@@ -30,7 +30,10 @@ async def start():
         "first_name VARCHAR(64),"  # Имя пользователя
         "balance INT DEFAULT 0,"  # Баланс пользователя
         "reg_time INT,"  # Время регистрации в формате timestamp
+        
+        # УДАЛИТЬ КОЛОНКУ
         "free_chatgpt SMALLINT DEFAULT 5000,"  # Количество бесплатных токенов для ChatGPT
+        
         "free_image SMALLINT DEFAULT 3,"  # Количество бесплатных изображений в MidJourney
         "default_ai VARCHAR(10) DEFAULT 'empty',"  # Выбранный по умолчанию AI
         "inviter_id BIGINT,"  # ID пригласившего пользователя
@@ -44,15 +47,18 @@ async def start():
         "chatgpt_settings VARCHAR(256) DEFAULT '',"  # Настройки ChatGPT
         "sub_time TIMESTAMP DEFAULT NOW(),"  # Время начала подписки
         "sub_type VARCHAR(12),"  # Тип подписки
-        "tokens INTEGER DEFAULT 0,"  # Количество токенов для ChatGPT
+
+        # ДОБАВИТЬ КОЛОНКИ
+        "tokens_4o INTEGER DEFAULT 0,"  # Количество токенов для ChatGPT
+        "tokens_4o-mini INTEGER DEFAULT 5000,"
+        "tokens_o1-preview INTEGER DEFAULT 0,"
+        "tokens_o1-mini INTEGER DEFAULT 0,"
+        "gpt_model VARCHAR(10) DEFAULT '4o-mini',"
+        "voice VARCHAR(64) DEFAULT 'onyx',"
+        "chatgpt_character VARCHAR(256) DEFAULT '',"
+
         "mj INTEGER DEFAULT 0,"  # Количество токенов для MidJourney
         "is_notified BOOLEAN DEFAULT FALSE)"  # Флаг уведомления пользователя
-    )
-
-    await conn.execute(
-        "CREATE TABLE IF NOT EXISTS voice("
-        "user_id BIGINT PRIMARY KEY,"
-        "voice VARCHAR(64) DEFAULT 'onyx')"
     )
 
     await conn.execute(
@@ -81,18 +87,6 @@ async def start():
     await conn.execute("CREATE TABLE IF NOT EXISTS user_promocode("
                        "promocode_id SMALLINT,"  # ID промокода
                        "user_id BIGINT)")  # ID пользователя, связанного с промокодом
-    
-    # await conn.execute(
-    #     "CREATE TABLE IF NOT EXISTS sub_orders("
-    #     "sub_order_id SERIAL,"  # Уникальный идентификатор подписки
-    #     "user_id BIGINT,"  # ID пользователя
-    #     "amount INTEGER,"  # Сумма подписки
-    #     "create_time TIMESTAMP DEFAULT NOW(),"  # Время создания подписки
-    #     "pay_time TIMESTAMP,"  # Время оплаты подписки
-    #     "sub_type VARCHAR(12),"  # Тип подписки
-    #     "days INTEGER,"  # Количество дней подписки
-    #     "with_discount BOOLEAN DEFAULT FALSE)"  # Наличие скидки
-    # )
 
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS orders("
@@ -145,11 +139,10 @@ async def get_user(user_id):
     await conn.close()
     return row
 
-
 # Получение информации о выранном голосе
 async def get_voice(user_id):
     conn: Connection = await get_conn()
-    row = await conn.fetchrow("SELECT voice FROM voice WHERE user_id = $1", user_id)
+    row = await conn.fetchrow("SELECT voice FROM users WHERE user_id = $1", user_id)
     await conn.close()
     return row["voice"] if row else 'onyx'  # Возвращаем только значение или None
 
@@ -158,18 +151,24 @@ async def get_voice(user_id):
 async def set_voice(user_id, voice):
 
     conn: Connection = await get_conn()
-    await conn.execute("UPDATE voice SET voice = $2 WHERE user_id = $1", user_id, voice)
+    await conn.execute("UPDATE users SET voice = $2 WHERE user_id = $1", user_id, voice)
     await conn.close()
+    
 
-# Записываем нового пользователя с голосами в базу данных
-async def create_voice(user_id, voice='onyx'):
-
+# Получаем информацию о выбранной модели GPT
+async def get_model(user_id):
     conn: Connection = await get_conn()
-    await conn.execute(
-        "INSERT INTO voice(user_id, voice) VALUES ($1, $2)", 
-        user_id, voice)
+    row = await conn.fetchrow("SELECT gpt_model FROM users WHERE user_id = $1", user_id)
     await conn.close()
-    return "onyx"
+    return row["gpt_model"]
+
+
+# Записываем выбранную модель GPT в базу данных
+async def set_model(user_id, gpt_model):
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET gpt_model = $2 WHERE user_id = $1", user_id, gpt_model)
+    await conn.close()
+
 
 # Функция для добавления нового пользователя
 async def add_user(user_id, username, first_name, inviter_id):
@@ -205,6 +204,14 @@ async def update_chatgpt_about_me(user_id, text):
     await conn.close()
 
 
+# Функция для обновления характера ChatGPT
+async def update_chatgpt_character(user_id, text):
+
+    conn: Connection = await get_conn()
+    await conn.execute("UPDATE users SET chatgpt_character = $2 WHERE user_id = $1", user_id, text)
+    await conn.close()
+
+
 # Функция для обновления настроек ChatGPT пользователя
 async def update_chatgpt_settings(user_id, text):
 
@@ -225,15 +232,19 @@ async def change_default_ai(user_id, ai_type):
 async def remove_free_chatgpt(user_id, tokens):
 
     conn: Connection = await get_conn()
-    await conn.execute("UPDATE users SET free_chatgpt = free_chatgpt - $2 WHERE user_id = $1", user_id, tokens)
+    await conn.execute("UPDATE users SET tokens_4o-mini = tokens_4o-mini - $2 WHERE user_id = $1", user_id, tokens)
     await conn.close()
 
 
 # Функция для уменьшения количества токенов ChatGPT у пользователя
-async def remove_chatgpt(user_id, tokens):
+async def remove_chatgpt(user_id, tokens, model):
 
     conn: Connection = await get_conn()
-    await conn.execute("UPDATE users SET tokens = tokens - $2 WHERE user_id = $1", user_id, tokens)
+    column = f'tokens_{model}'
+    if column not in {'tokens_4o', 'tokens_4o-mini', 'tokens_o1-preview', 'tokens_o1-mini'}:
+        raise ValueError("Invalid model name")
+
+    await conn.execute(f"UPDATE users SET {column} = {column} - $2 WHERE user_id = $1", user_id, tokens)
     await conn.close()
 
 
@@ -545,13 +556,18 @@ async def set_order_pay(order_id):
     await conn.execute("UPDATE orders SET pay_time = NOW() WHERE id = $1", order_id)
     await conn.close()
 
+
 ''' Токены и Запросы '''
 
 # Обновление количества токенов у пользователя
-async def update_tokens(user_id, new_tokens):
+async def update_tokens(user_id, new_tokens, model):
 
     conn: Connection = await get_conn()
-    await conn.execute("UPDATE users SET tokens = $2 WHERE user_id = $1", user_id, new_tokens)
+    column = f'tokens_{model}'
+    if column not in {'tokens_4o', 'tokens_4o-mini', 'tokens_o1-preview', 'tokens_o1-mini'}:
+        raise ValueError("Invalid model name")
+
+    await conn.execute(f"UPDATE users SET {column} = $2 WHERE user_id = $1", user_id, new_tokens)
     await conn.close()
 
 
@@ -562,28 +578,6 @@ async def update_requests(user_id, new_requests):
     await conn.execute("UPDATE users SET mj = $2 WHERE user_id = $1", user_id, new_requests)
     await conn.close()
 
-
-async def get_sub_stat():
-    conn: Connection = await get_conn()
-    row = await conn.fetchrow("SELECT "
-                              "COUNT(*) FILTER (WHERE sub_type = 'base') as base,"
-                              "COUNT(*) FILTER (WHERE sub_type = 'standard') as standard,"
-                              "COUNT(*) FILTER (WHERE sub_type = 'premium') as premium "
-                              "FROM users where sub_time > NOW()")
-    await conn.close()
-    return row
-
-
-async def get_today_sub_stat():
-    conn: Connection = await get_conn()
-    row = await conn.fetchrow("SELECT "
-                              "COUNT(*) FILTER (WHERE sub_type = 'base') as base,"
-                              "COUNT(*) FILTER (WHERE sub_type = 'standard') as standard,"
-                              "COUNT(*) FILTER (WHERE sub_type = 'premium') as premium "
-                              "FROM sub_orders WHERE pay_time is not null and pay_time::date = current_date"
-                              )
-    await conn.close()
-    return row
 
 """Скидка ChatGPT"""
 

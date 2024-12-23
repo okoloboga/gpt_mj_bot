@@ -40,12 +40,26 @@ async def choose_neural_network(call: CallbackQuery):
     reply_markup=user_kb.get_neural_network_menu())
 
 
-# Меню для выбора количества токенов ChatGPT
-@dp.callback_query_handler(text="buy_chatgpt_tokens")
-async def choose_chatgpt_tokens(call: CallbackQuery):
+# Меню выбора модели для покупки токенов ChatGPT
+@dp.callback_query_handler(text="select_gpt_tokens")
+async def choose_gpt_tokens(call: CallbackQuery):
 
     user_id = call.from_user.id
     
+    await call.message.edit_text("""
+Выберите модель ChatGPT⤵️""", 
+    reply_markup=user_kb.get_chatgpt_models())
+
+
+# Меню для выбора количества токенов ChatGPT
+@dp.callback_query_handler(Text(startswith="buy_chatgpt_tokens"))
+async def choose_chatgpt_tokens(call: CallbackQuery):
+
+    user_id = call.from_user.id
+    model = call.data.split(":")[1]
+
+    logger.info(f"User ID: {user_id}, модель ChatGPT: {model}")
+
     # Получаем данные о последнем уведомлении пользователя
     user_data = await db.get_user_notified_gpt(user_id)
     now = datetime.now()
@@ -58,13 +72,13 @@ async def choose_chatgpt_tokens(call: CallbackQuery):
         if now < last_notification + timedelta(hours=24):
             await call.message.edit_text(
                 "Выберите количество токенов со скидкой⤵️",
-                reply_markup=user_kb.get_chatgpt_discount_tokens_menu()
+                reply_markup=user_kb.get_chatgpt_tokens_menu('discount', model)
             )
     
     # Если уведомление не было отправлено или прошло больше 24 часов, показываем обычное меню
     await call.message.edit_text(
         "Выберите количество токенов⤵️",
-        reply_markup=user_kb.get_chatgpt_tokens_menu()
+        reply_markup=user_kb.get_chatgpt_tokens_menu('normal', model)
     )
 
 
@@ -93,16 +107,21 @@ async def choose_midjourney_requests(call: CallbackQuery):
     reply_markup=user_kb.get_midjourney_requests_menu())
 
 
-# Реагирование на нажатие кнопки с выбором количества тоенов для GPT
-@dp.callback_query_handler(Text(startswith="select_chatgpt_tokens:"))
+# Реагирование на нажатие кнопки с выбором количества токенов для GPT
+@dp.callback_query_handler(Text(startswith="tokens:"))
 async def handle_chatgpt_tokens_purchase(call: CallbackQuery):
 
     user_id = call.from_user.id
+    logger.info(f"User ID: {user_id} выбирает количество токенов ChatGPT: {call.data}") 
 
     tokens = int(call.data.split(":")[1])  # Получаем количество токенов
-    amount = int(call.data.split(":")[2])  # Получаем цену за количество токенов
-    src = str(call.data.split(":")[3])  # Источник сообщения - из уведомления или аккаунта
-    discounts = [139, 224, 381]
+    model = str(call.data.split(":")[2])  # Получаем модель СhatGPT
+    amount = int(call.data.split(":")[3])  # Получаем цену за количество токенов
+    src = str(call.data.split(":")[4])  # Источник сообщения - из уведомления или аккаунта
+
+    logger.info(f"Разобранный callback: {tokens}, {model}, {amount}, {src}")
+    
+    discounts = {189, 315, 412, 628, 949, 1619, 2166, 3199, 227, 386, 509, 757}
     user_discount = await db.get_user_notified_gpt(user_id)
 
     if user_discount is None or (user_discount['used'] != True or (user_discount['used'] == True and amount not in discounts)):
@@ -111,13 +130,13 @@ async def handle_chatgpt_tokens_purchase(call: CallbackQuery):
             await db.update_used_discount_gpt(user_id)
 
         # Создаем заказ для покупки токенов в базе данных
-        order_id = await db.add_order(call.from_user.id, amount, "chatgpt", tokens)
+        order_id = await db.add_order(call.from_user.id, amount, model, tokens)
 
         # Генерируем ссылки для оплаты
         urls = get_pay_urls('s'+str(order_id), amount)
     
         # Отправляем пользователю сообщение с выбором способа оплаты
-        await call.message.edit_text(f"✅{tokens} токенов для ChatGPT\n💰Сумма: {amount}₽.",
+        await call.message.edit_text(f"✅{tokens / 1000} тыс. токенов для GPT-{model}\n💰Сумма: {amount}₽.",
                                      reply_markup=user_kb.get_pay_urls(urls, order_id, src))
     
     else:
@@ -151,94 +170,6 @@ async def handle_midjourney_requests_purchase(call: CallbackQuery):
     else:
         await call.message.edit_text("Вы уже использовали скидку")
 
-''' Старые функции подписок 
-
-# Хендлер для выбора подписки через callback
-@dp.callback_query_handler(text="buy_sub")
-async def choose_amount(call: CallbackQuery):
-    # Отправляем сообщение с описанием различных тарифов и клавиатурой для выбора
-    await call.message.edit_text("""
-Выберите тариф⤵️
-
-Тариф <b>«Базовый»</b>
-1 млн токенов для ChatGPT
-10 запросов в Midjourney в день
-
-Тариф <b>«Стандарт»</b>
-2 млн токенов для ChatGPT
-20 запросов в Midjourney в день
-
-Тариф <b>«Премиум»</b>
-5 млн токенов для ChatGPT
-40 запросов в Midjourney в день
-
-Тариф <b>«Иллюстратор»</b>
-50 тыс токенов для ChatGPT
-100 запросов в Midjourney в день
-
-Тариф <b>«Автор»</b>
-10 млн токенов для ChatGPT
-5 запросов в Midjourney в день""", reply_markup=user_kb.sub_types)
-
-
-# Хендлер для выбора типа подписки через callback
-@dp.callback_query_handler(Text(startswith="sub_type:"))
-async def choose_amount(call: CallbackQuery):
-    sub_type = call.data.split(":")[1]  # Получаем тип подписки из callback-запроса
-    discount = False  # Проверка, есть ли скидка
-    try:
-        call.data.split(":")[2]  # Проверяем, есть ли третий элемент в запросе (если есть, значит это скидка)
-        discount = True
-    except IndexError:
-        pass
-
-    # В зависимости от наличия скидки выбираем цены
-    if discount:
-        prices = config.sub_types[sub_type]["discount_prices"]
-    else:
-        prices = config.sub_types[sub_type]["prices"]
-
-    # Предлагаем выбрать период подписки
-    await call.message.edit_text("Выберите период подписки⤵️",
-                                 reply_markup=user_kb.get_sub_period(sub_type, prices, discount))
-
-
-# Хендлер для выбора периода подписки
-@dp.callback_query_handler(Text(startswith="sub_period:"))
-async def choose_amount(call: CallbackQuery):
-    sub_type = call.data.split(":")[1]  # Тип подписки
-    sub_period_id = int(call.data.split(":")[2])  # Период подписки
-    discount = False
-    try:
-        call.data.split(":")[3]  # Проверяем наличие скидки
-        discount = True
-    except IndexError:
-        pass
-
-    # Если используется скидка, проверяем, был ли она уже использована
-    if discount:
-        order = await db.check_discount_order(call.from_user.id)
-        if order:
-            await call.answer("Вы уже использовали скидку", show_alert=True)
-            return await call.message.delete()
-
-        # Если скидка доступна, берем данные о цене со скидкой
-        price_data = config.sub_types[sub_type]["discount_prices"][sub_period_id]
-    else:
-        # Если скидки нет, берем обычные цены
-        price_data = config.sub_types[sub_type]["prices"][sub_period_id]
-
-    amount = price_data["price"]  # Цена подписки
-    # Создаем заказ на подписку в базе данных
-    order_id = await db.add_sub_order(call.from_user.id, amount, sub_type, discount, price_data["days"])
-    # Генерируем ссылки для оплаты
-    urls = get_pay_urls("s" + str(order_id), amount)
-    # Отправляем сообщение с предложением оплатить подписку
-    await call.message.answer(f"""💰 Сумма: {amount} рублей
-
-♻️ Средства зачислятся автоматически""", reply_markup=user_kb.get_pay_urls(urls, order_id))
-    await call.answer()
-'''
 
 # Хендлер для оплаты через Telegram (проплаченный функционал)
 @dp.callback_query_handler(Text(startswith="tg_stars:"))

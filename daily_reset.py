@@ -11,7 +11,7 @@ async def main():
     conn = await get_conn()
 
     # Сбрасываем лимит бесплатных токенов для ChatGPT до 10,000 у всех пользователей
-    await conn.execute("UPDATE users SET free_chatgpt = ")
+    await conn.execute("UPDATE users SET  = ")
 
     # Для всех подписок обновляем лимит запросов к MidJourney
     for sub in config.sub_types:

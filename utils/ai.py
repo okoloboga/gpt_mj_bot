@@ -71,13 +71,13 @@ async def get_translate(text):
 
 
 # Функция для отправки запроса в ChatGPT
-async def get_gpt(messages):
+async def get_gpt(messages, model):
     status = True
     tokens = 0
     content = ""
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Убедись, что модель корректна
+            model=f"gpt-{model}",
             messages=messages[-10:]  # Последние 10 сообщений
         )
         # Используем атрибуты объекта вместо индексации
@@ -162,21 +162,6 @@ def voice_to_text(file_path):
     except sr.RequestError:
         return "Ошибка запроса к сервису распознавания"
 
-'''
-# Функция для преобразования текста в аудио
-def text_to_speech(text):
-    tts = gTTS(text=text, lang='ru')
-
-    # Сохраняем результат как временный mp3-файл
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
-        temp_audio_path = temp_audio_file.name
-        tts.save(temp_audio_path)
-    audio_file = InputFile(temp_audio_path)
-
-    os.remove(temp_audio_path)  # Удаляем временный файл после использования
-    return audio_file
-
-'''
 def text_to_speech(text, model="tts-1", voice="onyx"):
 
     # Создаем временный файл для аудио
@@ -196,23 +181,4 @@ def text_to_speech(text, model="tts-1", voice="onyx"):
 
     return audio_file
 
-'''
-def text_to_speech(text, model="tts-1", voice="onyx"):
-
-    # Создаем временный файл для аудио
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
-        temp_audio_path = temp_audio_file.name
-
-    # Запрос к OpenAI для создания аудио
-    response = client.audio.speech.create(
-        model=model,
-        voice=voice,
-        input=text
-    )
-
-    # Сохраняем результат в файл
-    response.stream_to_file(temp_audio_path)
-
-    return temp_audio_path  # Возвращаем путь к файлу
-'''
 
