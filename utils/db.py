@@ -49,10 +49,10 @@ async def start():
         "sub_type VARCHAR(12),"  # Тип подписки
 
         # ДОБАВИТЬ КОЛОНКИ
-        "tokens_4o INTEGER DEFAULT 0,"  # Количество токенов для ChatGPT
-        "tokens_4o_mini INTEGER DEFAULT 5000,"
+        "tokens_4o INTEGER DEFAULT 1000,"  # Количество токенов для ChatGPT
+        "tokens_4o_mini INTEGER DEFAULT 0,"
         "tokens_o1_preview INTEGER DEFAULT 0,"
-        "tokens_o1_mini INTEGER DEFAULT 0,"
+        "tokens_o1_mini INTEGER DEFAULT 1000,"
         "gpt_model VARCHAR(10) DEFAULT '4o-mini',"
         "voice VARCHAR(64) DEFAULT 'onyx',"
         "chatgpt_character VARCHAR(256) DEFAULT '',"
