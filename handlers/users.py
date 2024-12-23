@@ -264,7 +264,7 @@ async def log_all_updates(update: Update, exception: Exception = None):
 @dp.callback_query_handler()
 async def all_callback_handler(call: CallbackQuery):
     logging.info(f"Received callback_data: {call.data}")
-    await call.answer("Callback received")
+    await call.message.answer("Callback received")
 
 
 # Хэндлер команды /start
