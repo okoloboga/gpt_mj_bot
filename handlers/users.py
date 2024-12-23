@@ -196,7 +196,6 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     logger.info(f"Ответ от ChatGPT-{model}: {res}")
 
     await state.update_data(content=res["content"])
-
     await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
 
     if not res["status"]:
@@ -204,11 +203,13 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     messages.append({"role": "assistant", "content": res["content"]})
 
     # Списывание токенов
+    '''
     if user["tokens_4o_mini"] > 0:
         await db.remove_free_chatgpt(user_id, res["tokens"])  # Уменьшаем бесплатные токены
         free_request = True
     else:
-        await db.remove_chatgpt(user_id, res["tokens"], model)  # Уменьшаем платные токены
+    '''  
+    await db.remove_chatgpt(user_id, res["tokens"], model)  # Уменьшаем токены
 
     # Проверка на количество оставшихся токенов
     now = datetime.now()
@@ -761,7 +762,7 @@ async def gen_prompt(message: Message, state: FSMContext):
 
         logger.info(f'Текстоавый запрос к GPT. User: {user}, Model: {model}, tokens: {user[f"tokens_{model}"]}')
 
-        if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
+        if user[f"tokens_{model}"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
 
         data = await state.get_data()
