@@ -448,7 +448,7 @@ async def back_to_profile(call: CallbackQuery, state: FSMContext):
             """
         
         # Отправляем сообщение с обновленными данными аккаунта
-        await message.answer(f"""🆔: <code>{user_id}</code>
+        await call.message.answer(f"""🆔: <code>{user_id}</code>
     {sub_text}""", reply_markup=keyboard)
 
     else:
@@ -922,6 +922,7 @@ async def model_menu(call: CallbackQuery):
     keyboard = user_kb.model_keyboard(selected_model=user_model)
     
     await call.message.answer("Выберите модель GPT для диалогов⤵️:", reply_markup=keyboard)
+    await call.answer()
 
 
 # Выбор модели GPT
