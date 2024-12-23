@@ -124,7 +124,7 @@ async def process_purchase(bot, order_id):
 
     user_id = order["user_id"]  # Получаем ID пользователя
     user = await db.get_user(user_id)  # Получаем информацию о пользователе
-    model = order["order_type"]
+    model = (order["order_type"]).replace('-', '_')
 
     logger.info(f"Оплата пользователя {user_id} успешно обработан. Тип заказа: {model}, количество: {order['quantity']}")
 

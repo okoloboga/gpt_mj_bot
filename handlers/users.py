@@ -183,7 +183,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     user = await db.get_user(user_id)
     lang_text = {"en": "compose an answer in English", "ru": "составь ответ на русском языке"}
     prompt += f"\n{lang_text[user['chat_gpt_lang']]}"
-    model = user['gpt_model']
+    model = (user['gpt_model']).replace('-', '_')
     messages.append({"role": "user", "content": prompt})
 
     await bot.send_chat_action(user_id, ChatActions.TYPING)
@@ -481,7 +481,7 @@ async def ask_question(message: Message, state: FSMContext):
     await state.finish()  # Завершаем текущее состояние
     await db.change_default_ai(message.from_user.id, "chatgpt")  # Устанавливаем ChatGPT как основной AI
     user = await db.get_user(message.from_user.id)  # Получаем данные пользователя
-    model = user["gpt_model"]
+    model = (user["gpt_model"]).replace("-", "_")
 
     # Проверяем наличие токенов и подписки
     if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
@@ -738,7 +738,7 @@ async def gen_prompt(message: Message, state: FSMContext):
         return await message.bot.send_message(796644977, message.from_user.id)
 
     if user["default_ai"] == "chatgpt":
-        model = user["gpt_model"]
+        model = (user["gpt_model"]).replace("-", "_")
 
         logger.info(f'Текстоавый запрос к GPT. User: {user}, Model: {model}, tokens: {user[f"tokens_{model}"]}')
 
@@ -779,7 +779,7 @@ async def handle_voice(message: Message, state: FSMContext):
         return await message.bot.send_message(796644977, message.from_user.id)
 
     if user["default_ai"] == "chatgpt":
-        model = user["gpt_model"]
+        model = (user["gpt_model"]).replace("-", "_")
 
         if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
@@ -852,7 +852,7 @@ async def photo_imagine(message: Message, state: FSMContext):
     user = await db.get_user(user_id)
 
     if user["default_ai"] == "chatgpt":
-        model = user["gpt_model"]
+        model = (user["gpt_model"]).replace('-', '_')
 
         if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
