@@ -261,9 +261,9 @@ def get_chatgpt_tokens_menu(mode, model):
         InlineKeyboardButton(
             f"100 тыс токенов, {prices[model][mode]['price'][3]}₽ (-{prices[model][mode]['percent'][3]}%)",
             callback_data=f"tokens:100000:{model}:{prices[model][mode]['price'][3] if mode == 'normal' else prices[model][mode]['price_data'][3]}:{source}"),
-        InlineKeyboardButton(
-            f"1 тыс токенов, {prices[model][mode]['price'][4]}₽ (-{prices[model][mode]['percent'][4]}%)", 
-            callback_data=f"tokens:1000:{model}:{prices[model][mode]['price'][4] if mode == 'normal' else prices[model][mode]['price_data'][4]}:{source}"),  
+        # InlineKeyboardButton(
+        #     f"1 тыс токенов, {prices[model][mode]['price'][4]}₽ (-{prices[model][mode]['percent'][4]}%)", 
+        #     callback_data=f"tokens:1000:{model}:{prices[model][mode]['price'][4] if mode == 'normal' else prices[model][mode]['price_data'][4]}:{source}"),  
         # InlineKeyboardButton("📋Что такое токены", url=""),          
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
