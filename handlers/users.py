@@ -922,7 +922,7 @@ async def model_menu(call: CallbackQuery):
     keyboard = user_kb.model_keyboard(selected_model=user_model)
     
     await call.message.answer("Выберите модель GPT для диалогов⤵️:", reply_markup=keyboard)
-    await call.answer()
+
 
 # Выбор модели GPT
 @dp.callback_query_handler(text_contains="select_model")
