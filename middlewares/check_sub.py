@@ -47,4 +47,4 @@ class CheckRegMiddleware(BaseMiddleware):
         except ChatNotFound as e:
             # Если канал не найден (ошибка ChatNotFound), уведомляем администратора
             print(e)
-            await update.bot.send_message(ADMINS[0], "Проблема с каналом партнером")
+            # await update.bot.send_message(ADMINS[0], "Проблема с каналом партнером")
