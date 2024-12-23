@@ -79,8 +79,14 @@ async def get_gpt(messages, model):
         model_map = {'4o-mini': 'gpt-4o-mini',
                      '4o': 'gpt-4o',
                      'o1-preview': 'o1-preview',
-                     'o1-mini': 'o1-mini'}
-                     
+                     'o1-mini': 'o1-mini'}  
+
+        logger.info(f'ChatGPT Model {model_map[model]}, message: {messages}')
+
+        if model in {'o1-preview', 'o1-mini'}:
+            if messages and messages[0]["role"] == "system":
+                messages[0] = {"role": "user", "content": "You are a helpful assistant."} 
+
         response = client.chat.completions.create(
             model=f"{model_map[model]}",
             messages=messages[-10:]  # Последние 10 сообщений
