@@ -578,7 +578,7 @@ async def ask_question(message: Message, state: FSMContext):
     model = (user["gpt_model"]).replace("-", "_")
 
     # Проверяем наличие токенов и подписки
-    if user[f"tokens_{model}"] <= 0 and user["tokens_4o_mini"] <= 0:
+    if user[f"tokens_{model}"] <= 0:
         return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")  # Сообщаем об исчерпании лимита
 
     # Сообщение с запросом ввода
