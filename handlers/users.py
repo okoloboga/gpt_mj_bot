@@ -237,7 +237,6 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 # Уведомение о низком количестве токенов GPT
 async def notify_low_chatgpt_tokens(user_id, bot: Bot):
 
-    user = await db.get_user(call.from_user.id)
     await bot.send_message(user_id, """
 У вас заканчиваются запросы для 💬ChatGPT
 Специально для вас мы подготовили <b>персональную скидку</b>!
