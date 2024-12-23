@@ -483,8 +483,8 @@ async def change_lang(call: CallbackQuery):
     await db.change_chat_gpt_lang(call.from_user.id, new_lang)  # Обновляем язык в базе
     lang_text = {"ru": "русский", "en": "английский"}
     await call.answer(f"Язык изменён на {lang_text[new_lang]}")
-    if from_msg == "chatgpt_menu":
-        kb = user_kb.get_chat_gpt_keyboard(new_lang, from_msg)  # Меню ChatGPT
+    if from_msg == "acc":
+        kb = user_kb.settings(new_lang, from_msg)  # Меню ChatGPT
     else:
         kb = user_kb.get_account(new_lang, from_msg)  # Меню аккаунта
     await call.message.edit_reply_markup(reply_markup=kb)  # Обновляем клавиатуру
