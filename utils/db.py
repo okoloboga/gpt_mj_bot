@@ -241,9 +241,7 @@ async def remove_chatgpt(user_id, tokens, model):
 
     conn: Connection = await get_conn()
     dashed_model = model.replace("-", "_")
-    column = f'tokens_{model}'
-
-    logger.info(f'Model: {model}, column: {column}')
+    column = f'tokens_{dashed_model}'
 
     if column not in {'tokens_4o', 'tokens_4o_mini', 'tokens_o1_preview', 'tokens_o1_mini'}:
         raise ValueError("Invalid model name")
@@ -568,7 +566,7 @@ async def update_tokens(user_id, new_tokens, model):
 
     conn: Connection = await get_conn()
     dashed_model = model.replace("-", "_")
-    column = f'tokens_{model}'
+    column = f'tokens_{dashed_model}'
     if column not in {'tokens_4o', 'tokens_4o_mini', 'tokens_o1_preview', 'tokens_o1_mini'}:
         raise ValueError("Invalid model name")
 
