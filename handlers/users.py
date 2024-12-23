@@ -81,7 +81,7 @@ async def not_enough_balance(bot: Bot, user_id: int, ai_type: str):
 
         user_data = await db.get_user_notified_gpt(user_id)
 
-        keyboard = user_kb.get_сhatgpt_models_noback() if model == "4o-mini" else user_kb.get_сhatgpt_tokens_menu('normal', model)
+        # keyboard = user_kb.get_сhatgpt_models_noback() if model == "4o-mini" else user_kb.get_chatgpt_tokens_menu('normal', model)
         
         '''
         # Нас больше не интресует, что была скидка или нет.
@@ -102,7 +102,7 @@ async def not_enough_balance(bot: Bot, user_id: int, ai_type: str):
         '''
 
         await bot.send_message(user_id, f"⚠️Токены для {model_map[model]} закончились!\n\nВыберите интересующий вас вариант⤵️", 
-            reply_markup=keyboard)  # Отправляем уведомление с клавиатурой для пополнения токенов
+            reply_markup=user_kb.get_chatgpt_tokens_menu('normal', model))  # Отправляем уведомление с клавиатурой для пополнения токенов
 
     elif ai_type == "image":
         user_data = await db.get_user_notified_mj(user_id)
@@ -760,7 +760,7 @@ async def gen_prompt(message: Message, state: FSMContext):
     if user["default_ai"] == "chatgpt":
         model = (user["gpt_model"]).replace("-", "_")
 
-        logger.info(f'Текстоавый запрос к GPT. User: {user}, Model: {model}, tokens: {user[f"tokens_{model}"]}')
+        logger.info(f'Текстовый запрос к GPT. User: {user}, Model: {model}, tokens: {user[f"tokens_{model}"]}')
 
         if user[f"tokens_{model}"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")

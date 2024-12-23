@@ -86,7 +86,7 @@ def model_keyboard(selected_model: str):
         for key, value in models.items()
     ]
     return InlineKeyboardMarkup(row_width=2).add(*buttons).add(
-        InlineKeyboardButton("📋Отличия моделей GPT", url="https://google.com"),
+        # InlineKeyboardButton("📋Отличия моделей GPT", url=""),
         InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
     )
 
@@ -206,7 +206,7 @@ def get_chatgpt_models():
         InlineKeyboardButton("GPT-4o", callback_data="buy_chatgpt_tokens:4o"),
         InlineKeyboardButton("GPT-o1-preview", callback_data="buy_chatgpt_tokens:o1-preview"),
         InlineKeyboardButton("GPT-o1-mini", callback_data="buy_chatgpt_tokens:o1-mini"),
-        InlineKeyboardButton("📋Отличия моделей GPT", url="https://google.com"),
+        # InlineKeyboardButton("📋Отличия моделей GPT", url=""),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
@@ -216,7 +216,7 @@ def get_chatgpt_models_noback():
         InlineKeyboardButton("GPT-4o", callback_data="buy_chatgpt_tokens:4o"),
         InlineKeyboardButton("GPT-o1-preview", callback_data="buy_chatgpt_tokens:o1-preview"),
         InlineKeyboardButton("GPT-o1-mini", callback_data="buy_chatgpt_tokens:o1-mini"),
-        InlineKeyboardButton("📋Отличия моделей GPT", url="https://google.com"),
+        # InlineKeyboardButton("📋Отличия моделей GPT", url=""),
     )
 
 
@@ -263,7 +263,8 @@ def get_chatgpt_tokens_menu(mode, model):
             callback_data=f"tokens:100000:{model}:{prices[model][mode]['price'][3] if mode == 'normal' else prices[model][mode]['price_data'][3]}:{source}"),
         InlineKeyboardButton(
             f"1 тыс токенов, {prices[model][mode]['price'][4]}₽ (-{prices[model][mode]['percent'][4]}%)", 
-            callback_data=f"tokens:1000:{model}:{prices[model][mode]['price'][4] if mode == 'normal' else prices[model][mode]['price_data'][4]}:{source}"),            
+            callback_data=f"tokens:1000:{model}:{prices[model][mode]['price'][4] if mode == 'normal' else prices[model][mode]['price_data'][4]}:{source}"),  
+        # InlineKeyboardButton("📋Что такое токены", url=""),          
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
