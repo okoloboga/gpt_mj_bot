@@ -35,6 +35,8 @@ def get_pay_urls(order_id, amount):
 @dp.callback_query_handler(text="buy_sub")
 async def choose_neural_network(call: CallbackQuery):
 
+    logger.info(f'Хэндлер {call.data}')
+    
     await call.message.edit_text("""
 Выберите нейросеть⤵️""", 
     reply_markup=user_kb.get_neural_network_menu())
@@ -43,7 +45,7 @@ async def choose_neural_network(call: CallbackQuery):
 # Меню выбора модели для покупки токенов ChatGPT
 @dp.callback_query_handler(text="select_gpt_tokens")
 async def choose_gpt_tokens(call: CallbackQuery):
-
+    
     user_id = call.from_user.id
     
     await call.message.edit_text("""

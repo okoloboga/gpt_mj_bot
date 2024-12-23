@@ -197,8 +197,8 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
     await state.update_data(content=res["content"])
 
-    await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
-    
+    await bot.send_message(user_iНасd, res["content"], reply_markup=user_kb.get_clear_or_audio())
+
     if not res["status"]:
         return
     messages.append({"role": "assistant", "content": res["content"]})
@@ -253,6 +253,13 @@ async def notify_low_midjourney_requests(user_id, bot: Bot):
     """, reply_markup=user_kb.get_midjourney_discount_notification())
 
 
+
+@dp.callback_query_handler()
+async def all_callback_handler(call: types.CallbackQuery):
+    logging.info(f"Received callback_data: {call.data}")
+    await call.answer("Callback received")
+
+
 # Хэндлер команды /start
 @dp.message_handler(state="*", commands='start')
 async def start_message(message: Message, state: FSMContext):
@@ -293,6 +300,8 @@ async def start_message(message: Message, state: FSMContext):
 # Хендлер настроек ChatGPT
 @dp.callback_query_handler(text="settings")
 async def settings(call: CallbackQuery):
+
+    logger.info(f'Хэндлер {call.data}')
 
     user = await db.get_user(call.from_user.id)
 
