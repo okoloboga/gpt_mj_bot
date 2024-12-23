@@ -368,8 +368,6 @@ async def show_profile(message: Message, state: FSMContext):
     user = await db.get_user(user_id)  # Получаем данные пользователя
     user_lang = user['chat_gpt_lang']
 
-    logger.info(user_lang)
-
     mj = int(user['mj']) + int(user['free_image']) if int(user['mj']) + int(user['free_image']) >= 0 else 0
     gpt_4o_mini = int(user['tokens_4o-mini']) if int(user['tokens_4o-mini']) >= 0 else 0
     gpt_4o = int(user['tokens_4o']) if int(user['tokens_4o']) >= 0 else 0
@@ -564,8 +562,6 @@ async def choose_image(call: CallbackQuery):
     await call.answer()  # Закрываем callback уведомление
     user = await db.get_user(call.from_user.id)
 
-    logger.info(call.data)
-
     if user["mj"] <= 0 and user["free_image"] <= 0:
         await not_enough_balance(call.bot, call.from_user.id, "image")  # Проверка наличия баланса для MidJourney
         return
@@ -575,8 +571,6 @@ async def choose_image(call: CallbackQuery):
     await call.message.answer("Ожидайте, сохраняю изображение в отличном качестве…⏳", 
                               reply_markup=user_kb.get_menu(user["default_ai"]))
     res = await ai.get_choose_mdjrny(task_id, image_id, call.from_user.id)  # Запрос к MidJourney API
-
-    logger.info(f'res: {res}, task_id: {task_id}, image_id: {image_id}')
 
     if res is not None and "success" not in res:
         if "message" in res and res["message"] == "repeat task":
@@ -641,8 +635,6 @@ async def clear_content(call: CallbackQuery, state: FSMContext):
 async def try_prompt(call: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
-
-    logger.info(f'Data: {data}')
 
     if "prompt" not in data:
         await call.message.answer("Попробуйте заново ввести запрос")
@@ -745,8 +737,6 @@ async def gen_prompt(message: Message, state: FSMContext):
         await message.answer("Введите команду /start для перезагрузки бота")
         return await message.bot.send_message(796644977, message.from_user.id)
 
-    logger.info(f'User: {user} , AI: {user["default_ai"]}, Prompt: {message.text}')
-
     if user["default_ai"] == "chatgpt":
         model = user["gpt_model"]
 
@@ -818,8 +808,6 @@ async def return_voice(call: CallbackQuery, state: FSMContext):
             raise ValueError("User voice not found")
     except (ValueError, Exception):  # Если строки нет или другая ошибка
         user_voice = await db.create_voice(user_id)  # Создаем запись
-
-    logger.info(user_voice)
 
     # Получаем данные из состояния
     content_raw = await state.get_data()

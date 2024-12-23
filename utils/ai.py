@@ -97,8 +97,6 @@ async def get_mdjrny(prompt, user_id):
     translated_prompt = await get_translate(prompt)  # Переводим запрос на английский
     request_id = await db.add_action(user_id, "image", "imagine")  # Сохраняем действие в базе данных
     response = await mj_api.imagine(translated_prompt, request_id)  # Отправляем запрос в Midjourney
-    
-    logger.info(f'Request ID: {request_id}, response: {response}')
 
     return response
 
@@ -107,8 +105,6 @@ async def get_mdjrny(prompt, user_id):
 async def get_choose_mdjrny(task_id, image_id, user_id):
 
     action_id = await db.add_action(user_id, "image", "upscale")  # Сохраняем действие в базе данных
-
-    logger.info(f'Task ID: {task_id}, Image ID: {image_id}, Action ID: {action_id}')
 
     response = await mj_api.upscale(task_id, image_id, action_id)  # Отправляем запрос на улучшение изображения
     return response

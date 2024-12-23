@@ -683,13 +683,6 @@ async def get_stat():
     start_utc_naive = start_utc.replace(tzinfo=None)
     end_utc_naive = end_utc.replace(tzinfo=None)
 
-    # Логирование для отладки
-    logger.info(f'Получение статистики в {end_moscow} по МСК, {end_utc} по UTC')
-    logger.info(f'start_timestamp: {start_timestamp} (type: {type(start_timestamp)})')
-    logger.info(f'end_timestamp: {end_timestamp} (type: {type(end_timestamp)})')
-    logger.info(f'start_utc_naive: {start_utc_naive} (type: {type(start_utc_naive)})')
-    logger.info(f'end_utc_naive: {end_utc_naive} (type: {type(end_utc_naive)})')
-
     conn = await get_conn()
     try:
         row = await conn.fetchrow("""
@@ -739,10 +732,6 @@ async def get_orders_statistics(period: str = "all"):
         start_time = start_utc.replace(tzinfo=None)
     else:
         start_time = None
-
-    logger.info(f'Получение статистики в {now_moscow} по МСК, {now_utc} по UTC')
-    if start_time:
-        logger.info(f'start_time: {start_time} (type: {type(start_time)})')
 
     conn = await get_conn()
     try:
