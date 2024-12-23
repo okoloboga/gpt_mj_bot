@@ -311,9 +311,10 @@ async def settings(call: CallbackQuery):
     logger.info(f'Хэндлер {call.data}')
 
     user = await db.get_user(call.from_user.id)
+    user_lang = user["chat_gpt_lang"]
 
     await call.message.answer("""Здесь Вы можете изменить настройки 
-ChatGPT⤵️""", reply_markup=user_kb.settings)
+ChatGPT⤵️""", reply_markup=user_kb.settings(user_lang, 'acc'))
     await call.answer()
 
 
