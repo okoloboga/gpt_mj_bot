@@ -83,10 +83,10 @@ def model_keyboard(selected_model: str):
             f"{value}✅" if key == selected_voice else value,
             callback_data=f"select_model:{key}"
         )
-        for key, value in voices.items()
+        for key, value in models.items()
     ]
     return InlineKeyboardMarkup(row_width=2).add(*buttons).add(
-        InlineKeyboardButton("📋Отличия моделей GPT", url=""),
+        InlineKeyboardButton("📋Отличия моделей GPT", url="https://google.com"),
         InlineKeyboardButton("🔙Назад", callback_data="back_to_profile:acc")
     )
 
