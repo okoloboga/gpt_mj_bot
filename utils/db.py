@@ -50,9 +50,9 @@ async def start():
 
         # ДОБАВИТЬ КОЛОНКИ
         "tokens_4o INTEGER DEFAULT 0,"  # Количество токенов для ChatGPT
-        "tokens_4o-mini INTEGER DEFAULT 5000,"
-        "tokens_o1-preview INTEGER DEFAULT 0,"
-        "tokens_o1-mini INTEGER DEFAULT 0,"
+        "tokens_4o_mini INTEGER DEFAULT 5000,"
+        "tokens_o1_preview INTEGER DEFAULT 0,"
+        "tokens_o1_mini INTEGER DEFAULT 0,"
         "gpt_model VARCHAR(10) DEFAULT '4o-mini',"
         "voice VARCHAR(64) DEFAULT 'onyx',"
         "chatgpt_character VARCHAR(256) DEFAULT '',"
@@ -232,7 +232,7 @@ async def change_default_ai(user_id, ai_type):
 async def remove_free_chatgpt(user_id, tokens):
 
     conn: Connection = await get_conn()
-    await conn.execute("UPDATE users SET tokens_4o-mini = tokens_4o-mini - $2 WHERE user_id = $1", user_id, tokens)
+    await conn.execute("UPDATE users SET tokens_4o_mini = tokens_4o_mini - $2 WHERE user_id = $1", user_id, tokens)
     await conn.close()
 
 
@@ -240,8 +240,9 @@ async def remove_free_chatgpt(user_id, tokens):
 async def remove_chatgpt(user_id, tokens, model):
 
     conn: Connection = await get_conn()
+    dashed_model = model.replace("-", "_")
     column = f'tokens_{model}'
-    if column not in {'tokens_4o', 'tokens_4o-mini', 'tokens_o1-preview', 'tokens_o1-mini'}:
+    if column not in {'tokens_4o', 'tokens_4o_mini', 'tokens_o1_preview', 'tokens_o1_mini'}:
         raise ValueError("Invalid model name")
 
     await conn.execute(f"UPDATE users SET {column} = {column} - $2 WHERE user_id = $1", user_id, tokens)
@@ -563,8 +564,9 @@ async def set_order_pay(order_id):
 async def update_tokens(user_id, new_tokens, model):
 
     conn: Connection = await get_conn()
+    dashed_model = model.replace("-", "_")
     column = f'tokens_{model}'
-    if column not in {'tokens_4o', 'tokens_4o-mini', 'tokens_o1-preview', 'tokens_o1-mini'}:
+    if column not in {'tokens_4o', 'tokens_4o_mini', 'tokens_o1_preview', 'tokens_o1_mini'}:
         raise ValueError("Invalid model name")
 
     await conn.execute(f"UPDATE users SET {column} = $2 WHERE user_id = $1", user_id, new_tokens)

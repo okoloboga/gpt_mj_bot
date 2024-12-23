@@ -369,10 +369,10 @@ async def show_profile(message: Message, state: FSMContext):
     user_lang = user['chat_gpt_lang']
 
     mj = int(user['mj']) + int(user['free_image']) if int(user['mj']) + int(user['free_image']) >= 0 else 0
-    gpt_4o_mini = int(user['tokens_4o-mini']) if int(user['tokens_4o-mini']) >= 0 else 0
+    gpt_4o_mini = int(user['tokens_4o_mini']) if int(user['tokens_4o_mini']) >= 0 else 0
     gpt_4o = int(user['tokens_4o']) if int(user['tokens_4o']) >= 0 else 0
-    gpt_o1_preview = int(user['tokens_o1-preview']) if int(user['tokens_o1-preview']) >= 0 else 0
-    gpt_o1_mini = int(user['tokens_o1-mini']) if int(user['tokens_o1-mini']) >= 0 else 0
+    gpt_o1_preview = int(user['tokens_o1_preview']) if int(user['tokens_o1_preview']) >= 0 else 0
+    gpt_o1_mini = int(user['tokens_o1_mini']) if int(user['tokens_o1_mini']) >= 0 else 0
 
     logger.info(f"Колиество токенов и запросов для {user_id}:mj: {mj}, gpt_4o: {gpt_4o}, gpt_4o_mini: {gpt_4o_mini}, gpt_o1_preview: {gpt_o1_preview}, gpt_o1_mini: {gpt_o1_mini}")
 
@@ -408,10 +408,10 @@ async def back_to_profile(call: CallbackQuery, state: FSMContext):
 
         # Формируем текст с количеством доступных генераций и токенов
         mj = int(user['mj']) + int(user['free_image']) if int(user['mj']) + int(user['free_image']) >= 0 else 0
-        gpt_4o_mini = int(user['tokens_4o-mini']) if int(user['tokens_4o-mini']) >= 0 else 0
+        gpt_4o_mini = int(user['tokens_4o_mini']) if int(user['tokens_4o_mini']) >= 0 else 0
         gpt_4o = int(user['tokens_4o']) if int(user['tokens_4o']) >= 0 else 0
-        gpt_o1_preview = int(user['tokens_o1-preview']) if int(user['tokens_o1-preview']) >= 0 else 0
-        gpt_o1_mini = int(user['tokens_o1-mini']) if int(user['tokens_o1-mini']) >= 0 else 0
+        gpt_o1_preview = int(user['tokens_o1_preview']) if int(user['tokens_o1_preview']) >= 0 else 0
+        gpt_o1_mini = int(user['tokens_o1_mini']) if int(user['tokens_o1_mini']) >= 0 else 0
 
         logger.info(f"Колиество токенов и запросов для {user_id}:mj: {mj}, gpt_4o: {gpt_4o}, gpt_4o_mini: {gpt_4o_mini}, gpt_o1_preview: {gpt_o1_preview}, gpt_o1_mini: {gpt_o1_mini}")
 
