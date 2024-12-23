@@ -68,11 +68,28 @@ def escape_markdown_v2(text):
 # Функция для удаления LaTeX формул
 def remove_latex(text):
     """
-    Удаляет LaTeX формулы из текста.
+    Удаляет LaTeX разметку (\( ... \) и \[ ... \]), заменяет формулы на читаемый текст.
     """
-    # Удаляем все, что находится между \( ... \) или \[ ... \]
-    cleaned_text = re.sub(r'\\\((.*?)\\\)|\\\[(.*?)\\\]', '', text)
-    return cleaned_text.strip()
+    # Удаляем \( ... \) и \[ ... \], оставляя содержимое
+    text = re.sub(r'\\\((.*?)\\\)', r'\1', text)  # Форматы \( ... \)
+    text = re.sub(r'\\\[(.*?)\\\]', r'\1', text)  # Форматы \[ ... \]
+
+    # Заменяем {,} на запятую
+    text = text.replace('{,}', ',')
+
+    # Преобразуем m_{\text{H}_2} в H2
+    text = re.sub(r'm_{\\text{([A-Za-z0-9_]+)}}', r'\1', text)
+
+    # Заменяем ^\circ на ° (градусы)
+    text = text.replace('^\\circ', '°')
+
+    # Убираем лишние обратные слеши
+    text = text.replace('\\', '')
+
+    # Убираем потенциальные избыточные пробелы
+    text = ' '.join(text.split())
+    
+    return text.strip()
 
 # Функция для обработки ответа GPT
 async def process_gpt_response(user_id, bot: Bot, gpt_response, reply_markup=None):
@@ -87,7 +104,6 @@ async def process_gpt_response(user_id, bot: Bot, gpt_response, reply_markup=Non
         try:
             escaped_text = escape_markdown_v2(cleaned_response)
             await bot.send_message(chat_id=user_id, text=escaped_text, parse_mode="MarkdownV2", reply_markup=reply_markup)
-            return
         except Exception as markdown_error:
             print(f"MarkdownV2 ошибка: {markdown_error}")
             pass  # Если MarkdownV2 не прошёл, переходим к HTML
@@ -95,7 +111,6 @@ async def process_gpt_response(user_id, bot: Bot, gpt_response, reply_markup=Non
         # Попробуем отправить как HTML
         try:
             await bot.send_message(chat_id=user_id, text=cleaned_response, parse_mode="HTML", reply_markup=reply_markup)
-            return
         except Exception as html_error:
             print(f"HTML ошибка: {html_error}")
             pass
