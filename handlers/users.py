@@ -217,11 +217,12 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
     
     if 0 < user[f"tokens_{model_dashed}"] <= 3000:  # Если осталось 3 тыс или меньше токенов
-        if user_notified is None and free_request:
+        logger.info(f"Осталось {user[f'tokens_{model_dashed}']} токенов, было уведомление: {user_notified}")
+        if user_notified is None:
             await db.create_user_notification_gpt(user_id)
             await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов
             # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
-        elif not free_request and user_notified is not None:
+        else:
             last_notification = user_notified['last_notification']
             if last_notification is None or now > last_notification + timedelta(days=30):
                 await db.update_user_notification_gpt(user_id)
