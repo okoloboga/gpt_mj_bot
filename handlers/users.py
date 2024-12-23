@@ -65,7 +65,6 @@ def escape_markdown_v2(text):
     return re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', text)
 
 
-# Функция для удаления LaTeX формул
 def remove_latex(text):
     """
     Удаляет LaTeX разметку (\( ... \) и \[ ... \]), заменяет формулы на читаемый текст.
@@ -83,13 +82,17 @@ def remove_latex(text):
     # Заменяем ^\circ на ° (градусы)
     text = text.replace('^\\circ', '°')
 
-    # Убираем лишние обратные слеши
+    # Убираем лишние обратные слеши, но сохраняем переносы строк
     text = text.replace('\\', '')
 
+    # Сохраняем переносы строк, удаляя лишние пробелы вокруг них
+    text = re.sub(r' *\n *', '\n', text)
+
     # Убираем потенциальные избыточные пробелы
-    text = ' '.join(text.split())
-    
+    text = re.sub(r' +', ' ', text)
+
     return text.strip()
+
 
 # Функция для обработки ответа GPT
 async def process_gpt_response(user_id, bot: Bot, gpt_response, reply_markup=None):
@@ -122,6 +125,7 @@ async def process_gpt_response(user_id, bot: Bot, gpt_response, reply_markup=Non
     except Exception as e:
         await bot.send_message(chat_id=user_id, text="Ошибка при обработке сообщения.")
         print(f"Ошибка: {e}")
+
 
 
 # Снижение баланса пользователя
