@@ -194,7 +194,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     # model_dashed = model.replace("-", "_")
     messages.append({"role": "user", "content": prompt})
 
-    logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model_dashed}']}")
+    logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model}']}")
 
     if model == "4o-mini" and user["tokens_4o_mini"] <= 0:
         logger.info("Модель 4o-mini закончилась - переключаем")
@@ -220,7 +220,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
     
     if 0 < user[f"tokens_{model_dashed}"] <= 3000:  # Если осталось 3 тыс или меньше токенов
-        logger.info(f"Осталось {user[f'tokens_{model_dashed}']} токенов, было уведомление: {user_notified}")
+        logger.info(f"Осталось {user[f'tokens_{model}']} токенов, было уведомление: {user_notified}")
         if user_notified is None:
             await db.create_user_notification_gpt(user_id)
             await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов
