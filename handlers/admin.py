@@ -95,7 +95,7 @@ async def show_stats(message: Message):
         f"ChatGPT \- {statistics['chatgpt_requests']} \| {statistics['chatgpt_payments']}\n"
         f"Midjourney \- {statistics['midjourney_requests']} \| {statistics['midjourney_payments']}\n\n"
         "*За 24 часа:*\n"
-        f"Пользователей - {statistics['daily_users']}\n"
+        f"Пользователей \- {statistics['daily_users']}\n"
         f"Запросов \| Оплат \- {statistics['daily_requests']} \| {statistics['daily_payments']}\n"
         f"ChatGPT \- {statistics['daily_chatgpt_requests']} \| {statistics['daily_chatgpt_payments']}\n"
         f"Midjourney \- {statistics['daily_midjourney_requests']} \| {statistics['daily_midjourney_payments']}\n"
