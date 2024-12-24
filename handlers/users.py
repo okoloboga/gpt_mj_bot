@@ -196,11 +196,6 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
     logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model_dashed}']}")
 
-    if model == "4o-mini" and user["tokens_4o_mini"] <= 0:
-        logger.info("Модель 4o-mini закончилась - переключаем")
-        await db.set_model(user_id, "4o")
-        await bot.send_message(user_id, "✅Модель для ChatGPT изменена на GPT-4o")
-
     await bot.send_chat_action(user_id, ChatActions.TYPING)
 
     res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPTs
@@ -764,6 +759,11 @@ async def gen_prompt(message: Message, state: FSMContext):
         model = (user["gpt_model"]).replace("-", "_")
 
         logger.info(f'Текстовый запрос к GPT. User: {user}, Model: {model}, tokens: {user[f"tokens_{model}"]}')
+
+        if model == "4o_mini" and user["tokens_4o_mini"] <= 0:
+            logger.info("Модель 4o-mini закончилась - переключаем")
+            await db.set_model(user_id, "4o")
+            await bot.send_message(user_id, "✅Модель для ChatGPT изменена на GPT-4o")
 
         if user[f"tokens_{model}"] <= 0:
             return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
