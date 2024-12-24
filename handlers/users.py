@@ -198,10 +198,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
     logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model_dashed}']}")
 
-    res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPT
-
-    logger.info(f"Ответ от ChatGPT-{model}: {res}")
-
+    res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPTs
     await state.update_data(content=res["content"])
     await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
 
