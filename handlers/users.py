@@ -194,6 +194,9 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     model_dashed = model.replace("-", "_")
     messages.append({"role": "user", "content": prompt})
 
+    if model == "4o-mini" and user["tokens_4o_mini"] <= 0:
+        await db.set_model(user_id, "4o")
+
     await bot.send_chat_action(user_id, ChatActions.TYPING)
 
     logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model_dashed}']}")
@@ -206,13 +209,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
         return
     messages.append({"role": "assistant", "content": res["content"]})
 
-    # Списывание токенов
-    '''
-    if user["tokens_4o_mini"] > 0:
-        await db.remove_free_chatgpt(user_id, res["tokens"])  # Уменьшаем бесплатные токены
-        free_request = True
-    else:
-    '''  
+    # Списывание токенов    
     await db.remove_chatgpt(user_id, res["tokens"], model)  # Уменьшаем токены
 
     # Проверка на количество оставшихся токенов
