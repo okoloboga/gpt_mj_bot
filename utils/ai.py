@@ -86,7 +86,7 @@ async def get_gpt(messages, model):
         }
         # Проверка и обработка изображений в сообщении пользователя
 
-        for message in MESSAGES:
+        for message in messages:
             logger.info(f'ЦИКЛ ПО messages: {message}')
             if message["role"] == "user":
                 logger.info('ПРОВЕРКА НА ТИП СОДЕРЖИМОГО')
