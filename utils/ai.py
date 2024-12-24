@@ -73,67 +73,33 @@ async def get_translate(text):
 
 # Функция для отправки запроса в ChatGPT
 async def get_gpt(messages, model):
-import re
-import logging
-
-async def get_gpt(messages, model):
     status = True
     tokens = 0
     content = ""
-
     try:
-        model_map = {
-            '4o-mini': 'gpt-4o-mini',
-            '4o': 'gpt-4o',
-            'o1-preview': 'o1-preview',
-            'o1-mini': 'o1-mini'
-        }
-
-        # Проверка и обработка изображений в сообщении пользователя
-        for message in messages:
-            if message["role"] == "user":
-                # Ищем ссылки на изображения
-                image_urls = re.findall(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', message["content"])
-                if image_urls:
-                    # Преобразуем сообщение в формат с type: image_url
-                    new_content = []
-
-                    # Добавляем текст (если есть)
-                    text_content = re.sub(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', '', message["content"]).strip()
-                    if text_content:
-                        new_content.append({"type": "text", "text": text_content})
-
-                    # Добавляем ссылки на изображения
-                    for url in image_urls:
-                        new_content.append({
-                            "type": "image_url",
-                            "image_url": {"url": url}
-                        })
-
-                    # Заменяем оригинальное сообщение на преобразованное
-                    message["content"] = new_content
+        model_map = {'4o-mini': 'gpt-4o-mini',
+                     '4o': 'gpt-4o',
+                     'o1-preview': 'o1-preview',
+                     'o1-mini': 'o1-mini'}  
 
         if model in {'o1-preview', 'o1-mini'}:
             if messages and messages[0]["role"] == "system":
-                messages[0] = {"role": "user", "content": "You are a helpful assistant."}
+                messages[0] = {"role": "user", "content": "You are a helpful assistant."} 
 
-        logging.info(f'MESSAGES TO GPT: {messages}')
+        logger.info(f'MESSAGES TO GPT: {messages}')
 
         response = client.chat.completions.create(
             model=f"{model_map[model]}",
             messages=messages[-10:]  # Последние 10 сообщений
         )
-
+        # Используем атрибуты объекта вместо индексации
         content = response.choices[0].message.content  # Получаем ответ
         tokens = response.usage.total_tokens  # Получаем количество использованных токенов
-
     except openai.OpenAIError as e:
         status = False
-        content = "Генерация текста временно недоступна, повторите запрос позднее"
-        logging.error(f'ChatGPT Error {e}')
-
+        content = "Генерация текста временно недоступна, повторите запрос позднее"  # Сообщение об ошибке
+        logger.info(f'ChatGPT Error {e}')
     return {"status": status, "content": content, "tokens": tokens}  # Возвращаем результат
-
 
 
 
