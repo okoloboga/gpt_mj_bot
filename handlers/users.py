@@ -236,7 +236,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
             await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов
             # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
         else:
-            last_notification = user_notified['last_notification']
+            last_notification = user_notified['last_notification'] if user_notified is not None else None
             if (last_notification is None or now > last_notification + timedelta(days=30)) and has_purchase is True:
                 await db.update_user_notification_gpt(user_id)
                 await notify_low_chatgpt_tokens(user_id, bot)
