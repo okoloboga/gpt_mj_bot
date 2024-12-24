@@ -15,6 +15,7 @@ import speech_recognition as sr  # Библиотека для распозна�
 from pydub import AudioSegment  # Библиотека для работы с аудио
 import tempfile
 import os
+import re
 
 from config import OPENAPI_TOKEN, midjourney_webhook_url, MJ_API_KEY, TNL_API_KEY, TOKEN, NOTIFY_URL, TNL_API_KEY1  # Импорт конфигураций и токенов
 from utils import db  # Работа с базой данных
@@ -72,71 +73,68 @@ async def get_translate(text):
 
 # Функция для отправки запроса в ChatGPT
 async def get_gpt(messages, model):
+import re
+import logging
+
+async def get_gpt(messages, model):
     status = True
     tokens = 0
     content = ""
-    temp_image_path = "temp_image.jpg"  # Временный файл для сохранения изображения
 
     try:
-        # Карта моделей
-        model_map = {'4o-mini': 'gpt-4o-mini',
-                     '4o': 'gpt-4o',
-                     'o1-preview': 'o1-preview',
-                     'o1-mini': 'o1-mini'}
+        model_map = {
+            '4o-mini': 'gpt-4o-mini',
+            '4o': 'gpt-4o',
+            'o1-preview': 'o1-preview',
+            'o1-mini': 'o1-mini'
+        }
 
-        # Если используется определенная модель, меняем системное сообщение
+        # Проверка и обработка изображений в сообщении пользователя
+        for message in messages:
+            if message["role"] == "user":
+                # Ищем ссылки на изображения
+                image_urls = re.findall(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', message["content"])
+                if image_urls:
+                    # Преобразуем сообщение в формат с type: image_url
+                    new_content = []
+
+                    # Добавляем текст (если есть)
+                    text_content = re.sub(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', '', message["content"]).strip()
+                    if text_content:
+                        new_content.append({"type": "text", "text": text_content})
+
+                    # Добавляем ссылки на изображения
+                    for url in image_urls:
+                        new_content.append({
+                            "type": "image_url",
+                            "image_url": {"url": url}
+                        })
+
+                    # Заменяем оригинальное сообщение на преобразованное
+                    message["content"] = new_content
+
         if model in {'o1-preview', 'o1-mini'}:
             if messages and messages[0]["role"] == "system":
                 messages[0] = {"role": "user", "content": "You are a helpful assistant."}
 
-        # Поиск ссылки на изображение в пользовательских сообщениях
-        user_message = next((msg for msg in messages if msg['role'] == 'user'), None)
-        if user_message:
-            content_text = user_message['content']
-            image_url = next((word for word in content_text.split() if word.startswith("http")), None)
+        logging.info(f'MESSAGES TO GPT: {messages}')
 
-            if image_url:
-                # Загружаем изображение по ссылке
-                response = requests.get(image_url)
-                response.raise_for_status()  # Проверяем успешность запроса
-
-                # Сохраняем изображение во временный файл
-                with open(temp_image_path, "wb") as image_file:
-                    image_file.write(response.content)
-
-                # Убираем ссылку из текста, оставляя только текстовый контекст
-                user_message['content'] = content_text.replace(image_url, "").strip()
-
-                # Здесь вместо обработки изображения мультимодальной моделью
-                # добавляем сообщение о том, что изображение было обработано
-                user_message['content'] += "\n(Обработано изображение, отправлено на анализ.)"
-
-        logger.info(f'MESSAGES TO GPT: {messages}')
-
-        # Отправляем запрос с текстом
         response = client.chat.completions.create(
             model=f"{model_map[model]}",
             messages=messages[-10:]  # Последние 10 сообщений
         )
 
-        # Получаем ответ и количество токенов
-        content = response.choices[0].message.content
-        tokens = response.usage.total_tokens
+        content = response.choices[0].message.content  # Получаем ответ
+        tokens = response.usage.total_tokens  # Получаем количество использованных токенов
 
-    except requests.RequestException as e:
-        status = False
-        content = f"Ошибка загрузки изображения: {e}"
-        logger.info(f"Image Download Error: {e}")
     except openai.OpenAIError as e:
         status = False
         content = "Генерация текста временно недоступна, повторите запрос позднее"
-        logger.info(f'ChatGPT Error: {e}')
-    except Exception as e:
-        status = False
-        content = f"Общая ошибка: {e}"
-        logger.info(f'General Error: {e}')
-    
-    return {"status": status, "content": content, "tokens": tokens}
+        logging.error(f'ChatGPT Error {e}')
+
+    return {"status": status, "content": content, "tokens": tokens}  # Возвращаем результат
+
+
 
 
 # Функция для отправки запроса в MidJourney
