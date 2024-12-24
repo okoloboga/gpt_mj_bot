@@ -204,10 +204,8 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPTs
 
     if len(res["content"]) <= 4096:
-        logger.info(f"Длина сообщения {len(res['content'])} < 4096")
         await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
     else:
-        logger.info(f"Длина сообщения {len(res['content'])} > 4096")
         # Разделение сообщения на части
         parts = split_message(res["content"], 4096)
         for part in parts:
@@ -230,7 +228,9 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     has_purchase = await db.has_matching_orders(user_id)
     
     if 0 < user[f"tokens_{model_dashed}"] <= 3000:  # Если осталось 3 тыс или меньше токенов
-        logger.info(f"Осталось {user[f'tokens_{model_dashed}']} токенов, было уведомление: {user_notified}")
+
+        logger.info(f"Осталось {user[f'tokens_{model_dashedы}']} токенов, было уведомление: {user_notified}")
+
         if user_notified is None and has_purchase is True:
             await db.create_user_notification_gpt(user_id)
             await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов

@@ -113,8 +113,6 @@ async def get_gpt(messages, model):
             if messages and messages[0]["role"] == "system":
                 messages[0] = {"role": "user", "content": "You are a helpful assistant."}
 
-        logging.info(f'MESSAGES TO GPT: {messages}')
-
         response = client.chat.completions.create(
             model=f"{model_map[model]}",
             messages=messages[-10:]  # Последние 10 сообщений
