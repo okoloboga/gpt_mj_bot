@@ -85,35 +85,50 @@ async def get_gpt(messages, model):
             'o1-mini': 'o1-mini'
         }
         # Проверка и обработка изображений в сообщении пользователя
-        for message in messages:
+
+        for message in MESSAGES:
             logger.info(f'ЦИКЛ ПО messages: {message}')
             if message["role"] == "user":
-                # Ищем ссылки на изображения
-                logger.info('ПРОВЕРКА ПО РЕГУЛЯРНОМУ ВРАЖЕНИЮ')
-                if message["content"] is list and message["content"][1]["type"] == "image_url":
-                    logger.info('message["content"] is list and message["content"][1]["type"] == "image_url"')
-                    image_urls = [item["image_url"]["url"] for item in message["content"][1]]
+                logger.info('ПРОВЕРКА НА ТИП СОДЕРЖИМОГО')
+                if isinstance(message["content"], list):  # Проверяем, является ли content списком
+                    logger.info('message["content"] is list')
+                    # Обрабатываем список контента
+                    image_urls = [
+                        item["image_url"]["url"]
+                        for item in message["content"]
+                        if item["type"] == "image_url"
+                    ]
+                    text_content = " ".join(
+                        item["text"]
+                        for item in message["content"]
+                        if item["type"] == "text"
+                    ).strip()
                 else:
+                    logger.info('message["content"] is string')
+                    # Ищем ссылки на изображения в строке
                     image_urls = re.findall(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', message["content"])
-                logger.info(f'ПОСЛЕ ПРОВЕРКИ РЕГИЛЯРНОГО ВЫРАЖЕНИЯ, ССЫЛКИ : {image_urls}')
-                if image_urls:
-                    # Преобразуем сообщение в формат с type: image_url
-                    new_content = []
-
-                    # Добавляем текст (если есть)
                     text_content = re.sub(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', '', message["content"]).strip()
-                    if text_content:
-                        new_content.append({"type": "text", "text": text_content})
 
-                    # Добавляем ссылки на изображения
-                    for url in image_urls:
-                        new_content.append({
-                            "type": "image_url",
-                            "image_url": {"url": url}
-                        })
+                logger.info(f'НАЙДЕНЫ ССЫЛКИ: {image_urls}')
+                logger.info(f'ТЕКСТ: {text_content}')
 
-                    # Заменяем оригинальное сообщение на преобразованное
-                    message["content"] = new_content
+                # Преобразуем сообщение в формат с type: image_url
+                new_content = []
+
+                # Добавляем текст (если есть)
+                if text_content:
+                    new_content.append({"type": "text", "text": text_content})
+
+                # Добавляем ссылки на изображения
+                for url in image_urls:
+                    new_content.append({
+                        "type": "image_url",
+                        "image_url": {"url": url}
+                    })
+
+                # Заменяем оригинальное сообщение на преобразованное
+                message["content"] = new_content
+
 
         if model in {'o1-preview', 'o1-mini'}:
             if messages and messages[0]["role"] == "system":
