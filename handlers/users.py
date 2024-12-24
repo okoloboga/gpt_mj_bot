@@ -331,7 +331,6 @@ async def back_to_discount_notification(call: CallbackQuery):
     await call.answer()
 
 
-
 # Хендлер настроек ChatGPT
 @dp.callback_query_handler(text="settings")
 async def settings(call: CallbackQuery):

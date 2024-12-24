@@ -87,9 +87,7 @@ async def get_gpt(messages, model):
         # Проверка и обработка изображений в сообщении пользователя
 
         for message in messages:
-            logger.info(f'ЦИКЛ ПО messages: {message}')
             if message["role"] == "user":
-                logger.info('ПРОВЕРКА НА ТИП СОДЕРЖИМОГО')
                 if isinstance(message["content"], list):  # Проверяем, является ли content списком
                     logger.info('message["content"] is list')
                     # Обрабатываем список контента
@@ -108,9 +106,6 @@ async def get_gpt(messages, model):
                     # Ищем ссылки на изображения в строке
                     image_urls = re.findall(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', message["content"])
                     text_content = re.sub(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', '', message["content"]).strip()
-
-                logger.info(f'НАЙДЕНЫ ССЫЛКИ: {image_urls}')
-                logger.info(f'ТЕКСТ: {text_content}')
 
                 # Преобразуем сообщение в формат с type: image_url
                 new_content = []

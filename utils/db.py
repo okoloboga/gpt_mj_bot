@@ -29,11 +29,7 @@ async def start():
         "username VARCHAR(32),"  # Имя пользователя
         "first_name VARCHAR(64),"  # Имя пользователя
         "balance INT DEFAULT 0,"  # Баланс пользователя
-        "reg_time INT,"  # Время регистрации в формате timestamp
-        
-        # УДАЛИТЬ КОЛОНКУ
-        # "free_chatgpt SMALLINT DEFAULT 5000,"  # Количество бесплатных токенов для ChatGPT
-        
+        "reg_time INT,"  # Время регистрации в формате timestamp     
         "free_image SMALLINT DEFAULT 3,"  # Количество бесплатных изображений в MidJourney
         "default_ai VARCHAR(10) DEFAULT 'empty',"  # Выбранный по умолчанию AI
         "inviter_id BIGINT,"  # ID пригласившего пользователя
@@ -47,8 +43,6 @@ async def start():
         "chatgpt_settings VARCHAR(256) DEFAULT '',"  # Настройки ChatGPT
         "sub_time TIMESTAMP DEFAULT NOW(),"  # Время начала подписки
         "sub_type VARCHAR(12),"  # Тип подписки
-
-        # ДОБАВИТЬ КОЛОНКИ
         "tokens_4o INTEGER DEFAULT 1000,"  # Количество токенов для ChatGPT
         "tokens_4o_mini INTEGER DEFAULT 0,"
         "tokens_o1_preview INTEGER DEFAULT 0,"
@@ -56,7 +50,6 @@ async def start():
         "gpt_model VARCHAR(10) DEFAULT '4o-mini',"
         "voice VARCHAR(64) DEFAULT 'onyx',"
         "chatgpt_character VARCHAR(256) DEFAULT '',"
-
         "mj INTEGER DEFAULT 0,"  # Количество токенов для MidJourney
         "is_notified BOOLEAN DEFAULT FALSE)"  # Флаг уведомления пользователя
     )
@@ -802,4 +795,95 @@ async def has_matching_orders(user_id: int) -> bool:
         # Логирование ошибки или другая обработка
         print(f"Ошибка при проверке заказов: {e}")
         return False
+
+
+async def get_statistics():
+    conn: Connection = await get_conn()
+
+    # Общее количество пользователей
+    total_users = await conn.fetchval("SELECT COUNT(DISTINCT user_id) FROM usage")
+
+    # Общее количество запросов и оплат
+    total_requests = await conn.fetchrow(
+        "SELECT COUNT(*) as total_requests, "
+        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as total_payments "
+        "FROM orders"
+    )
+
+    chatgpt_stats = await conn.fetchrow(
+        "SELECT COUNT(*) as requests, "
+        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
+        "FROM orders WHERE order_type='chatgpt'"
+    )
+
+    midjourney_stats = await conn.fetchrow(
+        "SELECT COUNT(*) as requests, "
+        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
+        "FROM orders WHERE order_type='midjourney'"
+    )
+
+    # Дата 24 часа назад
+    moscow_tz = ZoneInfo("Europe/Moscow")  # Часовой пояс Москвы
+    utc_tz = ZoneInfo("UTC")  # Часовой пояс UTC
+
+    # Текущее время в Москве
+    now_moscow = datetime.now(moscow_tz)
+
+    # Начало текущего дня в Москве (00:00)
+    start_moscow = datetime.combine(now_moscow.date(), time.min, tzinfo=moscow_tz)
+
+    # Конец периода — текущее время
+    end_moscow = now_moscow
+
+    # Конвертация в UTC
+    start_utc = start_moscow.astimezone(utc_tz)
+    end_utc = end_moscow.astimezone(utc_tz)
+
+    # Получение Unix timestamps для таблицы users
+    start_timestamp = int(start_utc.timestamp())
+    end_timestamp = int(end_utc.timestamp())
+
+    # Преобразование в naive datetime (без tzinfo) для таблицы usage
+    start_utc_naive = start_utc.replace(tzinfo=None)
+    end_utc_naive = end_utc.replace(tzinfo=None)
+
+    # Количество запросов и оплат за последние 24 часа
+    daily_requests = await conn.fetchrow(
+        "SELECT COUNT(*) as daily_requests, "
+        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as daily_payments "
+        "FROM orders WHERE create_time BETWEEN $1 AND $2", start_utc_naive, end_utc_naive
+    )
+
+    daily_chatgpt_stats = await conn.fetchrow(
+        "SELECT COUNT(*) as requests, "
+        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
+        "FROM orders WHERE order_type='chatgpt' AND create_time BETWEEN $1 AND $2", start_utc_naive, end_utc_naive
+    )
+
+    daily_midjourney_stats = await conn.fetchrow(
+        "SELECT COUNT(*) as requests, "
+        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
+        "FROM orders WHERE order_type='midjourney' AND create_time BETWEEN $1 AND $2", start_utc_naive, end_utc_naive
+    )
+
+    await conn.close()
+
+    statistics = {
+        "total_users": total_users,
+        "total_requests": total_requests["total_requests"],
+        "total_payments": total_requests["total_payments"],
+        "chatgpt_requests": chatgpt_stats["requests"],
+        "chatgpt_payments": chatgpt_stats["payments"],
+        "midjourney_requests": midjourney_stats["requests"],
+        "midjourney_payments": midjourney_stats["payments"],
+        "daily_users": daily_requests["daily_requests"],
+        "daily_requests": daily_requests["daily_requests"],
+        "daily_payments": daily_requests["daily_payments"],
+        "daily_chatgpt_requests": daily_chatgpt_stats["requests"],
+        "daily_chatgpt_payments": daily_chatgpt_stats["payments"],
+        "daily_midjourney_requests": daily_midjourney_stats["requests"],
+        "daily_midjourney_payments": daily_midjourney_stats["payments"],
+    }
+
+    return statistics
 

@@ -12,3 +12,8 @@ admin_menu = InlineKeyboardMarkup(row_width=1).add(
     InlineKeyboardButton('Партнерская программа', callback_data='admin_ref_menu'),
     # Кнопка для управления бонусными ссылками (промокодами)
     InlineKeyboardButton('Бонус ссылки', callback_data='admin_promo_menu'))
+
+def more_stats_kb():
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton('Расширенная статистика', callback_data='more_stats')
+    )
