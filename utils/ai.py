@@ -90,7 +90,10 @@ async def get_gpt(messages, model):
             if message["role"] == "user":
                 # Ищем ссылки на изображения
                 logger.info('ПРОВЕРКА ПО РЕГУЛЯРНОМУ ВРАЖЕНИЮ')
-                image_urls = re.findall(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', message["content"])
+                if message["content"] is list and message["content"][0]["type"] == "image_url":
+                    image_urls = [item["image_url"]["url"] for item in message["content"]]
+                else:
+                    image_urls = re.findall(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', message["content"])
                 logger.info(f'ПОСЛЕ ПРОВЕРКИ РЕГИЛЯРНОГО ВЫРАЖЕНИЯ, ССЫЛКИ : {image_urls}')
                 if image_urls:
                     # Преобразуем сообщение в формат с type: image_url
