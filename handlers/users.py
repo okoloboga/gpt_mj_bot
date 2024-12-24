@@ -321,7 +321,7 @@ async def start_message(message: Message, state: FSMContext):
 
 # Уведомение о низком количестве токенов GPT
 @dp.callback_query_handler(text="back_to_discount")
-async def notify_low_chatgpt_tokens(call: CallbackQuery):
+async def back_to_discount_notification(call: CallbackQuery):
 
     await call.message.answer("""
 У вас заканчиваются запросы для 💬ChatGPT
