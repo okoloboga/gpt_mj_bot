@@ -139,7 +139,7 @@ async def handle_chatgpt_tokens_purchase(call: CallbackQuery):
         urls = get_pay_urls('s'+str(order_id), amount)
     
         # Отправляем пользователю сообщение с выбором способа оплаты
-        await call.message.edit_text(f"✅{tokens / 1000} тыс. токенов для GPT-{model}\n💰Сумма: {amount}₽.",
+        await call.message.edit_text(f"✅{int(tokens / 1000)} тыс. токенов для GPT-{model}\n💰Сумма: {amount}₽.",
                                      reply_markup=user_kb.get_pay_urls(urls, order_id, src))
     
     else:

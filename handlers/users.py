@@ -720,7 +720,7 @@ async def character_menu(call: CallbackQuery, state: FSMContext):
 
     user = await db.get_user(call.from_user.id)
     await call.message.answer(
-        '<b>Введите запрос</b>\n\nНастройте ChatGPT как Вам удобно - тон, настроение, эмоциональный окрас сообщений⤵️\nИнструкция <u><a>href="https://telegra.ph/Tonkaya-nastrojka-ChatGPT-06-30"</a></u>',
+        '<b>Введите запрос</b>\n\nНастройте ChatGPT как Вам удобно - тон, настроение, эмоциональный окрас сообщений⤵️\nИнструкция <u><a href="https://telegra.ph/Tonkaya-nastrojka-ChatGPT-06-30">Инструкция.</a></u>',
         disable_web_page_preview=True,
         reply_markup=user_kb.clear_description())
     await state.set_state(states.ChangeChatGPTCharacter.text)
