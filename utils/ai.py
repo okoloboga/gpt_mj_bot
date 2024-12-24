@@ -91,6 +91,7 @@ async def get_gpt(messages, model):
                 # Ищем ссылки на изображения
                 logger.info('ПРОВЕРКА ПО РЕГУЛЯРНОМУ ВРАЖЕНИЮ')
                 if message["content"] is list and message["content"][1]["type"] == "image_url":
+                    logger.info('message["content"] is list and message["content"][1]["type"] == "image_url"')
                     image_urls = [item["image_url"]["url"] for item in message["content"][1]]
                 else:
                     image_urls = re.findall(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', message["content"])
