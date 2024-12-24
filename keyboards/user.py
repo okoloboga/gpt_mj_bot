@@ -129,31 +129,13 @@ def get_try_prompt(ai_type):
 
 # Главное меню бота, где пользователь выбирает, с каким AI он хочет работать (ChatGPT или MidJourney)
 def get_menu(default_ai):
-    '''
+
     return ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(KeyboardButton(f"{'💬ChatGPT✅' if default_ai == 'chatgpt' else '💬ChatGPT'}"),
                                                                       KeyboardButton(f"{'🎨Midjourney✅' if default_ai == 'image' else '🎨Midjourney'}"),
                                                                       KeyboardButton("⚙Аккаунт"),
                                                                       KeyboardButton("👨🏻‍💻Поддержка"),
                                                                       KeyboardButton("🤝Партнерская программа"))
-    '''
-    if default_ai == "chatgpt":
-        return ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(KeyboardButton("💬ChatGPT✅"),
-                                                                          KeyboardButton("🎨Midjourney"),
-                                                                          KeyboardButton("⚙Аккаунт"),
-                                                                          KeyboardButton("👨🏻‍💻Поддержка"),
-                                                                          KeyboardButton("🤝Партнерская программа"))
-    elif default_ai == "image":
-        return ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(KeyboardButton("💬ChatGPT"),
-                                                                          KeyboardButton("🎨Midjourney✅"),
-                                                                          KeyboardButton("⚙Аккаунт"),
-                                                                          KeyboardButton("👨🏻‍💻Поддержка"),
-                                                                          KeyboardButton("🤝Партнерская программа"))
-    else:
-        return ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(KeyboardButton("💬ChatGPT"),
-                                                                          KeyboardButton("🎨Midjourney"),
-                                                                          KeyboardButton("⚙Аккаунт"),
-                                                                          KeyboardButton("👨🏻‍💻Поддержка"),
-                                                                          KeyboardButton("🤝Партнерская программа"))
+
 
 # Кнопки для выбора способа оплаты (Tinkoff, криптовалюта и т.д.)
 def get_pay_urls(urls, order_id, src='acc'):

@@ -191,10 +191,10 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     lang_text = {"en": "compose an answer in English", "ru": "составь ответ на русском языке"}
     prompt += f"\n{lang_text[user['chat_gpt_lang']]}"
     model = user['gpt_model']
-    # model_dashed = model.replace("-", "_")
+    model_dashed = model.replace("-", "_")
     messages.append({"role": "user", "content": prompt})
 
-    logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model}']}")
+    logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model_dashed}']}")
 
     if model == "4o-mini" and user["tokens_4o_mini"] <= 0:
         logger.info("Модель 4o-mini закончилась - переключаем")
