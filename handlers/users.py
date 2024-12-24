@@ -86,27 +86,10 @@ async def not_enough_balance(bot: Bot, user_id: int, ai_type: str):
                      'o1-preview': 'GPT-o1-preview',
                      'o1-mini': 'GPT-o1-mini'}
 
+        logger.info(f"ПРОВЕРЯЮ MODEL MAP:")
+        logger.info(model_map[model])
+
         user_data = await db.get_user_notified_gpt(user_id)
-
-        # keyboard = user_kb.get_сhatgpt_models_noback() if model == "4o-mini" else user_kb.get_chatgpt_tokens_menu('normal', model)
-        
-        '''
-        # Нас больше не интресует, что была скидка или нет.
-
-        if user_data and user_data['last_notification']:
-            last_notification = user_data['last_notification']
-
-            # Если уведомление было менее 24 часов назад, показываем меню со скидкой
-            if now < last_notification + timedelta(hours=24):
-                await bot.send_message(user_id, """
-⚠️Токены для ChatGPT закончились!
-
-Выберите интересующий вас вариант⤵️
-                """,
-                    reply_markup=user_kb.get_сhatgpt_models_noback()
-                )
-                return
-        '''
 
         await bot.send_message(user_id, f"⚠️Токены для {model_map[model]} закончились!\n\nВыберите интересующий вас вариант⤵️", 
             reply_markup=user_kb.get_chatgpt_tokens_menu('normal', model))  # Отправляем уведомление с клавиатурой для пополнения токенов
@@ -500,6 +483,8 @@ async def ask_question(message: Message, state: FSMContext):
     await db.change_default_ai(message.from_user.id, "chatgpt")  # Устанавливаем ChatGPT как основной AI
     user = await db.get_user(message.from_user.id)  # Получаем данные пользователя
     model = (user["gpt_model"]).replace("-", "_")
+
+    logger.info(f'Выбранная модель {model}')
 
     # Проверяем наличие токенов и подписки
     if user[f"tokens_{model}"] <= 0:
