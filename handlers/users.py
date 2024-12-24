@@ -229,7 +229,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     
     if 0 < user[f"tokens_{model_dashed}"] <= 3000:  # Если осталось 3 тыс или меньше токенов
 
-        logger.info(f"Осталось {user[f'tokens_{model_dashedы}']} токенов, было уведомление: {user_notified}")
+        logger.info(f"Осталось {user[f'tokens_{model_dashed}']} токенов, было уведомление: {user_notified}")
 
         if user_notified is None and has_purchase is True:
             await db.create_user_notification_gpt(user_id)
