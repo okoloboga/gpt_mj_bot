@@ -75,31 +75,80 @@ async def get_gpt(messages, model):
     status = True
     tokens = 0
     content = ""
+    temp_image_path = "temp_image.jpg"  # Временный файл для сохранения изображения
+    
     try:
+        # Карта моделей
         model_map = {'4o-mini': 'gpt-4o-mini',
                      '4o': 'gpt-4o',
                      'o1-preview': 'o1-preview',
-                     'o1-mini': 'o1-mini'}  
+                     'o1-mini': 'o1-mini'}
 
+        # Если используется определенная модель, меняем системное сообщение
         if model in {'o1-preview', 'o1-mini'}:
             if messages and messages[0]["role"] == "system":
-                messages[0] = {"role": "user", "content": "You are a helpful assistant."} 
+                messages[0] = {"role": "user", "content": "You are a helpful assistant."}
 
+        # Логируем отправляемые сообщения
         logger.info(f'MESSAGES TO GPT: {messages}')
 
-        response = client.chat.completions.create(
-            model=f"{model_map[model]}",
-            messages=messages[-10:]  # Последние 10 сообщений
-        )
-        # Используем атрибуты объекта вместо индексации
-        content = response.choices[0].message.content  # Получаем ответ
-        tokens = response.usage.total_tokens  # Получаем количество использованных токенов
+        # Поиск ссылки на изображение в пользовательских сообщениях
+        user_message = next((msg for msg in messages if msg['role'] == 'user'), None)
+        if user_message:
+            content_text = user_message['content']
+            image_url = next((word for word in content_text.split() if word.startswith("http")), None)
+
+            if image_url:
+                # Загружаем изображение по ссылке
+                response = requests.get(image_url)
+                response.raise_for_status()  # Проверяем успешность запроса
+
+                # Сохраняем изображение во временный файл
+                with open(temp_image_path, "wb") as image_file:
+                    image_file.write(response.content)
+
+                # Убираем ссылку из текста, оставляя только текстовый контекст
+                user_message['content'] = content_text.replace(image_url, "").strip()
+
+                # Открываем файл изображения
+                with open(temp_image_path, "rb") as image_file:
+                    # Отправляем запрос в OpenAI API с изображением
+                    response = client.chat.completions.create(
+                        model=f"{model_map[model]}",
+                        messages=messages[-10:],  # Последние 10 сообщений
+                        files={'image': image_file}
+                    )
+            else:
+                # Если ссылки нет, отправляем только текст
+                response = client.chat.completions.create(
+                    model=f"{model_map[model]}",
+                    messages=messages[-10:]  # Последние 10 сообщений
+                )
+        else:
+            # Если пользовательских сообщений нет, отправляем только текст
+            response = client.chat.completions.create(
+                model=f"{model_map[model]}",
+                messages=messages[-10:]  # Последние 10 сообщений
+            )
+
+        # Получаем ответ и количество токенов
+        content = response.choices[0].message.content
+        tokens = response.usage.total_tokens
+
+    except requests.RequestException as e:
+        status = False
+        content = f"Ошибка загрузки изображения: {e}"
+        logger.info(f"Image Download Error: {e}")
     except openai.OpenAIError as e:
         status = False
-        content = "Генерация текста временно недоступна, повторите запрос позднее"  # Сообщение об ошибке
-        logger.info(f'ChatGPT Error {e}')
-    return {"status": status, "content": content, "tokens": tokens}  # Возвращаем результат
-
+        content = "Генерация текста временно недоступна, повторите запрос позднее"
+        logger.info(f'ChatGPT Error: {e}')
+    except Exception as e:
+        status = False
+        content = f"Общая ошибка: {e}"
+        logger.info(f'General Error: {e}')
+    
+    return {"status": status, "content": content, "tokens": tokens}
 
 
 # Функция для отправки запроса в MidJourney
