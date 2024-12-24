@@ -212,7 +212,7 @@ def get_chatgpt_models():
 
 def get_chatgpt_models_noback(discount=None):
 
-    target = 'disount' if discount else 'normal'
+    target = 'dicsount' if discount else 'normal'
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("GPT-4o", callback_data=f"buy_chatgpt_tokens:4o:{target}"),
         InlineKeyboardButton("GPT-o1-preview", callback_data=f"buy_chatgpt_tokens:o1-preview:{target}"),
