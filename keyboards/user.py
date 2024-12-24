@@ -226,10 +226,9 @@ def get_chatgpt_models_noback(discount=None):
 # Model - 4o, o1-preview, o1-mini
 def get_chatgpt_tokens_menu(mode, model):
 
-    if mode in {'normal', 'discount'}:
-        source = 'acc'
-    else:
-        source = 'not_gpt'
+    
+    source = 'acc' if mode in {'normal', 'discount'} else 'not_gpt'
+    back = "buy_sub" if mode == 'normal' else 'back_to_discount' 
 
     prices = {'4o': {'normal': {'price': [199, 349, 469, 739, 10],
                                 'percent': [0, 12, 21, 25, 0]},
@@ -266,7 +265,7 @@ def get_chatgpt_tokens_menu(mode, model):
         #     f"1 тыс токенов, {prices[model][mode]['price'][4]}₽ (-{prices[model][mode]['percent'][4]}%)", 
         #     callback_data=f"tokens:1000:{model}:{prices[model][mode]['price'][4] if mode == 'normal' else prices[model][mode]['price_data'][4]}:{source}"),  
         InlineKeyboardButton("📋Что такое токены", url="https://telegra.ph/CHto-takoe-tokeny-12-23-3"),          
-        InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
+        InlineKeyboardButton("🔙Назад", callback_data=back)
     )
 
 

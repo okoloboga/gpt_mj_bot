@@ -256,6 +256,7 @@ async def notify_low_chatgpt_tokens(user_id, bot: Bot):
 Выберите интересующую Вас модель⤵️
     """, reply_markup=user_kb.get_chatgpt_models_noback('discount'))
 
+
 # Уведомление о низком количестве запросов MidJourney
 async def notify_low_midjourney_requests(user_id, bot: Bot):
 
@@ -316,6 +317,17 @@ async def start_message(message: Message, state: FSMContext):
     # Проверка промокода, если он был передан
     if code is not None:
         await check_promocode(message.from_user.id, code, message.bot)
+
+
+# Уведомение о низком количестве токенов GPT
+@dp.callback_query_handler(text="back_to_discount")
+async def notify_low_chatgpt_tokens(call: CallbackQuery):
+
+    await call.message.answer("""
+У вас заканчиваются запросы для 💬ChatGPT
+Специально для вас мы подготовили <b>персональную скидку</b>!
+Выберите интересующую Вас модель⤵️
+    """, reply_markup=user_kb.get_chatgpt_models_noback('discount'))
 
 
 # Хендлер настроек ChatGPT
