@@ -203,19 +203,20 @@ def get_neural_network_menu():
 def get_chatgpt_models():
 
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("GPT-4o", callback_data="buy_chatgpt_tokens:4o"),
-        InlineKeyboardButton("GPT-o1-preview", callback_data="buy_chatgpt_tokens:o1-preview"),
-        InlineKeyboardButton("GPT-o1-mini", callback_data="buy_chatgpt_tokens:o1-mini"),
+        InlineKeyboardButton("GPT-4o", callback_data="buy_chatgpt_tokens:4o:normal"),
+        InlineKeyboardButton("GPT-o1-preview", callback_data="buy_chatgpt_tokens:o1-preview:normal"),
+        InlineKeyboardButton("GPT-o1-mini", callback_data="buy_chatgpt_tokens:o1-mini:normal"),
         InlineKeyboardButton("📋Отличия моделей GPT", url="https://telegra.ph/Otlichiya-modelej-GPT-12-24"),
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
-def get_chatgpt_models_noback():
+def get_chatgpt_models_noback(discount=None):
 
+    target = 'disount' if discount else 'normal'
     return InlineKeyboardMarkup(row_width=1).add(
-        InlineKeyboardButton("GPT-4o", callback_data="buy_chatgpt_tokens:4o"),
-        InlineKeyboardButton("GPT-o1-preview", callback_data="buy_chatgpt_tokens:o1-preview"),
-        InlineKeyboardButton("GPT-o1-mini", callback_data="buy_chatgpt_tokens:o1-mini"),
+        InlineKeyboardButton("GPT-4o", callback_data=f"buy_chatgpt_tokens:4o:{target}"),
+        InlineKeyboardButton("GPT-o1-preview", callback_data=f"buy_chatgpt_tokens:o1-preview:{target}"),
+        InlineKeyboardButton("GPT-o1-mini", callback_data=f"buy_chatgpt_tokens:o1-mini:{target}"),
         InlineKeyboardButton("📋Отличия моделей GPT", url="https://telegra.ph/Otlichiya-modelej-GPT-12-24"),
     )
 

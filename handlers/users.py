@@ -212,7 +212,6 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
             await bot.send_message(user_id, part, reply_markup=user_kb.get_clear_or_audio())
 
     await state.update_data(content=res["content"])
-    # await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
 
     if not res["status"]:
         return
@@ -255,7 +254,7 @@ async def notify_low_chatgpt_tokens(user_id, bot: Bot):
 У вас заканчиваются запросы для 💬ChatGPT
 Специально для вас мы подготовили <b>персональную скидку</b>!
 Выберите интересующую Вас модель⤵️
-    """, reply_markup=user_kb.get_chatgpt_models_noback())
+    """, reply_markup=user_kb.get_chatgpt_models_noback('discount'))
 
 # Уведомление о низком количестве запросов MidJourney
 async def notify_low_midjourney_requests(user_id, bot: Bot):

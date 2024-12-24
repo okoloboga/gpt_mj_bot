@@ -57,31 +57,17 @@ async def choose_chatgpt_tokens(call: CallbackQuery):
 
     user_id = call.from_user.id
     model = call.data.split(":")[1]
+    mode = call.data.split(":")[2]
 
-    logger.info(f"User ID: {user_id}, модель ChatGPT: {model}")
+    logger.info(f"User ID: {user_id}, модель ChatGPT: {model}, скидочное : {mode}")
 
     # Получаем данные о последнем уведомлении пользователя
     user_data = await db.get_user_notified_gpt(user_id)
     now = datetime.now()
 
-    '''
-    # Проверяем, было ли уведомление отправлено менее 24 часов назад
-    if user_data and user_data['last_notification']:
-        last_notification = user_data['last_notification']
-        
-        # Если уведомление было менее 24 часов назад, показываем меню со скидкой
-        if now < last_notification + timedelta(hours=24):
-            await call.message.edit_text(
-                "Выберите количество токенов со скидкой⤵️",
-                reply_markup=user_kb.get_chatgpt_tokens_menu('discount', model)
-            )
-            return
-    '''
-        
-    # Если уведомление не было отправлено или прошло больше 24 часов, показываем обычное меню
     await call.message.edit_text(
         "Выберите количество токенов⤵️",
-        reply_markup=user_kb.get_chatgpt_tokens_menu('normal', model)
+        reply_markup=user_kb.get_chatgpt_tokens_menu(mode, model)
     )
 
 
