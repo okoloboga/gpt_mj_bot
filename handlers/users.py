@@ -196,6 +196,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
     if model == "4o-mini" and user["tokens_4o_mini"] <= 0:
         await db.set_model(user_id, "4o")
+        await bot.send_message(user_id, "✅Модель для ChatGPT изменена на GPT-4o")
 
     await bot.send_chat_action(user_id, ChatActions.TYPING)
 
@@ -944,7 +945,7 @@ async def select_model(call: CallbackQuery):
         keyboard = user_kb.model_keyboard(selected_model=selected_model)
 
         await call.message.edit_text("Выберите модель GPT для диалогов⤵️:", reply_markup=keyboard)
-        await call.answer(f"Выбрана модель: {selected_model} ✅")   
+        await call.message.answer(f"✅Модель для ChatGPT изменена на GPT-{selected_model}")   
     except Exception as e:
         logger.error(f"Ошибка при выборе модели GPT: {e}")
         await call.answer("Произошла ошибка. Попробуйте снова.", show_alert=True)

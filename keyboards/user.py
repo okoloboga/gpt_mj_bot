@@ -264,7 +264,7 @@ def get_chatgpt_tokens_menu(mode, model):
         # InlineKeyboardButton(
         #     f"1 тыс токенов, {prices[model][mode]['price'][4]}₽ (-{prices[model][mode]['percent'][4]}%)", 
         #     callback_data=f"tokens:1000:{model}:{prices[model][mode]['price'][4] if mode == 'normal' else prices[model][mode]['price_data'][4]}:{source}"),  
-        # InlineKeyboardButton("📋Что такое токены", url=""),          
+        InlineKeyboardButton("📋Что такое токены", url="https://telegra.ph/CHto-takoe-tokeny-12-23-3"),          
         InlineKeyboardButton("🔙Назад", callback_data="buy_sub")
     )
 
