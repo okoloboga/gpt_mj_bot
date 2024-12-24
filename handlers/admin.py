@@ -91,14 +91,14 @@ async def show_stats(message: Message):
     response_text = (
         "*За все время:*\n"
         f"Количество пользователей: {statistics['total_users']}\n"
-        f"Запросов | Оплат - {statistics['total_requests']} | {statistics['total_payments']}\n"
-        f"ChatGPT - {statistics['chatgpt_requests']} | {statistics['chatgpt_payments']}\n"
-        f"Midjourney - {statistics['midjourney_requests']} | {statistics['midjourney_payments']}\n\n"
+        f"Запросов \| Оплат - {statistics['total_requests']} \| {statistics['total_payments']}\n"
+        f"ChatGPT - {statistics['chatgpt_requests']} \| {statistics['chatgpt_payments']}\n"
+        f"Midjourney - {statistics['midjourney_requests']} \| {statistics['midjourney_payments']}\n\n"
         "*За 24 часа:*\n"
         f"Пользователей - {statistics['daily_users']}\n"
-        f"Запросов | Оплат - {statistics['daily_requests']} | {statistics['daily_payments']}\n"
-        f"ChatGPT - {statistics['daily_chatgpt_requests']} | {statistics['daily_chatgpt_payments']}\n"
-        f"Midjourney - {statistics['daily_midjourney_requests']} | {statistics['daily_midjourney_payments']}\n"
+        f"Запросов \| Оплат - {statistics['daily_requests']} \| {statistics['daily_payments']}\n"
+        f"ChatGPT - {statistics['daily_chatgpt_requests']} \| {statistics['daily_chatgpt_payments']}\n"
+        f"Midjourney - {statistics['daily_midjourney_requests']} \| {statistics['daily_midjourney_payments']}\n"
     )
 
     await message.answer(response_text, parse_mode="MarkdownV2")
