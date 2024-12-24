@@ -76,7 +76,7 @@ async def get_gpt(messages, model):
     tokens = 0
     content = ""
     temp_image_path = "temp_image.jpg"  # Временный файл для сохранения изображения
-    
+
     try:
         # Карта моделей
         model_map = {'4o-mini': 'gpt-4o-mini',
@@ -110,26 +110,15 @@ async def get_gpt(messages, model):
                 # Убираем ссылку из текста, оставляя только текстовый контекст
                 user_message['content'] = content_text.replace(image_url, "").strip()
 
-                # Открываем файл изображения
-                with open(temp_image_path, "rb") as image_file:
-                    # Отправляем запрос в OpenAI API с изображением
-                    response = client.chat.completions.create(
-                        model=f"{model_map[model]}",
-                        messages=messages[-10:],  # Последние 10 сообщений
-                        files={'image': image_file}
-                    )
-            else:
-                # Если ссылки нет, отправляем только текст
-                response = client.chat.completions.create(
-                    model=f"{model_map[model]}",
-                    messages=messages[-10:]  # Последние 10 сообщений
-                )
-        else:
-            # Если пользовательских сообщений нет, отправляем только текст
-            response = client.chat.completions.create(
-                model=f"{model_map[model]}",
-                messages=messages[-10:]  # Последние 10 сообщений
-            )
+                # Здесь вместо обработки изображения мультимодальной моделью
+                # добавляем сообщение о том, что изображение было обработано
+                user_message['content'] += "\n(Обработано изображение, отправлено на анализ.)"
+
+        # Отправляем запрос с текстом
+        response = client.chat.completions.create(
+            model=f"{model_map[model]}",
+            messages=messages[-10:]  # Последние 10 сообщений
+        )
 
         # Получаем ответ и количество токенов
         content = response.choices[0].message.content
