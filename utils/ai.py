@@ -81,8 +81,6 @@ async def get_gpt(messages, model):
                      'o1-preview': 'o1-preview',
                      'o1-mini': 'o1-mini'}  
 
-        logger.info(f'ChatGPT Model {model_map[model]}, message: {messages}')
-
         if model in {'o1-preview', 'o1-mini'}:
             if messages and messages[0]["role"] == "system":
                 messages[0] = {"role": "user", "content": "You are a helpful assistant."} 
