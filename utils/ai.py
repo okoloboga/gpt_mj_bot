@@ -84,9 +84,10 @@ async def get_gpt(messages, model):
             'o1-preview': 'o1-preview',
             'o1-mini': 'o1-mini'
         }
-
+        logger.info('ПЕРЕД ЦИКЛОМ')
         # Проверка и обработка изображений в сообщении пользователя
         for message in messages:
+            logger.info(f'ЦИКЛ ПО messages: {message}')
             if message["role"] == "user":
                 # Ищем ссылки на изображения
                 image_urls = re.findall(r'(https?://\S+\.(?:jpg|jpeg|png|gif))', message["content"])
