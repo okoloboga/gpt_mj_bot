@@ -204,10 +204,10 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPTs
 
     if len(res["content"]) <= 4096:
-        logger.info(f"Длина сообщения {len(res["content"])} < 4096")
+        logger.info(f"Длина сообщения {len(res['content'])} < 4096")
         await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
     else:
-        logger.info(f"Длина сообщения {len(res["content"])} > 4096")
+        logger.info(f"Длина сообщения {len(res['content'])} > 4096")
         # Разделение сообщения на части
         parts = split_message(res["content"], 4096)
         for part in parts:
