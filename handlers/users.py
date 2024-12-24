@@ -194,13 +194,14 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     model_dashed = model.replace("-", "_")
     messages.append({"role": "user", "content": prompt})
 
+    logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model_dashed}']}")
+
     if model == "4o-mini" and user["tokens_4o_mini"] <= 0:
+        logger.info("Модель 4o-mini закончилась - переключаем")
         await db.set_model(user_id, "4o")
         await bot.send_message(user_id, "✅Модель для ChatGPT изменена на GPT-4o")
 
     await bot.send_chat_action(user_id, ChatActions.TYPING)
-
-    logger.info(f"Текстовый запрос к ChatGPT. User: {user}, Model: {model}, tokens: {user[f'tokens_{model_dashed}']}")
 
     res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPTs
     await state.update_data(content=res["content"])
