@@ -89,9 +89,6 @@ async def get_gpt(messages, model):
             if messages and messages[0]["role"] == "system":
                 messages[0] = {"role": "user", "content": "You are a helpful assistant."}
 
-        # Логируем отправляемые сообщения
-        logger.info(f'MESSAGES TO GPT: {messages}')
-
         # Поиск ссылки на изображение в пользовательских сообщениях
         user_message = next((msg for msg in messages if msg['role'] == 'user'), None)
         if user_message:
@@ -113,6 +110,8 @@ async def get_gpt(messages, model):
                 # Здесь вместо обработки изображения мультимодальной моделью
                 # добавляем сообщение о том, что изображение было обработано
                 user_message['content'] += "\n(Обработано изображение, отправлено на анализ.)"
+
+        logger.info(f'MESSAGES TO GPT: {messages}')
 
         # Отправляем запрос с текстом
         response = client.chat.completions.create(
