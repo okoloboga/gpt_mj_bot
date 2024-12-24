@@ -764,7 +764,7 @@ async def gen_prompt(message: Message, state: FSMContext):
         if model == "4o_mini" and user["tokens_4o_mini"] <= 0:
             logger.info("Модель 4o-mini закончилась - переключаем")
             await db.set_model(user_id, "4o")
-            await bot.send_message(user_id, "✅Модель для ChatGPT изменена на GPT-4o")
+            await message.answer("✅Модель для ChatGPT изменена на GPT-4o")
 
         if user[f"tokens_{model}"] <= 0:
             return await not_enough_balance(message.bot, user_id, "chatgpt")
