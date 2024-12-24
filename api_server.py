@@ -180,6 +180,9 @@ async def get_midjourney_without_id(request: Request):
     return await handle_midjourney_webhook(action_id=None, request=request)
 
 async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
+
+    logger.info(f"Получен webhook от MidJourney с action_id: {action_id}, request: {request}")
+
     try:
         data = await request.json()
         logger.info(f"Получен webhook: {data}")
