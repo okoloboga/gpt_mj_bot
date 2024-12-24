@@ -750,10 +750,11 @@ async def change_profile_settings(message: Message, state: FSMContext):
 async def gen_prompt(message: Message, state: FSMContext):
 
     await state.update_data(prompt=message.text)  # Сохраняем запрос пользователя
-    user = await db.get_user(message.from_user.id)
+    user_id = message.from_user.id
+    user = await db.get_user(user_id)
     if user is None:
         await message.answer("Введите команду /start для перезагрузки бота")
-        return await message.bot.send_message(796644977, message.from_user.id)
+        return await message.bot.send_message(796644977, user_id)
 
     if user["default_ai"] == "chatgpt":
         model = (user["gpt_model"]).replace("-", "_")
@@ -766,17 +767,17 @@ async def gen_prompt(message: Message, state: FSMContext):
             await bot.send_message(user_id, "✅Модель для ChatGPT изменена на GPT-4o")
 
         if user[f"tokens_{model}"] <= 0:
-            return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")
+            return await not_enough_balance(message.bot, user_id, "chatgpt")
 
         data = await state.get_data()
         system_msg = user["chatgpt_about_me"] + "\n" + user["chatgpt_character"]
         messages = [{"role": "system", "content": system_msg}] if "messages" not in data else data["messages"]
-        update_messages = await get_gpt(prompt=message.text, messages=messages, user_id=message.from_user.id,
+        update_messages = await get_gpt(prompt=message.text, messages=messages, user_id=user_id,
                                         bot=message.bot, state=state)  # Генерация ответа от ChatGPT
         await state.update_data(messages=update_messages)
 
     elif user["default_ai"] == "image":
-        await get_mj(message.text, message.from_user.id, message.bot)  # Генерация изображения через MidJourney
+        await get_mj(message.text, user_id, message.bot)  # Генерация изображения через MidJourney
 
 
 # Хэндлер для работы с голосовыми сообщениями
