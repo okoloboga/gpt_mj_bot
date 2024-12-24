@@ -948,7 +948,7 @@ async def select_model(call: CallbackQuery):
         await call.message.answer(f"✅Модель для ChatGPT изменена на GPT-{selected_model}")   
     except Exception as e:
         logger.error(f"Ошибка при выборе модели GPT: {e}")
-        await call.answer("Произошла ошибка. Попробуйте снова.", show_alert=True)
+        await call.answer()
 
 
 # Вход в меню выбора голоса
