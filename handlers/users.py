@@ -169,6 +169,24 @@ async def get_mj(prompt, user_id, bot: Bot):
                 await notify_low_midjourney_requests(user_id, bot)
 
 
+def split_message(text: str, max_length: int) -> list:
+    """Разбивает длинное сообщение на части, не превышающие max_length."""
+    lines = text.split('\n')
+    parts = []
+    current_part = ""
+
+    for line in lines:
+        if len(current_part) + len(line) + 1 > max_length:
+            parts.append(current_part)
+            current_part = ""
+        current_part += line + '\n'
+
+    if current_part:
+        parts.append(current_part)
+
+    return parts
+
+
 # Генерация ответа от ChatGPT
 async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
@@ -184,8 +202,17 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     await bot.send_chat_action(user_id, ChatActions.TYPING)
 
     res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPTs
+
+    if len(res["content"]) <= 4096:
+        await bot.send_message(user_id_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
+    else:
+        # Разделение сообщения на части
+        parts = split_message(res["content"], 4096)
+        for part in parts:
+            await bot.send_message(user_id, part, reply_markup=user_kb.get_clear_or_audio())
+
     await state.update_data(content=res["content"])
-    await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
+    # await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
 
     if not res["status"]:
         return
@@ -198,16 +225,17 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     now = datetime.now()
     user_notified = await db.get_user_notified_gpt(user_id)
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
+    has_purchase = await db.has_matching_orders(user_id)
     
     if 0 < user[f"tokens_{model_dashed}"] <= 3000:  # Если осталось 3 тыс или меньше токенов
         logger.info(f"Осталось {user[f'tokens_{model}']} токенов, было уведомление: {user_notified}")
-        if user_notified is None:
+        if user_notified is None and has_purchase is True:
             await db.create_user_notification_gpt(user_id)
             await notify_low_chatgpt_tokens(user_id, bot)  # Отправляем уведомление о низком количестве токенов
             # await db.set_user_notified(user_id)  # Помечаем, что уведомление отправлено
         else:
             last_notification = user_notified['last_notification']
-            if last_notification is None or now > last_notification + timedelta(days=30):
+            if (last_notification is None or now > last_notification + timedelta(days=30)) and has_purchase is True:
                 await db.update_user_notification_gpt(user_id)
                 await notify_low_chatgpt_tokens(user_id, bot)
 

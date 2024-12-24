@@ -777,3 +777,29 @@ async def get_orders_statistics(period: str = "all"):
 
     return stats
 
+# Делал ли пользователь заказ в последние 29 дней по этой модели
+async def has_matching_orders(user_id: int) -> bool:
+    try:
+        conn: Connection = await get_conn()
+        try:
+            row = await conn.fetchrow(
+                """
+                SELECT EXISTS(
+                    SELECT 1
+                    FROM orders
+                    WHERE user_id = $1
+                      AND pay_time IS NOT NULL
+                      AND pay_time >= NOW() - INTERVAL '29 days'
+                      AND order_type IN ('4o', 'o1-preview', 'o1-mini')
+                ) AS exists
+                """,
+                user_id
+            )
+            return row['exists']
+        finally:
+            await conn.close()
+    except Exception as e:
+        # Логирование ошибки или другая обработка
+        print(f"Ошибка при проверке заказов: {e}")
+        return False
+
