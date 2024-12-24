@@ -202,6 +202,7 @@ async def handle_midjourney_webhook(action_id: Optional[int], request: Request):
         action_id = action['id']
 
     if not action:
+        task_id = data.get('task_id') or data.get('external_task_id')
         logger.error(f"Action not found для action_id: {action_id} или task_id: {task_id}")
         raise HTTPException(status_code=404, detail="Action not found")
 
