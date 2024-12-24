@@ -483,7 +483,9 @@ async def ask_question(message: Message, state: FSMContext):
 
     await state.finish()  # Завершаем текущее состояние
     await db.change_default_ai(message.from_user.id, "chatgpt")  # Устанавливаем ChatGPT как основной AI
-    user = await db.get_user(message.from_user.id)  # Получаем данные пользователя
+    
+    user_id = message.from_user.id
+    user = await db.get_user(user_id)  # Получаем данные пользователя
     model = (user["gpt_model"]).replace("-", "_")
 
     logger.info(f'Выбранная модель {model}')
@@ -496,7 +498,7 @@ async def ask_question(message: Message, state: FSMContext):
 
     # Проверяем наличие токенов и подписки
     if user[f"tokens_{model}"] <= 0:
-        return await not_enough_balance(message.bot, message.from_user.id, "chatgpt")  # Сообщаем об исчерпании лимита
+        return await not_enough_balance(message.bot, user_id, "chatgpt")  # Сообщаем об исчерпании лимита
 
     # Сообщение с запросом ввода
     await message.answer("""<b>Введите запрос</b>
