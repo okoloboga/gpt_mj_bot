@@ -86,13 +86,15 @@ async def not_enough_balance(bot: Bot, user_id: int, ai_type: str):
                      'o1-preview': 'GPT-o1-preview',
                      'o1-mini': 'GPT-o1-mini'}
 
-        logger.info(f"ПРОВЕРЯЮ MODEL MAP:")
-        logger.info(model_map[model])
-
         user_data = await db.get_user_notified_gpt(user_id)
 
+        if model == '4o-mini':
+            keyboard=user_kb.get_chatgpt_models_noback()
+        else:
+            keyboard=user_kb.get_chatgpt_tokens_menu('normal', model)
+
         await bot.send_message(user_id, f"⚠️Токены для {model_map[model]} закончились!\n\nВыберите интересующий вас вариант⤵️", 
-            reply_markup=user_kb.get_chatgpt_tokens_menu('normal', model))  # Отправляем уведомление с клавиатурой для пополнения токенов
+            reply_markup=keyboard)  # Отправляем уведомление с клавиатурой для пополнения токенов
 
     elif ai_type == "image":
         user_data = await db.get_user_notified_mj(user_id)
