@@ -801,26 +801,7 @@ async def get_statistics():
     conn: Connection = await get_conn()
 
     # Общее количество пользователей
-    total_users = await conn.fetchval("SELECT COUNT(DISTINCT user_id) FROM usage")
-
-    # Общее количество запросов и оплат
-    total_requests = await conn.fetchrow(
-        "SELECT COUNT(*) as total_requests, "
-        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as total_payments "
-        "FROM orders"
-    )
-
-    chatgpt_stats = await conn.fetchrow(
-        "SELECT COUNT(*) as requests, "
-        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
-        "FROM orders WHERE order_type='chatgpt'"
-    )
-
-    midjourney_stats = await conn.fetchrow(
-        "SELECT COUNT(*) as requests, "
-        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
-        "FROM orders WHERE order_type='midjourney'"
-    )
+    total_users = await conn.fetchval("SELECT COUNT(DISTINCT user_id) FROM users")
 
     # Дата 24 часа назад
     moscow_tz = ZoneInfo("Europe/Moscow")  # Часовой пояс Москвы
@@ -847,42 +828,79 @@ async def get_statistics():
     start_utc_naive = start_utc.replace(tzinfo=None)
     end_utc_naive = end_utc.replace(tzinfo=None)
 
-    # Количество запросов и оплат за последние 24 часа
+    ### Общие запросы и оплаты:
+    # Запрос для получения общего количества запросов:
+    total_requests = await conn.fetchrow(
+        "SELECT COUNT(*) as total_requests "
+        "FROM usage"
+    )
+
+    # Запрос для получения общего количества оплат:
+    total_payments = await conn.fetchrow(
+        "SELECT SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as total_payments "
+        "FROM orders"
+    )
+
+    ### Информация о запросах и оплатах по типу заказа:
+    # Запрос для ChatGPT:
+    chatgpt_requests = await conn.fetchrow(
+        "SELECT COUNT(*) as requests "
+        "FROM usage WHERE ai_type='chatgpt'"
+    )
+
+    chatgpt_payments = await conn.fetchrow(
+        "SELECT SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
+        "FROM orders WHERE order_type='chatgpt'"
+    )
+
+    # Запрос для Midjourney:
+    midjourney_requests = await conn.fetchrow(
+        "SELECT COUNT(*) as requests "
+        "FROM usage WHERE ai_type='midjourney'"
+    )
+
+    midjourney_payments = await conn.fetchrow(
+        "SELECT SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
+        "FROM orders WHERE order_type='midjourney'"
+    )
+
+    # Запрос для получения количества запросов за последние 24 часа:
     daily_requests = await conn.fetchrow(
-        "SELECT COUNT(*) as daily_requests, "
-        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as daily_payments "
-        "FROM orders WHERE create_time BETWEEN $1 AND $2", start_utc_naive, end_utc_naive
+        "SELECT COUNT(*) as daily_requests "
+        "FROM usage WHERE create_time BETWEEN $1 AND $2", start_utc_naive
     )
 
-    daily_chatgpt_stats = await conn.fetchrow(
-        "SELECT COUNT(*) as requests, "
-        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
-        "FROM orders WHERE order_type='chatgpt' AND create_time BETWEEN $1 AND $2", start_utc_naive, end_utc_naive
+    # Запрос для получения количества оплат за последние 24 часа:
+    daily_payments = await conn.fetchrow(
+        "SELECT SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as daily_payments "
+        "FROM orders WHERE create_time BETWEEN $1 AND $2", end_utc_naive
     )
-
-    daily_midjourney_stats = await conn.fetchrow(
-        "SELECT COUNT(*) as requests, "
-        "SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
-        "FROM orders WHERE order_type='midjourney' AND create_time BETWEEN $1 AND $2", start_utc_naive, end_utc_naive
-    )
-
     await conn.close()
-
     statistics = {
         "total_users": total_users,
-        "total_requests": total_requests["total_requests"],
-        "total_payments": total_requests["total_payments"],
-        "chatgpt_requests": chatgpt_stats["requests"],
-        "chatgpt_payments": chatgpt_stats["payments"],
-        "midjourney_requests": midjourney_stats["requests"],
-        "midjourney_payments": midjourney_stats["payments"],
-        "daily_users": daily_requests["daily_requests"],
-        "daily_requests": daily_requests["daily_requests"],
-        "daily_payments": daily_requests["daily_payments"],
-        "daily_chatgpt_requests": daily_chatgpt_stats["requests"],
-        "daily_chatgpt_payments": daily_chatgpt_stats["payments"],
-        "daily_midjourney_requests": daily_midjourney_stats["requests"],
-        "daily_midjourney_payments": daily_midjourney_stats["payments"],
+        "total_requests": total_requests["total_requests"],  # Количество запросов теперь из таблицы usage
+        "total_payments": total_payments["total_payments"],  # Количество оплат из таблицы orders
+
+        # Статистика по ChatGPT
+        "chatgpt_requests": chatgpt_requests["requests"],  # Запросы из таблицы usage
+        "chatgpt_payments": chatgpt_payments["payments"],  # Оплаты из таблицы orders
+
+        # Статистика по Midjourney
+        "midjourney_requests": midjourney_requests["requests"],  # Запросы из таблицы usage
+        "midjourney_payments": midjourney_payments["payments"],  # Оплаты из таблицы orders
+
+        # Статистика за последние 24 часа
+        "daily_users": daily_users["daily_users"],  # Если такая статистика доступна
+        "daily_requests": daily_requests["daily_requests"],  # Количество запросов из таблицы usage за 24 часа
+        "daily_payments": daily_payments["daily_payments"],  # Количество оплат из таблицы orders за 24 часа
+
+        # Статистика по ChatGPT за последние 24 часа
+        "daily_chatgpt_requests": daily_chatgpt_requests["requests"],  # Запросы из таблицы usage за 24 часа
+        "daily_chatgpt_payments": daily_chatgpt_payments["payments"],  # Оплаты из таблицы orders за 24 часа
+
+        # Статистика по Midjourney за последние 24 часа
+        "daily_midjourney_requests": daily_midjourney_requests["requests"],  # Запросы из таблицы usage за 24 часа
+        "daily_midjourney_payments": daily_midjourney_payments["payments"],  # Оплаты из таблицы orders за 24 часа
     }
 
     return statistics
