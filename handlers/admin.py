@@ -88,7 +88,7 @@ async def switch_api_handler(message: Message):
 @dp.callback_query_handler(lambda callback: callback.from_user.id in ADMINS,
                            text="stats"
                            )
-                           
+
 async def show_stats(message: Message):
     statistics = (await db.fetch_short_statistics()).replace('-', ' ')
 
@@ -106,7 +106,7 @@ async def show_stats(callback: CallbackQuery):
 
     logger.info(statistics)
 
-    await callback.message.edit_text(statistics, parse_mode="MarkdownV2")
+    await callback.message.edit_text(statistics, reply_markup=admin_kb.less_stats_kb(),parse_mode="MarkdownV2")
 
 
 # Хендлер для отображения реферальной статистики

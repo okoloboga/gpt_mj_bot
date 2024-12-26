@@ -890,7 +890,7 @@ async def fetch_short_statistics() -> str:
         midjourney_requests_all_time = await conn.fetchval("""
             SELECT COUNT(*)
             FROM usage
-            WHERE ai_type = 'mj'
+            WHERE ai_type = 'image'
         """)
         logger.info(f"Midjourney запросов за всё время: {midjourney_requests_all_time}")
 
@@ -947,7 +947,7 @@ async def fetch_short_statistics() -> str:
         midjourney_requests_today = await conn.fetchval("""
             SELECT COUNT(*)
             FROM usage
-            WHERE ai_type = 'mj' AND create_time >= $1
+            WHERE ai_type = 'image' AND create_time >= $1
         """, start_of_day)
         logger.info(f"Midjourney запросов за сегодня: {midjourney_requests_today}")
 
