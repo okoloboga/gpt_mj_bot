@@ -90,7 +90,7 @@ async def switch_api_handler(message: Message):
                            )
 
 async def show_stats(message: Message):
-    statistics = (await db.fetch_short_statistics()).replace('-', ' ')
+    statistics = await db.fetch_short_statistics()
 
     logger.info(statistics)
 
