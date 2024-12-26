@@ -828,7 +828,7 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
             # Общие суммы и разбивка
             total_chatgpt_count = chatgpt['total_count']
             total_chatgpt_amount = chatgpt['total_amount']
-            lines.append(f"*Всего оплат ChatGPT: {escape_markdown(total_chatgpt_count)}, на сумму {escape_markdown(total_chatgpt_amount)}₽* \(4o \+ o1\-preview \+ o1\-mini\)\n")
+            lines.append(f"*Всего оплат ChatGPT: {escape_markdown(total_chatgpt_count)}* \(4o \+ o1\-preview \+ o1\-mini\)\n")
 
         # Форматирование Midjourney
         midjourney = order_stats.get('Midjourney', {})
@@ -839,7 +839,7 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
                 lines.append(f"{qty} запросов: {count}")
             total_midjourney = midjourney.get('total_count', 0)
             total_midjourney_amount = midjourney.get('total_amount', 0)
-            lines.append(f"*Всего: {escape_markdown(total_midjourney)}, на сумму {escape_markdown(total_midjourney_amount)}₽*")
+            lines.append(f"*Всего: {escape_markdown(total_midjourney)}*")
 
         return '\n'.join(lines)
 
