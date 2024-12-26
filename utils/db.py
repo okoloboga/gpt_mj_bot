@@ -996,7 +996,7 @@ def format_short_statistics(all_time: Dict[str, Any], today: Dict[str, Any]) -> 
     Форматирует краткую статистику в строку для отправки в Telegram.
     """
     def format_section(title: str, data: Dict[str, Any]) -> str:
-        lines = [f"```\n{title}:"]
+        lines = [f"{title}:"]
 
         # Количество пользователей
         lines.append(f"Количество пользователей: {data['users']}")
@@ -1012,7 +1012,6 @@ def format_short_statistics(all_time: Dict[str, Any], today: Dict[str, Any]) -> 
         midjourney_payments = data['midjourney_payments'] if data['midjourney_payments'] > 0 else "None"
         lines.append(f"Midjourney - {data['midjourney_requests']} | {midjourney_payments}")
 
-        lines.append("```")
         return '\n'.join(lines)
 
     all_time_section = format_section("За все время", all_time)
