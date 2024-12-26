@@ -682,6 +682,12 @@ async def has_matching_orders(user_id: int) -> bool:
         return False
 
 
+CHATGPT_ORDER_TYPES = ['4o', 'o1-preview', 'o1-mini']
+CHATGPT_QUANTITIES = [20000, 40000, 60000, 100000]
+
+MIDJOURNEY_QUANTITIES = [10, 20, 50, 100]
+
+
 async def fetch_statistics() -> str:
     """
     Асинхронно собирает статистику из базы данных и возвращает отформатированную строку.
