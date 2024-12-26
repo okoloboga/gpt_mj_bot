@@ -804,7 +804,7 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
                 for qty in CHATGPT_QUANTITIES:
                     count = details.get(qty, 0)
                     lines.append(f"{qty//1000}к токенов: {count}")
-                lines.append(f"Всего {order_type.replace('-', '\-')}: {chatgpt['details'][order_type].get('total_count', 0)}\n")
+                lines.append(f"Всего {order_type.replace('-', ' ')}: {chatgpt['details'][order_type].get('total_count', 0)}\n")
 
             # Общие суммы и разбивка
             total_chatgpt_count = chatgpt.get('total_count', 0)
