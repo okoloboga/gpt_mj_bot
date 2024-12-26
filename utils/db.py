@@ -758,13 +758,15 @@ def process_orders(orders) -> Dict[str, Any]:
     Обрабатывает записи заказов и структурирует данные для статистики.
     """
     # Инициализация статистики с нулевыми значениями
-    chatgpt_stats = {order_type: {qty: 0 for qty in CHATGPT_QUANTITIES} for order_type in CHATGPT_ORDER_TYPES}
-    total_chatgpt = 0
-    total_chatgpt_amount = 0
-
+    chatgpt_stats = {
+        order_type: {
+            'quantities': {qty: 0 for qty in CHATGPT_QUANTITIES},
+            'total_count': 0,
+            'total_amount': 0
+        } for order_type in CHATGPT_ORDER_TYPES
+    }
     midjourney_stats = {qty: 0 for qty in MIDJOURNEY_QUANTITIES}
-    total_midjourney = 0
-    total_midjourney_amount = 0
+    midjourney_totals = {'total_count': 0, 'total_amount': 0}
 
     for record in orders:
         order_type = record['order_type']
@@ -774,16 +776,16 @@ def process_orders(orders) -> Dict[str, Any]:
 
         if order_type in CHATGPT_ORDER_TYPES:
             if quantity in CHATGPT_QUANTITIES:
-                chatgpt_stats[order_type][quantity] += count
-                total_chatgpt += count
-                total_chatgpt_amount += total_amount
+                chatgpt_stats[order_type]['quantities'][quantity] += count
+                chatgpt_stats[order_type]['total_count'] += count
+                chatgpt_stats[order_type]['total_amount'] += total_amount
             else:
                 logger.warning(f"Неизвестное количество для ChatGPT: {quantity}")
         elif order_type == 'midjourney':
             if quantity in MIDJOURNEY_QUANTITIES:
                 midjourney_stats[quantity] += count
-                total_midjourney += count
-                total_midjourney_amount += total_amount
+                midjourney_totals['total_count'] += count
+                midjourney_totals['total_amount'] += total_amount
             else:
                 logger.warning(f"Неизвестное количество для Midjourney: {quantity}")
         else:
@@ -791,14 +793,12 @@ def process_orders(orders) -> Dict[str, Any]:
 
     return {
         'ChatGPT': {
-            'details': chatgpt_stats,
-            'total_count': total_chatgpt,
-            'total_amount': total_chatgpt_amount
+            'details': chatgpt_stats
         },
         'Midjourney': {
             'details': midjourney_stats,
-            'total_count': total_midjourney,
-            'total_amount': total_midjourney_amount
+            'total_count': midjourney_totals['total_count'],
+            'total_amount': midjourney_totals['total_amount']
         }
     }
 
@@ -818,7 +818,7 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
                 for qty in CHATGPT_QUANTITIES:
                     count = details.get(qty, 0)
                     lines.append(f"{qty//1000}к токенов: {count}")
-                lines.append(f"*Всего {escape_markdown(order_type)}: {escape_markdown(chatgpt['total_count'])}*\n")
+                lines.append(f"*Всего {escape_markdown(order_type)}: {escape_markdown(chatgpt['details'][order_type]['total_count'])}*\n")
 
             # Общие суммы и разбивка
             total_chatgpt_count = chatgpt.get('total_count', 0)
