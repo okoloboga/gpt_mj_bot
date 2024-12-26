@@ -816,8 +816,8 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
 
                 lines.append(f"*{escape_markdown(order_type)}*")
                 for qty in CHATGPT_QUANTITIES:
-                    count = details.get(qty, 0)
-                    lines.append(f"{qty//1000}к токенов: {count}")
+                    count = details
+                    lines.append(f"{qty//1000}к токенов: {chatgpt['details'][order_type][qty]}")
                 lines.append(f"*Всего {escape_markdown(order_type)}: {escape_markdown(chatgpt['details'][order_type]['total_count'])}*\n")
 
             # Общие суммы и разбивка
