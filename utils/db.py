@@ -684,7 +684,6 @@ async def has_matching_orders(user_id: int) -> bool:
 
 CHATGPT_ORDER_TYPES = ['4o', 'o1-preview', 'o1-mini']
 CHATGPT_QUANTITIES = [20000, 40000, 60000, 100000]
-
 MIDJOURNEY_QUANTITIES = [10, 20, 50, 100]
 
 
@@ -804,8 +803,8 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
                 lines.append(f"\n{order_type}")
                 for qty in CHATGPT_QUANTITIES:
                     count = details.get(qty, 0)
-                    lines.append(f"    {qty//1000}к токенов: {count}")
-                lines.append(f"    Всего {order_type}: {chatgpt['details'][order_type].get('total_count', 0)}\n")
+                    lines.append(f"{qty//1000}к токенов: {count}")
+                lines.append(f"Всего {order_type}: {chatgpt['details'][order_type].get('total_count', 0)}\n")
 
             # Общие суммы и разбивка
             total_chatgpt_count = chatgpt.get('total_count', 0)
@@ -818,12 +817,11 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
             lines.append("Midjourney")
             for qty in MIDJOURNEY_QUANTITIES:
                 count = midjourney['details'].get(qty, 0)
-                lines.append(f"    {qty} запросов: {count}")
+                lines.append(f"{qty} запросов: {count}")
             total_midjourney = midjourney.get('total_count', 0)
             total_midjourney_amount = midjourney.get('total_amount', 0)
-            lines.append(f"    Всего: {total_midjourney}, на сумму {total_midjourney_amount}₽")
-        
-        lines.append("```")
+            lines.append(f"Всего: {total_midjourney}, на сумму {total_midjourney_amount}₽")
+
         return '\n'.join(lines)
 
     all_time = format_order(statistics['all_time'], "Оплат за все время")
