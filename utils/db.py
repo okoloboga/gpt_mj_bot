@@ -807,34 +807,34 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
     Форматирует статистику в строку для отправки в Telegram.
     """
     def format_order(order_stats: Dict[str, Any], title: str) -> str:
-        lines = [f"**{escape_markdown(title)}:**"]
+        lines = [f"*{escape_markdown(title)}:*"]
 
         # Форматирование ChatGPT
         chatgpt = order_stats.get('ChatGPT', {})
         if chatgpt:
             for order_type, details in chatgpt['details'].items():
 
-                lines.append(f"**{escape_markdown(order_type)}**")
+                lines.append(f"*{escape_markdown(order_type)}*")
                 for qty in CHATGPT_QUANTITIES:
                     count = details.get(qty, 0)
                     lines.append(f"{qty//1000}к токенов: {count}")
-                lines.append(f"**Всего {escape_markdown(order_type)}: {escape_markdown(chatgpt['details'][order_type].get('total_count', 0))}**\n")
+                lines.append(f"*Всего {escape_markdown(order_type)}: {escape_markdown(chatgpt['details'][order_type].get('total_count', 0))}*\n")
 
             # Общие суммы и разбивка
             total_chatgpt_count = chatgpt.get('total_count', 0)
             total_chatgpt_amount = chatgpt.get('total_amount', 0)
-            lines.append(f"**Всего оплат ChatGPT: {escape_markdown(total_chatgpt_count)}, на сумму {escape_markdown(total_chatgpt_amount)}₽** \(4o \+ o1\-preview \+ o1\-mini\)\n")
+            lines.append(f"*Всего оплат ChatGPT: {escape_markdown(total_chatgpt_count)}, на сумму {escape_markdown(total_chatgpt_amount)}₽* \(4o \+ o1\-preview \+ o1\-mini\)\n")
 
         # Форматирование Midjourney
         midjourney = order_stats.get('Midjourney', {})
         if midjourney:
-            lines.append("**Midjourney**")
+            lines.append("*Midjourney*")
             for qty in MIDJOURNEY_QUANTITIES:
                 count = midjourney['details'].get(qty, 0)
                 lines.append(f"{qty} запросов: {count}")
             total_midjourney = midjourney.get('total_count', 0)
             total_midjourney_amount = midjourney.get('total_amount', 0)
-            lines.append(f"**Всего: {escape_markdown(total_midjourney)}, на сумму {escape_markdown(total_midjourney_amount)}₽**")
+            lines.append(f"*Всего: {escape_markdown(total_midjourney)}, на сумму {escape_markdown(total_midjourney_amount)}₽*")
 
         return '\n'.join(lines)
 
@@ -1008,7 +1008,7 @@ def format_short_statistics(all_time: Dict[str, Any], today: Dict[str, Any]) -> 
     Форматирует краткую статистику в строку для отправки в Telegram.
     """
     def format_section(title: str, data: Dict[str, Any]) -> str:
-        lines = [f"**{escape_markdown(title)}:**"]  # Заголовок выделен жирным
+        lines = [f"*{escape_markdown(title)}:*"]  # Заголовок выделен жирным
 
         # Количество пользователей
         lines.append(f"**Количество пользователей:** {escape_markdown(str(data['users']))}")
