@@ -1010,7 +1010,7 @@ def format_short_statistics(all_time: Dict[str, Any], today: Dict[str, Any]) -> 
         lines = [f"{title}:"]
 
         # Количество пользователей
-        lines.append(f"**Количество пользователей: {escape_markdown(data['users'])}**")
+        lines.append(f"**Количество пользователей: {escape_markdown(str(data['users']))}**")
 
         # Запросов | Оплат
         lines.append(f"Запросов \| Оплат \- {data['requests']} \| {data['payments']}")
