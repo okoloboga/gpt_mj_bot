@@ -99,7 +99,7 @@ async def show_stats(message: Message):
                            text="stats"
                            )
 
-async def show_stats(message: Message):
+async def show_stats(callback: CallbackQuery):
     statistics = await db.fetch_short_statistics()
 
     logger.info(statistics)
