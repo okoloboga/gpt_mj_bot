@@ -772,20 +772,22 @@ def process_orders(orders) -> Dict[str, Any]:
         order_type = record['order_type']
         quantity = record['quantity']
         count = record['count']
-        total_amount = record['total_amount'] or 0  # Обработка возможных NULL значений
+        amount = record['amount'] or 0  # Обработка возможных NULL значений
 
         if order_type in CHATGPT_ORDER_TYPES:
             if quantity in CHATGPT_QUANTITIES:
                 chatgpt_stats[order_type]['quantities'][quantity] += count
+                chatgpt_stats[order_type]['count'] += count
+                chatgpt_stats[order_type]['amount'] += amount
                 total_chatgpt_count += count
-                total_chatgpt_amount += total_amount
+                total_chatgpt_amount += amount
             else:
                 logger.warning(f"Неизвестное количество для ChatGPT: {quantity}")
         elif order_type == 'midjourney':
             if quantity in MIDJOURNEY_QUANTITIES:
                 midjourney_stats[quantity] += count
                 midjourney_totals['total_count'] += count
-                midjourney_totals['total_amount'] += total_amount
+                midjourney_totals['total_amount'] += amount
             else:
                 logger.warning(f"Неизвестное количество для Midjourney: {quantity}")
         else:
@@ -819,7 +821,7 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
                 lines.append(f"*{escape_markdown(order_type)}*")
                 for qty in CHATGPT_QUANTITIES:
                     lines.append(f"{qty//1000}к токенов: {chatgpt['details'][order_type]['quantities'][qty]}")
-                lines.append(f"*Всего {escape_markdown(order_type)}: {escape_markdown(chatgpt['details'][order_type]['total_count'])}*\n")
+                lines.append(f"*Всего {escape_markdown(order_type)}: {escape_markdown(chatgpt['details'][order_type]['count'])}*\n")
 
             # Общие суммы и разбивка
             total_chatgpt_count = chatgpt['total_count']
