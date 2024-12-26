@@ -761,10 +761,10 @@ def process_orders(orders) -> Dict[str, Any]:
     chatgpt_stats = {
         order_type: {
             'quantities': {qty: 0 for qty in CHATGPT_QUANTITIES},
-            'total_count': 0,
-            'total_amount': 0
         } for order_type in CHATGPT_ORDER_TYPES
     }
+    total_chatgpt_count = 0
+    total_chatgpt_amount = 0
     midjourney_stats = {qty: 0 for qty in MIDJOURNEY_QUANTITIES}
     midjourney_totals = {'total_count': 0, 'total_amount': 0}
 
