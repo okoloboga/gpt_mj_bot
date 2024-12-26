@@ -800,11 +800,8 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
         chatgpt = order_stats.get('ChatGPT', {})
         if chatgpt:
             for order_type, details in chatgpt['details'].items():
-                if order_type == 'o1-mini':
-                    order_type == 'o1 mini'
-                elif order_type == 'o1-preview':
-                    order_type == 'o1 preview'
-                    
+                order_type.replace('-', ' ')
+
                 lines.append(f"\n{order_type}")
                 for qty in CHATGPT_QUANTITIES:
                     count = details.get(qty, 0)
