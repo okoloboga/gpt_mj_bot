@@ -794,8 +794,8 @@ def process_orders(orders) -> Dict[str, Any]:
     return {
         'ChatGPT': {
             'details': chatgpt_stats,
-            'total_count': total_chatgpt,
-            'total_amount': total_chatgpt_amoun
+            'total_count': total_chatgpt_count,
+            'total_amount': total_chatgpt_amount
         },
         'Midjourney': {
             'details': midjourney_stats,
