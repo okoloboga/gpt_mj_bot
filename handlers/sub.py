@@ -65,6 +65,19 @@ async def choose_chatgpt_tokens(call: CallbackQuery):
     user_data = await db.get_user_notified_gpt(user_id)
     now = datetime.now()
 
+    # Проверяем, было ли уведомление отправлено менее 24 часов назад
+    if user_data and user_data['last_notification']:
+        last_notification = user_data['last_notification']
+        
+        # Если уведомление было менее 24 часов назад, показываем меню со скидкой
+        if now < last_notification + timedelta(hours=24):
+            await call.message.edit_text('''
+Успейте приобрести токены со <b>скидкой<b>
+предложение актуально </b>24 часа⤵️</b>''',
+                reply_markup=user_kb.get_chatgpt_tokens_menu('discount', model)
+            )
+            return
+
     if mode == 'discount':
         answer = '''
 Успейте приобрести токены со <b>скидкой<b>
