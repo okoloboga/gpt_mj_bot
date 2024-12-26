@@ -96,7 +96,7 @@ async def show_stats(message: Message):
 
 @dp.message_handler(commands=['testbold'])
 async def test_bold(message: Message):
-    test_msg = "**Жирный текст**"
+    test_msg = "*Жирный текст*"
     await message.answer(test_msg, parse_mode=ParseMode.MARKDOWN_V2)
 
 
