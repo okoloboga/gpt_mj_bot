@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from aiogram.types import Message, CallbackQuery
 from aiogram.dispatcher import FSMContext
+from aiogram.types import ParseMode
 
 import config
 import keyboards.admin as admin_kb  # Клавиатуры для админских команд
@@ -85,6 +86,15 @@ async def switch_api_handler(message: Message):
 @dp.message_handler(lambda message: message.from_user.id in ADMINS,
                     commands="stats"
                     )
+
+async def show_stats(message: Message):
+    statistics = await db.fetch_short_statistics()
+
+    logger.info(statistics)
+
+    await message.answer(statistics, reply_markup=admin_kb.more_stats_kb(), parse_mode=ParseMode.MARKDOWN_V2)
+
+
 @dp.callback_query_handler(lambda callback: callback.from_user.id in ADMINS,
                            text="stats"
                            )
@@ -94,7 +104,7 @@ async def show_stats(message: Message):
 
     logger.info(statistics)
 
-    await message.answer(statistics, reply_markup=admin_kb.more_stats_kb(), parse_mode="MarkdownV2")
+    await callback.message.edit_text(statistics, reply_markup=admin_kb.more_stats_kb(), parse_mode=ParseMode.MARKDOWN_V2)
 
 
 # Хендлер для отображения полной статистики по пользователям и запросам
@@ -106,7 +116,7 @@ async def show_stats(callback: CallbackQuery):
 
     logger.info(statistics)
 
-    await callback.message.edit_text(statistics, reply_markup=admin_kb.less_stats_kb(),parse_mode="MarkdownV2")
+    await callback.message.edit_text(statistics, reply_markup=admin_kb.less_stats_kb(), parse_mode=ParseMode.MARKDOWN_V2)
 
 
 # Хендлер для отображения реферальной статистики
