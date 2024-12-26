@@ -241,7 +241,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
                 await db.update_user_notification_gpt(user_id)
                 await notify_low_chatgpt_tokens(user_id, bot)
 
-    await db.add_action(user_id, "chatgpt")  # Логируем действие пользователя
+    await db.add_action(user_id, model)  # Логируем действие пользователя
     return messages
 
 

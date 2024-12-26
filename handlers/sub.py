@@ -135,7 +135,7 @@ async def handle_chatgpt_tokens_purchase(call: CallbackQuery):
 
     if user_discount is None or (user_discount['used'] != True or (user_discount['used'] == True and amount not in discounts)):
         
-        if amount in discounts:  # Покупка со скидкой
+        if amount in discounts:  # Покупка со скидкой. ПО ХОРОШЕМУ, ДОЛЖНА СРАБАТЫВАТЬ ПОСЛЕ ОПЛАТЫ...
             await db.update_used_discount_gpt(user_id)
 
         # Создаем заказ для покупки токенов в базе данных
@@ -159,7 +159,7 @@ async def handle_midjourney_requests_purchase(call: CallbackQuery):
     requests_count = int(call.data.split(":")[1])  # Получаем количество запросов
     amount = int(call.data.split(":")[2])  # Получаем цену за количество запросов
     src = str(call.data.split(":")[3])  # Источник сообщения - из уведомления или аккаунта
-    discounts = [246, 550, 989]
+    discounts = {246, 550, 989}
     user_discount = await db.get_user_notified_mj(user_id)
 
     if user_discount is None or (user_discount['used'] != True or (user_discount['used'] == True and amount not in discounts)):

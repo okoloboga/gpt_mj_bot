@@ -124,7 +124,11 @@ async def process_purchase(bot, order_id):
 
     user_id = order["user_id"]  # Получаем ID пользователя
     user = await db.get_user(user_id)  # Получаем информацию о пользователе
+    user_discount = await db.get_user_notified_gpt(user_id)  # Была ли скидка?
     model = (order["order_type"]).replace('-', '_')
+    amount = order["amount"]  # Заплаченная сумма
+    discounts = {189, 315, 412, 628, 949, 1619, 2166, 3199, 227, 386, 509, 757, 550, 246, 989} # Сумма соответсвующая скидкам
+    user_discount = await db.get_user_notified_gpt(user_id)
 
     logger.info(f"Оплата пользователя {user_id} успешно обработана. Тип заказа: {model}, количество: {order['quantity']}")
 
@@ -142,3 +146,9 @@ async def process_purchase(bot, order_id):
         new_requests = user["mj"] + order["quantity"]
         await db.update_requests(user_id, new_requests)
         await bot.send_message(user_id, f"✅Добавлено {order['quantity']} запросов для MidJourney.")
+
+    if user_discount is not None and user_discount["used"] != True and amount in discounts:
+        logger.info(f'Скидка использована: {user_discount["used"]}, покупка на сумму: {amount}')
+        # Если была предложена скидка, пользователь ею не пользовался, но текущий заказ равен скидочной цене - значит убираем возможность скидки. 
+        await db.update_used_discount_gpt(user_id)  
+ 

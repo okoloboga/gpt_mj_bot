@@ -86,51 +86,10 @@ async def switch_api_handler(message: Message):
                     commands="stats"
                     )
 async def show_stats(message: Message):
-    statistics = await db.get_statistics()
+    statistics = await db.fetch_statistics()
 
-    response_text = (
-        "*За все время:*\n"
-        f"Количество пользователей: {statistics['total_users']}\n"
-        f"Запросов \| Оплат \- {statistics['total_requests']} \| {statistics['total_payments']}\n"
-        f"ChatGPT \- {statistics['chatgpt_requests']} \| {statistics['chatgpt_payments']}\n"
-        f"Midjourney \- {statistics['midjourney_requests']} \| {statistics['midjourney_payments']}\n\n"
-        "*За 24 часа:*\n"
-        f"Пользователей \- {statistics['daily_users']}\n"
-        f"Запросов \| Оплат \- {statistics['daily_requests']} \| {statistics['daily_payments']}\n"
-        f"ChatGPT \- {statistics['daily_chatgpt_requests']} \| {statistics['daily_chatgpt_payments']}\n"
-        f"Midjourney \- {statistics['daily_midjourney_requests']} \| {statistics['daily_midjourney_payments']}\n"
-    )
+    await message.answer(statistics, parse_mode="MarkdownV2")
 
-    await message.answer(response_text, parse_mode="MarkdownV2")
-'''    
-    stats_data = await db.get_stat()  # Получаем общую статистику
-
-    stats_today = await db.get_orders_statistics(period="today")
-    stats_all = await db.get_orders_statistics(period="all")
-
-    response = "За 24 часа:\n\n"
-    response += format_statistics(stats_today) + "\n"
-
-    response += "За все время:\n"
-    response += format_statistics(stats_all) + "\n"
-
-    await message.answer(f"""*За все время:*
-Количество пользователей: {stats_data['users_count']}
-Запросов {stats_data['chatgpt_count'] + stats_data['image_count']}
-ChatGPT \- {stats_data['chatgpt_count']}
-Midjourney \- {stats_data['image_count']}
- 
-*За 24 часа:*
-Пользователей \- {stats_data['today_users_count']}
-Запросов \- {stats_data['today_chatgpt_count'] + stats_data['today_image_count']}
-ChatGPT \- {stats_data['today_chatgpt_count']}
-Midjourney \- {stats_data['today_image_count']}
-""", reply_markup=admin_kb.admin_menu, parse_mode="MarkdownV2")  # Кнопки для админа
-
-
-@dp.callback_query_handler(lambda callback: callback.from_user.id in ADMINS, text="more_stats")
-async def 
-'''
 
 # Хендлер для отображения реферальной статистики
 @dp.callback_query_handler(is_admin=True, text='admin_ref_menu')
