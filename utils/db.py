@@ -1002,15 +1002,15 @@ def format_short_statistics(all_time: Dict[str, Any], today: Dict[str, Any]) -> 
         lines.append(f"Количество пользователей: {data['users']}")
 
         # Запросов | Оплат
-        lines.append(f"Запросов | Оплат \- {data['requests']} | {data['payments']}")
+        lines.append(f"Запросов \| Оплат \- {data['requests']} \| {data['payments']}")
 
         # ChatGPT
         chatgpt_payments = data['chatgpt_payments'] if data['chatgpt_payments'] > 0 else "None"
-        lines.append(f"ChatGPT \- {data['chatgpt_requests']} | {chatgpt_payments}")
+        lines.append(f"ChatGPT \- {data['chatgpt_requests']} \| {chatgpt_payments}")
 
         # Midjourney
         midjourney_payments = data['midjourney_payments'] if data['midjourney_payments'] > 0 else "None"
-        lines.append(f"Midjourney \- {data['midjourney_requests']} | {midjourney_payments}")
+        lines.append(f"Midjourney \- {data['midjourney_requests']} \| {midjourney_payments}")
 
         return '\n'.join(lines)
 
