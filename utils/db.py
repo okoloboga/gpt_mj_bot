@@ -786,7 +786,7 @@ async def fetch_statistics() -> str:
         # Получаем текущее время в Москве и начало текущего дня
         moscow_tz = ZoneInfo("Europe/Moscow")
         now_moscow = datetime.now(moscow_tz)
-        start_of_day = now_moscow.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_of_day = now_moscow.replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
         logger.info(f"Сбор статистики с начала дня: {start_of_day.isoformat()}")
 
         # Запросы к базе данных
