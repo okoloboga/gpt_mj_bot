@@ -809,7 +809,7 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
             # Общие суммы и разбивка
             total_chatgpt_count = chatgpt.get('total_count', 0)
             total_chatgpt_amount = chatgpt.get('total_amount', 0)
-            lines.append(f"Всего оплат ChatGPT: {total_chatgpt_count}, на сумму {total_chatgpt_amount}₽ (4o+o1\-preview+o1\-mini)\n")
+            lines.append(f"Всего оплат ChatGPT: {total_chatgpt_count}, на сумму {total_chatgpt_amount}₽ (4o + o1 preview + o1 mini)\n")
 
         # Форматирование Midjourney
         midjourney = order_stats.get('Midjourney', {})
