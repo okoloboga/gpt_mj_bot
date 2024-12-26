@@ -772,7 +772,7 @@ def process_orders(orders) -> Dict[str, Any]:
         order_type = record['order_type']
         quantity = record['quantity']
         count = record['count']
-        amount = record['amount'] or 0  # Обработка возможных NULL значений
+        amount = record['total_amount'] or 0  # Обработка возможных NULL значений
 
         if order_type in CHATGPT_ORDER_TYPES:
             if quantity in CHATGPT_QUANTITIES:
