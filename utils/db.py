@@ -801,32 +801,32 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
         if chatgpt:
             for order_type, details in chatgpt['details'].items():
 
-                lines.append(f"{order_type}")
+                lines.append(f"**{order_type}**")
                 for qty in CHATGPT_QUANTITIES:
                     count = details.get(qty, 0)
                     lines.append(f"{qty//1000}к токенов: {count}")
-                lines.append(f"Всего {order_type}: {chatgpt['details'][order_type].get('total_count', 0)}\n")
+                lines.append(f"**Всего {order_type}: {chatgpt['details'][order_type].get('total_count', 0)}**\n")
 
             # Общие суммы и разбивка
             total_chatgpt_count = chatgpt.get('total_count', 0)
             total_chatgpt_amount = chatgpt.get('total_amount', 0)
-            lines.append(f"Всего оплат ChatGPT: {total_chatgpt_count}, на сумму {total_chatgpt_amount}₽ \(4o \+ o1-preview \+ o1-mini\)\n")
+            lines.append(f"**Всего оплат ChatGPT: {total_chatgpt_count}, на сумму {total_chatgpt_amount}₽** \(4o \+ o1-preview \+ o1-mini\)\n")
 
         # Форматирование Midjourney
         midjourney = order_stats.get('Midjourney', {})
         if midjourney:
-            lines.append("Midjourney")
+            lines.append("**Midjourney**")
             for qty in MIDJOURNEY_QUANTITIES:
                 count = midjourney['details'].get(qty, 0)
                 lines.append(f"{qty} запросов: {count}")
             total_midjourney = midjourney.get('total_count', 0)
             total_midjourney_amount = midjourney.get('total_amount', 0)
-            lines.append(f"Всего: {total_midjourney}, на сумму {total_midjourney_amount}₽")
+            lines.append(f"**Всего: {total_midjourney}, на сумму {total_midjourney_amount}₽**")
 
         return '\n'.join(lines)
 
-    all_time = format_order(statistics['all_time'], "Оплат за все время")
-    today = format_order(statistics['today'], "Оплат с начала дня")
+    all_time = format_order(statistics['all_time'], "**Оплат за все время**")
+    today = format_order(statistics['today'], "**Оплат за 24 часа**")
     return f"{all_time}\n\n{today}"
 
 
@@ -849,9 +849,8 @@ async def fetch_short_statistics() -> str:
         # За все время
         # Количество пользователей
         users_all_time = await conn.fetchval("""
-            SELECT COUNT(DISTINCT user_id)
-            FROM orders
-            WHERE pay_time IS NOT NULL
+            SELECT COUNT(*)
+            FROM users
         """)
         logger.info(f"Количество пользователей за всё время: {users_all_time}")
 
@@ -999,7 +998,7 @@ def format_short_statistics(all_time: Dict[str, Any], today: Dict[str, Any]) -> 
         lines = [f"{title}:"]
 
         # Количество пользователей
-        lines.append(f"Количество пользователей: {data['users']}")
+        lines.append(f"**Количество пользователей: {data['users']}**")
 
         # Запросов | Оплат
         lines.append(f"Запросов \| Оплат \- {data['requests']} \| {data['payments']}")
@@ -1014,7 +1013,7 @@ def format_short_statistics(all_time: Dict[str, Any], today: Dict[str, Any]) -> 
 
         return '\n'.join(lines)
 
-    all_time_section = format_section("За все время", all_time)
-    today_section = format_section("За 24 часа", today)
+    all_time_section = format_section("**За все время**", all_time)
+    today_section = format_section("**За 24 часа**", today)
     separator = "______"
     return f"{all_time_section}\n\n{today_section}"
