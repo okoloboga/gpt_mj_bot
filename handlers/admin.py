@@ -94,6 +94,11 @@ async def show_stats(message: Message):
 
     await message.answer(statistics, reply_markup=admin_kb.more_stats_kb(), parse_mode=ParseMode.MARKDOWN_V2)
 
+@dp.message_handler(commands=['testbold'])
+async def test_bold(message: types.Message):
+    test_msg = "**Жирный текст**"
+    await message.answer(test_msg, parse_mode=ParseMode.MARKDOWN_V2)
+
 
 @dp.callback_query_handler(lambda callback: callback.from_user.id in ADMINS,
                            text="stats"
