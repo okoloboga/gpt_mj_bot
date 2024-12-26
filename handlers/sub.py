@@ -66,7 +66,9 @@ async def choose_chatgpt_tokens(call: CallbackQuery):
     now = datetime.now()
 
     if mode == 'discount':
-        answer = 'Успейте приобрести токены со **скидкой**\nпредложение актуально **24 часа⤵️**'
+        answer = '''
+Успейте приобрести токены со <b>скидкой<b>
+предложение актуально </b>24 часа⤵️</b>'''
     else:
         answer = "Выберите количество токенов⤵️"
     

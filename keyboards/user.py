@@ -140,11 +140,13 @@ def get_menu(default_ai):
 # Кнопки для выбора способа оплаты (Tinkoff, криптовалюта и т.д.)
 def get_pay_urls(urls, order_id, src='acc'):
 
+    back = 'back_to_profile' if src == 'acc' else 'back_to_discount'
+
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("Банковская карта", url=urls["tinkoff"]),
         InlineKeyboardButton("Криптовалюта", web_app=WebAppInfo(url=urls["freekassa"])),
         InlineKeyboardButton("Telegram Stars", callback_data=f"tg_stars:{order_id}"),
-        InlineKeyboardButton("🔙Назад", callback_data=f"back_to_profile:{src}"))
+        InlineKeyboardButton("🔙Назад", callback_data=back))
 
 
 # Клавиатура для оплаты через Telegram Stars
@@ -226,7 +228,7 @@ def get_chatgpt_models_noback(discount=None):
 # Model - 4o, o1-preview, o1-mini
 def get_chatgpt_tokens_menu(mode, model):
 
-    source = 'acc' if mode in {'normal', 'discount'} else 'not_gpt'
+    source = 'acc' if source == 'normal' else 'not_gpt'
     back = "buy_sub" if mode == 'normal' else 'back_to_discount' 
 
     prices = {'4o': {'normal': {'price': [199, 349, 469, 739, 10],
