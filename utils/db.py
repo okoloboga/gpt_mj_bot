@@ -57,11 +57,11 @@ async def start():
 
     await conn.execute(
         "CREATE TABLE IF NOT EXISTS usage("
-        "id SERIAL PRIMARY KEY,"
-        "user_id BIGINT,"
-        "ai_type VARCHAR(10),"
-        "image_type VARCHAR(10),"
-        "use_time INT,"
+        "id SERIAL PRIMARY KEY,"  # Уникальный идентификатор действия
+        "user_id BIGINT,"  # ID пользователя
+        "ai_type VARCHAR(10),"  # Тип нейросети - midjourney, chatgpt, 4o, o1-preview, o1-mini
+        "image_type VARCHAR(10),"  # Тип действия для midjourney
+        "use_time INT,"  
         "get_response BOOLEAN DEFAULT FALSE,"
         "create_time TIMESTAMP DEFAULT NOW(),"
         "external_task_id VARCHAR(1024))"
@@ -828,3 +828,194 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
     all_time = format_order(statistics['all_time'], "Оплат за все время")
     today = format_order(statistics['today'], "Оплат с начала дня")
     return f"{all_time}\n\n{today}"
+
+
+async def fetch_short_statistics() -> str:
+    """
+    Асинхронно собирает краткую статистику из базы данных и возвращает отформатированную строку.
+    """
+    try:
+        conn: asyncpg.Connection = await get_conn()
+    except Exception as e:
+        return f"Ошибка подключения к базе данных: {e}"
+
+    try:
+        # Получаем текущее время в Москве и начало текущего дня
+        moscow_tz = ZoneInfo("Europe/Moscow")
+        now_moscow = datetime.now(moscow_tz)
+        start_of_day = now_moscow.replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
+        logger.info(f"Сбор краткой статистики с начала дня: {start_of_day.isoformat()}")
+
+        # За все время
+        # Количество пользователей
+        users_all_time = await conn.fetchval("""
+            SELECT COUNT(DISTINCT user_id)
+            FROM orders
+            WHERE pay_time IS NOT NULL
+        """)
+        logger.info(f"Количество пользователей за всё время: {users_all_time}")
+
+        # Запросов
+        total_requests_all_time = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM usage
+        """)
+        logger.info(f"Количество запросов за всё время: {total_requests_all_time}")
+
+        # Оплат
+        total_payments_all_time = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM orders
+            WHERE pay_time IS NOT NULL
+        """)
+        logger.info(f"Количество оплат за всё время: {total_payments_all_time}")
+
+        # ChatGPT запросов
+        chatgpt_requests_all_time = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM usage
+            WHERE ai_type IN ('chatgpt', '4o', 'o1-preview', 'o1-mini')
+        """)
+        logger.info(f"ChatGPT запросов за всё время: {chatgpt_requests_all_time}")
+
+        # ChatGPT оплат
+        chatgpt_payments_all_time = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM orders
+            WHERE pay_time IS NOT NULL AND order_type IN ('chatgpt', '4o', 'o1-preview', 'o1-mini')
+        """)
+        logger.info(f"ChatGPT оплат за всё время: {chatgpt_payments_all_time}")
+
+        # Midjourney запросов
+        midjourney_requests_all_time = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM usage
+            WHERE ai_type = 'midjourney'
+        """)
+        logger.info(f"Midjourney запросов за всё время: {midjourney_requests_all_time}")
+
+        # Midjourney оплат
+        midjourney_payments_all_time = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM orders
+            WHERE pay_time IS NOT NULL AND order_type = 'midjourney'
+        """)
+        logger.info(f"Midjourney оплат за всё время: {midjourney_payments_all_time}")
+
+        # За 24 часа (с начала дня)
+        # Количество пользователей
+        users_today = await conn.fetchval("""
+            SELECT COUNT(DISTINCT user_id)
+            FROM orders
+            WHERE pay_time IS NOT NULL AND pay_time >= $1
+        """, start_of_day)
+        logger.info(f"Количество пользователей за сегодня: {users_today}")
+
+        # Запросов
+        total_requests_today = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM usage
+            WHERE create_time >= $1
+        """, start_of_day)
+        logger.info(f"Количество запросов за сегодня: {total_requests_today}")
+
+        # Оплат
+        total_payments_today = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM orders
+            WHERE pay_time IS NOT NULL AND pay_time >= $1
+        """, start_of_day)
+        logger.info(f"Количество оплат за сегодня: {total_payments_today}")
+
+        # ChatGPT запросов
+        chatgpt_requests_today = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM usage
+            WHERE ai_type IN ('chatgpt', '4o', 'o1-preview', 'o1-mini') AND create_time >= $1
+        """, start_of_day)
+        logger.info(f"ChatGPT запросов за сегодня: {chatgpt_requests_today}")
+
+        # ChatGPT оплат
+        chatgpt_payments_today = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM orders
+            WHERE pay_time IS NOT NULL AND pay_time >= $1 AND order_type IN ('chatgpt', '4o', 'o1-preview', 'o1-mini')
+        """, start_of_day)
+        logger.info(f"ChatGPT оплат за сегодня: {chatgpt_payments_today}")
+
+        # Midjourney запросов
+        midjourney_requests_today = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM usage
+            WHERE ai_type = 'midjourney' AND create_time >= $1
+        """, start_of_day)
+        logger.info(f"Midjourney запросов за сегодня: {midjourney_requests_today}")
+
+        # Midjourney оплат
+        midjourney_payments_today = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM orders
+            WHERE pay_time IS NOT NULL AND pay_time >= $1 AND order_type = 'midjourney'
+        """, start_of_day)
+        logger.info(f"Midjourney оплат за сегодня: {midjourney_payments_today}")
+
+        # Закрываем соединение
+        await conn.close()
+        logger.info("Соединение с базой данных закрыто")
+
+        # Форматирование вывода
+        short_statistics = format_short_statistics(
+            all_time={
+                'users': users_all_time,
+                'requests': total_requests_all_time,
+                'payments': total_payments_all_time,
+                'chatgpt_requests': chatgpt_requests_all_time,
+                'chatgpt_payments': chatgpt_payments_all_time,
+                'midjourney_requests': midjourney_requests_all_time,
+                'midjourney_payments': midjourney_payments_all_time
+            },
+            today={
+                'users': users_today,
+                'requests': total_requests_today,
+                'payments': total_payments_today,
+                'chatgpt_requests': chatgpt_requests_today,
+                'chatgpt_payments': chatgpt_payments_today,
+                'midjourney_requests': midjourney_requests_today,
+                'midjourney_payments': midjourney_payments_today
+            }
+        )
+        return short_statistics
+
+    except Exception as e:
+        logger.error(f"Ошибка при выполнении запросов или обработке данных: {e}")
+        return f"Ошибка при сборе статистики: {e}"
+
+
+def format_short_statistics(all_time: Dict[str, Any], today: Dict[str, Any]) -> str:
+    """
+    Форматирует краткую статистику в строку для отправки в Telegram.
+    """
+    def format_section(title: str, data: Dict[str, Any]) -> str:
+        lines = [f"```\n{title}:"]
+
+        # Количество пользователей
+        lines.append(f"Количество пользователей: {data['users']}")
+
+        # Запросов | Оплат
+        lines.append(f"Запросов | Оплат - {data['requests']} | {data['payments']}")
+
+        # ChatGPT
+        chatgpt_payments = data['chatgpt_payments'] if data['chatgpt_payments'] > 0 else "None"
+        lines.append(f"ChatGPT - {data['chatgpt_requests']} | {chatgpt_payments}")
+
+        # Midjourney
+        midjourney_payments = data['midjourney_payments'] if data['midjourney_payments'] > 0 else "None"
+        lines.append(f"Midjourney - {data['midjourney_requests']} | {midjourney_payments}")
+
+        lines.append("```")
+        return '\n'.join(lines)
+
+    all_time_section = format_section("За все время", all_time)
+    today_section = format_section("За 24 часа", today)
+    separator = "______"
+    return f"{all_time_section}\n\n{today_section}"

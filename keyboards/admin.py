@@ -17,3 +17,8 @@ def more_stats_kb():
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton('Расширенная статистика', callback_data='more_stats')
     )
+
+def back_to_short():
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton('Краткая статистика', callback_data='stats')
+    )

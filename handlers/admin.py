@@ -81,16 +81,32 @@ async def switch_api_handler(message: Message):
             logging.error(f"Ошибка при переключении на ApiFrame: {e}")
 
 
-# Хендлер для отображения статистики по пользователям и запросам
+# Хендлер для отображения краткой статистики по пользователям и запросам
 @dp.message_handler(lambda message: message.from_user.id in ADMINS,
                     commands="stats"
                     )
+@dp.callback_query_handler(lambda callback: callback.from_user.id in ADMINS,
+                           text="stats"
+                           )
+                           
 async def show_stats(message: Message):
+    statistics = (await db.fetch_short_statistics()).replace('-', ' ')
+
+    logger.info(statistics)
+
+    await message.answer(statistics, reply_markup=admin_kb.more_stats_kb(), parse_mode="MarkdownV2")
+
+
+# Хендлер для отображения полной статистики по пользователям и запросам
+@dp.callback_query_handler(lambda callback: callback.from_user.id in ADMINS,
+                           text="more_stats"
+                           )
+async def show_stats(callback: CallbackQuery):
     statistics = (await db.fetch_statistics()).replace('-', ' ')
 
     logger.info(statistics)
 
-    await message.answer(statistics, parse_mode="MarkdownV2")
+    await callback.message.edit_text(statistics, parse_mode="MarkdownV2")
 
 
 # Хендлер для отображения реферальной статистики
