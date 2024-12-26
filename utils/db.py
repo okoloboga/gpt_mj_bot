@@ -687,50 +687,53 @@ async def fetch_statistics() -> str:
     Асинхронно собирает статистику из базы данных и возвращает отформатированную строку.
     """
     try:
-        pool = await get_pool()
+        conn: asyncpg.Connection = await get_conn()
     except Exception as e:
         return f"Ошибка подключения к базе данных: {e}"
 
-    async with pool.acquire() as conn:
-        try:
-            # Получаем текущее время в Москве и начало текущего дня
-            moscow_tz = ZoneInfo("Europe/Moscow")
-            now_moscow = datetime.now(moscow_tz)
-            start_of_day = now_moscow.replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
-            logger.info(f"Сбор статистики с начала дня: {start_of_day.isoformat()}")
+    try:
+        # Получаем текущее время в Москве и начало текущего дня
+        moscow_tz = ZoneInfo("Europe/Moscow")
+        now_moscow = datetime.now(moscow_tz)
+        start_of_day = now_moscow.replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
+        logger.info(f"Сбор статистики с начала дня: {start_of_day.isoformat()}")
 
-            # Запросы к базе данных с фильтрацией оплаченных заказов
-            # Все оплаты за всё время
-            all_time_orders = await conn.fetch("""
-                SELECT order_type, quantity, COUNT(*) AS count, SUM(amount) AS total_amount
-                FROM orders
-                WHERE pay_time IS NOT NULL
-                GROUP BY order_type, quantity
-            """)
-            logger.info(f"Получено {len(all_time_orders)} записей за всё время")
+        # Запросы к базе данных с фильтрацией оплаченных заказов
+        # Все оплаты за всё время
+        all_time_orders = await conn.fetch("""
+            SELECT order_type, quantity, COUNT(*) AS count, SUM(amount) AS total_amount
+            FROM orders
+            WHERE pay_time IS NOT NULL
+            GROUP BY order_type, quantity
+        """)
+        logger.info(f"Получено {len(all_time_orders)} записей за всё время")
 
-            # Оплаты с начала дня по московскому времени
-            todays_orders = await conn.fetch("""
-                SELECT order_type, quantity, COUNT(*) AS count, SUM(amount) AS total_amount
-                FROM orders
-                WHERE pay_time >= $1 AND pay_time IS NOT NULL
-                GROUP BY order_type, quantity
-            """, start_of_day)
-            logger.info(f"Получено {len(todays_orders)} записей за сегодня")
+        # Оплаты с начала дня по московскому времени
+        todays_orders = await conn.fetch("""
+            SELECT order_type, quantity, COUNT(*) AS count, SUM(amount) AS total_amount
+            FROM orders
+            WHERE pay_time >= $1 AND pay_time IS NOT NULL
+            GROUP BY order_type, quantity
+        """, start_of_day)
+        logger.info(f"Получено {len(todays_orders)} записей за сегодня")
 
-            # Обработка данных
-            statistics = {
-                'all_time': process_orders(all_time_orders),
-                'today': process_orders(todays_orders)
-            }
+        # Закрываем соединение
+        await conn.close()
+        logger.info("Соединение с базой данных закрыто")
 
-            # Форматирование вывода
-            formatted_statistics = format_statistics(statistics)
-            return formatted_statistics
+        # Обработка данных
+        statistics = {
+            'all_time': process_orders(all_time_orders),
+            'today': process_orders(todays_orders)
+        }
 
-        except Exception as e:
-            logger.error(f"Ошибка при выполнении запросов или обработке данных: {e}")
-            return f"Ошибка при сборе статистики: {e}"
+        # Форматирование вывода
+        formatted_statistics = format_statistics(statistics)
+        return formatted_statistics
+
+    except Exception as e:
+        logger.error(f"Ошибка при выполнении запросов или обработке данных: {e}")
+        return f"Ошибка при сборе статистики: {e}"
 
 def process_orders(orders) -> Dict[str, Any]:
     """
@@ -795,13 +798,13 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
                 lines.append(f"\n{order_type}")
                 for qty in CHATGPT_QUANTITIES:
                     count = details.get(qty, 0)
-                    lines.append(f"{qty//1000}к токенов: {count}")
-                lines.append(f"Всего {order_type}: {chatgpt['details'][order_type].get('total_count', 0)}\n")
+                    lines.append(f"    {qty//1000}к токенов: {count}")
+                lines.append(f"    Всего {order_type}: {chatgpt['details'][order_type].get('total_count', 0)}\n")
 
             # Общие суммы и разбивка
             total_chatgpt_count = chatgpt.get('total_count', 0)
             total_chatgpt_amount = chatgpt.get('total_amount', 0)
-            lines.append(f"Всего оплат ChatGPT: {total_chatgpt_count}, на сумму {total_chatgpt_amount}₽ (4o+o1preview+o1mini)\n")
+            lines.append(f"Всего оплат ChatGPT: {total_chatgpt_count}, на сумму {total_chatgpt_amount}₽ (4o+o1-preview+o1-mini)\n")
 
         # Форматирование Midjourney
         midjourney = order_stats.get('Midjourney', {})
@@ -809,10 +812,12 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
             lines.append("Midjourney")
             for qty in MIDJOURNEY_QUANTITIES:
                 count = midjourney['details'].get(qty, 0)
-                lines.append(f"{qty} запросов: {count}")
+                lines.append(f"    {qty} запросов: {count}")
             total_midjourney = midjourney.get('total_count', 0)
             total_midjourney_amount = midjourney.get('total_amount', 0)
-            lines.append(f"Всего: {total_midjourney}, на сумму {total_midjourney_amount}₽")
+            lines.append(f"    Всего: {total_midjourney}, на сумму {total_midjourney_amount}₽")
+        
+        lines.append("```")
         return '\n'.join(lines)
 
     all_time = format_order(statistics['all_time'], "Оплат за все время")
