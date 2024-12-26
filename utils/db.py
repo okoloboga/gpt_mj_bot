@@ -691,10 +691,11 @@ CHATGPT_QUANTITIES = [20000, 40000, 60000, 100000]
 MIDJOURNEY_QUANTITIES = [10, 20, 50, 100]
 
 
-def escape_markdown(text: str) -> str:
+def escape_markdown(text: Any) -> str:
     """
     Экранирует специальные символы MarkdownV2.
     """
+    text = str(text)
     escape_chars = r'\`*_{}[]()#+-.!'
     return ''.join(['\\' + char if char in escape_chars else char for char in text])
 
@@ -806,7 +807,7 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
     Форматирует статистику в строку для отправки в Telegram.
     """
     def format_order(order_stats: Dict[str, Any], title: str) -> str:
-        lines = [f"*{escape_markdown(title)}:*"]
+        lines = [f"**{escape_markdown(title)}:**"]
 
         # Форматирование ChatGPT
         chatgpt = order_stats.get('ChatGPT', {})
@@ -817,12 +818,12 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
                 for qty in CHATGPT_QUANTITIES:
                     count = details.get(qty, 0)
                     lines.append(f"{qty//1000}к токенов: {count}")
-                lines.append(f"**Всего {escape_markdown(order_type)}: {escape_markdown(str(chatgpt['details'][order_type].get('total_count', 0)))}**\n")
+                lines.append(f"**Всего {escape_markdown(order_type)}: {escape_markdown(chatgpt['details'][order_type].get('total_count', 0))}**\n")
 
             # Общие суммы и разбивка
             total_chatgpt_count = chatgpt.get('total_count', 0)
             total_chatgpt_amount = chatgpt.get('total_amount', 0)
-            lines.append(f"**Всего оплат ChatGPT: {escape_markdown(str(total_chatgpt_count))}, на сумму {escape_markdown(str(total_chatgpt_amount))}₽** \(4o \+ o1\-preview \+ o1\-mini\)\n")
+            lines.append(f"**Всего оплат ChatGPT: {escape_markdown(total_chatgpt_count)}, на сумму {escape_markdown(total_chatgpt_amount)}₽** \(4o \+ o1\-preview \+ o1\-mini\)\n")
 
         # Форматирование Midjourney
         midjourney = order_stats.get('Midjourney', {})
@@ -833,12 +834,12 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
                 lines.append(f"{qty} запросов: {count}")
             total_midjourney = midjourney.get('total_count', 0)
             total_midjourney_amount = midjourney.get('total_amount', 0)
-            lines.append(f"**Всего: {escape_markdown(str(total_midjourney))}, на сумму {escape_markdown(str(total_midjourney_amount))}₽**")
+            lines.append(f"**Всего: {escape_markdown(total_midjourney)}, на сумму {escape_markdown(total_midjourney_amount)}₽**")
 
         return '\n'.join(lines)
 
-    all_time = format_order(statistics['all_time'], "**Оплат за все время**")
-    today = format_order(statistics['today'], "**Оплат за 24 часа**")
+    all_time = format_order(statistics['all_time'], "Оплат за все время")
+    today = format_order(statistics['today'], "Оплат за 24 часа")
     return f"{all_time}\n\n{today}"
 
 
@@ -1007,10 +1008,10 @@ def format_short_statistics(all_time: Dict[str, Any], today: Dict[str, Any]) -> 
     Форматирует краткую статистику в строку для отправки в Telegram.
     """
     def format_section(title: str, data: Dict[str, Any]) -> str:
-        lines = [f"{title}:"]
+        lines = [f"**{escape_markdown(title)}:**"]  # Заголовок выделен жирным
 
         # Количество пользователей
-        lines.append(f"**Количество пользователей: {escape_markdown(str(data['users']))}**")
+        lines.append(f"**Количество пользователей:** {escape_markdown(str(data['users']))}")
 
         # Запросов | Оплат
         lines.append(f"Запросов \| Оплат \- {data['requests']} \| {data['payments']}")
@@ -1025,7 +1026,6 @@ def format_short_statistics(all_time: Dict[str, Any], today: Dict[str, Any]) -> 
 
         return '\n'.join(lines)
 
-    all_time_section = format_section("**За все время**", all_time)
-    today_section = format_section("**За 24 часа**", today)
-    separator = "______"
+    all_time_section = format_section("За все время", all_time)
+    today_section = format_section("За 24 часа", today)
     return f"{all_time_section}\n\n{today_section}"
