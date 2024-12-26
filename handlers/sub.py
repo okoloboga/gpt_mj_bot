@@ -65,8 +65,13 @@ async def choose_chatgpt_tokens(call: CallbackQuery):
     user_data = await db.get_user_notified_gpt(user_id)
     now = datetime.now()
 
+    if mode == 'discount':
+        answer = 'Успейте приобрести токены со **скидкой**\nпредложение актуально **24 часа⤵️**'
+    else:
+        answer = "Выберите количество токенов⤵️"
+    
     await call.message.edit_text(
-        "Выберите количество токенов⤵️",
+        answer,
         reply_markup=user_kb.get_chatgpt_tokens_menu(mode, model)
     )
 
@@ -158,6 +163,20 @@ async def handle_midjourney_requests_purchase(call: CallbackQuery):
                                      reply_markup=user_kb.get_pay_urls(urls, order_id, src))
     else:
         await call.message.edit_text("Вы уже использовали скидку")
+
+
+# Уведомение о низком количестве токенов GPT
+@dp.callback_query_handler(text="back_to_discount")
+async def back_to_discount_notification(call: CallbackQuery):
+
+    logger.info('back_to_discount')
+
+    await call.message.edit_text("""
+У вас заканчиваются запросы для 💬ChatGPT
+Специально для вас мы подготовили <b>персональную скидку</b>!
+Выберите интересующую Вас модель⤵️
+    """, reply_markup=user_kb.get_chatgpt_models_noback('discount'))
+    await call.answer()
 
 
 # Хендлер для оплаты через Telegram (проплаченный функционал)
