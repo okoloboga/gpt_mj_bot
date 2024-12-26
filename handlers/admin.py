@@ -102,7 +102,7 @@ async def show_stats(message: Message):
                            text="more_stats"
                            )
 async def show_stats(callback: CallbackQuery):
-    statistics = (await db.fetch_statistics()).replace('-', ' ')
+    statistics = (await db.fetch_statistics())
 
     logger.info(statistics)
 
