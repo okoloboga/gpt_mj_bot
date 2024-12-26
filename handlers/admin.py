@@ -88,6 +88,8 @@ async def switch_api_handler(message: Message):
 async def show_stats(message: Message):
     statistics = await db.fetch_statistics()
 
+    logger.info(statistics)
+
     await message.answer(statistics, parse_mode="MarkdownV2")
 
 
