@@ -228,7 +228,7 @@ def get_chatgpt_models_noback(discount=None):
 # Model - 4o, o1-preview, o1-mini
 def get_chatgpt_tokens_menu(mode, model):
 
-    source = 'acc' if source == 'normal' else 'not_gpt'
+    source = 'acc' if mode == 'normal' else 'not_gpt'
     back = "buy_sub" if mode == 'normal' else 'back_to_discount' 
 
     prices = {'4o': {'normal': {'price': [199, 349, 469, 739, 10],
