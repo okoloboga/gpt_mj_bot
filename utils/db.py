@@ -2,6 +2,7 @@ from datetime import datetime, date, time, timedelta
 import asyncpg
 import logging
 from zoneinfo import ZoneInfo
+from typing import Dict, Any
 from asyncpg import Connection
 from config import DB_USER, DB_HOST, DB_DATABASE, DB_PASSWORD
 
@@ -653,122 +654,6 @@ async def update_used_discount_mj(user_id):
         user_id)
     await conn.close()
 
-# Получение общей статистики
-async def get_stat():
-    moscow_tz = ZoneInfo("Europe/Moscow")  # Часовой пояс Москвы
-    utc_tz = ZoneInfo("UTC")  # Часовой пояс UTC
-
-    # Текущее время в Москве
-    now_moscow = datetime.now(moscow_tz)
-
-    # Начало текущего дня в Москве (00:00)
-    start_moscow = datetime.combine(now_moscow.date(), time.min, tzinfo=moscow_tz)
-
-    # Конец периода — текущее время
-    end_moscow = now_moscow
-
-    # Конвертация в UTC
-    start_utc = start_moscow.astimezone(utc_tz)
-    end_utc = end_moscow.astimezone(utc_tz)
-
-    # Получение Unix timestamps для таблицы users
-    start_timestamp = int(start_utc.timestamp())
-    end_timestamp = int(end_utc.timestamp())
-
-    # Преобразование в naive datetime (без tzinfo) для таблицы usage
-    start_utc_naive = start_utc.replace(tzinfo=None)
-    end_utc_naive = end_utc.replace(tzinfo=None)
-
-    conn = await get_conn()
-    try:
-        row = await conn.fetchrow("""
-            SELECT 
-                (SELECT COUNT(*) FROM users) AS users_count,
-                (SELECT COUNT(*) FROM users WHERE reg_time BETWEEN $1 AND $2) AS today_users_count,
-                (SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt') AS chatgpt_count,
-                (SELECT COUNT(*) FROM usage WHERE ai_type = 'image') AS image_count,
-                (SELECT COUNT(*) FROM usage WHERE ai_type = 'chatgpt' AND create_time BETWEEN $3 AND $4) AS today_chatgpt_count,
-                (SELECT COUNT(*) FROM usage WHERE ai_type = 'image' AND create_time BETWEEN $3 AND $4) AS today_image_count
-            """, start_timestamp, end_timestamp, start_utc_naive, end_utc_naive)
-    finally:
-        await conn.close()
-
-    return row
-
-# Получение статистики заказов
-async def get_orders_statistics(period: str = "all"):
-    """
-    Получает статистику заказов за указанный период.
-    
-    :param period: Период статистики: '24h', 'month', 'all' или 'today'.
-    :return: Словарь с данными статистики.
-    """
-    moscow_tz = ZoneInfo("Europe/Moscow")  # Часовой пояс Москвы
-    utc_tz = ZoneInfo("UTC")  # Часовой пояс UTC
-
-    # Текущее время в Москве и UTC
-    now_moscow = datetime.now(moscow_tz)
-    now_utc = datetime.now(utc_tz)
-
-    # Определяем начало периода на основе выбранного периода
-    if period == "24h":
-        start_moscow = now_moscow - timedelta(hours=24)
-    elif period == "month":
-        start_moscow = now_moscow.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    elif period == "today":
-        # Начало текущих суток в Москве (00:00)
-        start_moscow = datetime.combine(now_moscow.date(), time.min, tzinfo=moscow_tz)
-    else:
-        start_moscow = None  # Для 'all' нет ограничения по времени
-
-    # Конвертация start_time в UTC, если он определён
-    if start_moscow:
-        start_utc = start_moscow.astimezone(utc_tz)
-        # Удаляем информацию о часовом поясе, делая datetime наивным
-        start_time = start_utc.replace(tzinfo=None)
-    else:
-        start_time = None
-
-    conn = await get_conn()
-    try:
-        # Основной SQL-запрос с условием времени
-        query = """
-        SELECT 
-            order_type,
-            quantity,
-            COUNT(*) AS count,
-            SUM(amount) AS total_amount
-        FROM orders
-        WHERE pay_time IS NOT NULL
-        """
-
-        # Список параметров для запроса
-        params = []
-
-        # Добавляем фильтрацию по времени, если указано
-        if start_time:
-            query += " AND pay_time >= $1"
-            params.append(start_time)
-
-        query += " GROUP BY order_type, quantity ORDER BY order_type, quantity;"
-
-        # Выполняем запрос
-        rows = await conn.fetch(query, *params)
-    finally:
-        await conn.close()
-
-    # Организуем данные в удобный для обработки формат
-    stats = {}
-    for row in rows:
-        order_type = row['order_type']
-        if order_type not in stats:
-            stats[order_type] = {}
-        stats[order_type][row['quantity']] = {
-            'count': row['count'],
-            'total_amount': row['total_amount']
-        }
-
-    return stats
 
 # Делал ли пользователь заказ в последние 29 дней по этой модели
 async def has_matching_orders(user_id: int) -> bool:
@@ -797,111 +682,139 @@ async def has_matching_orders(user_id: int) -> bool:
         return False
 
 
-async def get_statistics():
-    conn: Connection = await get_conn()
+async def fetch_statistics() -> str:
+    """
+    Асинхронно собирает статистику из базы данных и возвращает отформатированную строку.
+    """
+    try:
+        pool = await get_pool()
+    except Exception as e:
+        return f"Ошибка подключения к базе данных: {e}"
 
-    # Общее количество пользователей
-    total_users = await conn.fetchval("SELECT COUNT(DISTINCT user_id) FROM users")
+    async with pool.acquire() as conn:
+        try:
+            # Получаем текущее время в Москве и начало текущего дня
+            moscow_tz = ZoneInfo("Europe/Moscow")
+            now_moscow = datetime.now(moscow_tz)
+            start_of_day = now_moscow.replace(hour=0, minute=0, second=0, microsecond=0).replace(tzinfo=None)
+            logger.info(f"Сбор статистики с начала дня: {start_of_day.isoformat()}")
 
-    # Дата 24 часа назад
-    moscow_tz = ZoneInfo("Europe/Moscow")  # Часовой пояс Москвы
-    utc_tz = ZoneInfo("UTC")  # Часовой пояс UTC
+            # Запросы к базе данных с фильтрацией оплаченных заказов
+            # Все оплаты за всё время
+            all_time_orders = await conn.fetch("""
+                SELECT order_type, quantity, COUNT(*) AS count, SUM(amount) AS total_amount
+                FROM orders
+                WHERE pay_time IS NOT NULL
+                GROUP BY order_type, quantity
+            """)
+            logger.info(f"Получено {len(all_time_orders)} записей за всё время")
 
-    # Текущее время в Москве
-    now_moscow = datetime.now(moscow_tz)
+            # Оплаты с начала дня по московскому времени
+            todays_orders = await conn.fetch("""
+                SELECT order_type, quantity, COUNT(*) AS count, SUM(amount) AS total_amount
+                FROM orders
+                WHERE pay_time >= $1 AND pay_time IS NOT NULL
+                GROUP BY order_type, quantity
+            """, start_of_day)
+            logger.info(f"Получено {len(todays_orders)} записей за сегодня")
 
-    # Начало текущего дня в Москве (00:00)
-    start_moscow = datetime.combine(now_moscow.date(), time.min, tzinfo=moscow_tz)
+            # Обработка данных
+            statistics = {
+                'all_time': process_orders(all_time_orders),
+                'today': process_orders(todays_orders)
+            }
 
-    # Конец периода — текущее время
-    end_moscow = now_moscow
+            # Форматирование вывода
+            formatted_statistics = format_statistics(statistics)
+            return formatted_statistics
 
-    # Конвертация в UTC
-    start_utc = start_moscow.astimezone(utc_tz)
-    end_utc = end_moscow.astimezone(utc_tz)
+        except Exception as e:
+            logger.error(f"Ошибка при выполнении запросов или обработке данных: {e}")
+            return f"Ошибка при сборе статистики: {e}"
 
-    # Получение Unix timestamps для таблицы users
-    start_timestamp = int(start_utc.timestamp())
-    end_timestamp = int(end_utc.timestamp())
+def process_orders(orders) -> Dict[str, Any]:
+    """
+    Обрабатывает записи заказов и структурирует данные для статистики.
+    """
+    # Инициализация статистики с нулевыми значениями
+    chatgpt_stats = {order_type: {qty: 0 for qty in CHATGPT_QUANTITIES} for order_type in CHATGPT_ORDER_TYPES}
+    total_chatgpt = 0
+    total_chatgpt_amount = 0
 
-    # Преобразование в naive datetime (без tzinfo) для таблицы usage
-    start_utc_naive = start_utc.replace(tzinfo=None)
-    end_utc_naive = end_utc.replace(tzinfo=None)
+    midjourney_stats = {qty: 0 for qty in MIDJOURNEY_QUANTITIES}
+    total_midjourney = 0
+    total_midjourney_amount = 0
 
-    ### Общие запросы и оплаты:
-    # Запрос для получения общего количества запросов:
-    total_requests = await conn.fetchrow(
-        "SELECT COUNT(*) as total_requests "
-        "FROM usage"
-    )
+    for record in orders:
+        order_type = record['order_type']
+        quantity = record['quantity']
+        count = record['count']
+        total_amount = record['total_amount'] or 0  # Обработка возможных NULL значений
 
-    # Запрос для получения общего количества оплат:
-    total_payments = await conn.fetchrow(
-        "SELECT SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as total_payments "
-        "FROM orders"
-    )
+        if order_type in CHATGPT_ORDER_TYPES:
+            if quantity in CHATGPT_QUANTITIES:
+                chatgpt_stats[order_type][quantity] += count
+                total_chatgpt += count
+                total_chatgpt_amount += total_amount
+            else:
+                logger.warning(f"Неизвестное количество для ChatGPT: {quantity}")
+        elif order_type == 'midjourney':
+            if quantity in MIDJOURNEY_QUANTITIES:
+                midjourney_stats[quantity] += count
+                total_midjourney += count
+                total_midjourney_amount += total_amount
+            else:
+                logger.warning(f"Неизвестное количество для Midjourney: {quantity}")
+        else:
+            logger.warning(f"Неизвестный тип заказа: {order_type}")
 
-    ### Информация о запросах и оплатах по типу заказа:
-    # Запрос для ChatGPT:
-    chatgpt_requests = await conn.fetchrow(
-        "SELECT COUNT(*) as requests "
-        "FROM usage WHERE ai_type='chatgpt'"
-    )
-
-    chatgpt_payments = await conn.fetchrow(
-        "SELECT SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
-        "FROM orders WHERE order_type='chatgpt'"
-    )
-
-    # Запрос для Midjourney:
-    midjourney_requests = await conn.fetchrow(
-        "SELECT COUNT(*) as requests "
-        "FROM usage WHERE ai_type='midjourney'"
-    )
-
-    midjourney_payments = await conn.fetchrow(
-        "SELECT SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as payments "
-        "FROM orders WHERE order_type='midjourney'"
-    )
-
-    # Запрос для получения количества запросов за последние 24 часа:
-    daily_requests = await conn.fetchrow(
-        "SELECT COUNT(*) as daily_requests "
-        "FROM usage WHERE create_time BETWEEN $1 AND $2", start_utc_naive
-    )
-
-    # Запрос для получения количества оплат за последние 24 часа:
-    daily_payments = await conn.fetchrow(
-        "SELECT SUM(CASE WHEN pay_time IS NOT NULL THEN 1 ELSE 0 END) as daily_payments "
-        "FROM orders WHERE create_time BETWEEN $1 AND $2", end_utc_naive
-    )
-    await conn.close()
-    statistics = {
-        "total_users": total_users,
-        "total_requests": total_requests["total_requests"],  # Количество запросов теперь из таблицы usage
-        "total_payments": total_payments["total_payments"],  # Количество оплат из таблицы orders
-
-        # Статистика по ChatGPT
-        "chatgpt_requests": chatgpt_requests["requests"],  # Запросы из таблицы usage
-        "chatgpt_payments": chatgpt_payments["payments"],  # Оплаты из таблицы orders
-
-        # Статистика по Midjourney
-        "midjourney_requests": midjourney_requests["requests"],  # Запросы из таблицы usage
-        "midjourney_payments": midjourney_payments["payments"],  # Оплаты из таблицы orders
-
-        # Статистика за последние 24 часа
-        "daily_users": daily_users["daily_users"],  # Если такая статистика доступна
-        "daily_requests": daily_requests["daily_requests"],  # Количество запросов из таблицы usage за 24 часа
-        "daily_payments": daily_payments["daily_payments"],  # Количество оплат из таблицы orders за 24 часа
-
-        # Статистика по ChatGPT за последние 24 часа
-        "daily_chatgpt_requests": daily_chatgpt_requests["requests"],  # Запросы из таблицы usage за 24 часа
-        "daily_chatgpt_payments": daily_chatgpt_payments["payments"],  # Оплаты из таблицы orders за 24 часа
-
-        # Статистика по Midjourney за последние 24 часа
-        "daily_midjourney_requests": daily_midjourney_requests["requests"],  # Запросы из таблицы usage за 24 часа
-        "daily_midjourney_payments": daily_midjourney_payments["payments"],  # Оплаты из таблицы orders за 24 часа
+    return {
+        'ChatGPT': {
+            'details': chatgpt_stats,
+            'total_count': total_chatgpt,
+            'total_amount': total_chatgpt_amount
+        },
+        'Midjourney': {
+            'details': midjourney_stats,
+            'total_count': total_midjourney,
+            'total_amount': total_midjourney_amount
+        }
     }
 
-    return statistics
+def format_statistics(statistics: Dict[str, Any]) -> str:
+    """
+    Форматирует статистику в строку для отправки в Telegram.
+    """
+    def format_order(order_stats: Dict[str, Any], title: str) -> str:
+        lines = [f"```\n{title}:"]
 
+        # Форматирование ChatGPT
+        chatgpt = order_stats.get('ChatGPT', {})
+        if chatgpt:
+            for order_type, details in chatgpt['details'].items():
+                lines.append(f"\n{order_type}")
+                for qty in CHATGPT_QUANTITIES:
+                    count = details.get(qty, 0)
+                    lines.append(f"{qty//1000}к токенов: {count}")
+                lines.append(f"Всего {order_type}: {chatgpt['details'][order_type].get('total_count', 0)}\n")
+
+            # Общие суммы и разбивка
+            total_chatgpt_count = chatgpt.get('total_count', 0)
+            total_chatgpt_amount = chatgpt.get('total_amount', 0)
+            lines.append(f"Всего оплат ChatGPT: {total_chatgpt_count}, на сумму {total_chatgpt_amount}₽ (4o+o1preview+o1mini)\n")
+
+        # Форматирование Midjourney
+        midjourney = order_stats.get('Midjourney', {})
+        if midjourney:
+            lines.append("Midjourney")
+            for qty in MIDJOURNEY_QUANTITIES:
+                count = midjourney['details'].get(qty, 0)
+                lines.append(f"{qty} запросов: {count}")
+            total_midjourney = midjourney.get('total_count', 0)
+            total_midjourney_amount = midjourney.get('total_amount', 0)
+            lines.append(f"Всего: {total_midjourney}, на сумму {total_midjourney_amount}₽")
+        return '\n'.join(lines)
+
+    all_time = format_order(statistics['all_time'], "Оплат за все время")
+    today = format_order(statistics['today'], "Оплат с начала дня")
+    return f"{all_time}\n\n{today}"
