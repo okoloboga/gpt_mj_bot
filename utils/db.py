@@ -2,6 +2,7 @@ from datetime import datetime, date, time, timedelta
 import asyncpg
 import logging
 from zoneinfo import ZoneInfo
+from typing import Dict, Any
 from asyncpg import Connection
 from config import DB_USER, DB_HOST, DB_DATABASE, DB_PASSWORD
 
