@@ -801,7 +801,7 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
         if chatgpt:
             for order_type, details in chatgpt['details'].items():
 
-                lines.append(f"\n{order_type}")
+                lines.append(f"{order_type}")
                 for qty in CHATGPT_QUANTITIES:
                     count = details.get(qty, 0)
                     lines.append(f"{qty//1000}к токенов: {count}")
