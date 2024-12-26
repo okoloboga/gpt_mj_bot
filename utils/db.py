@@ -698,10 +698,7 @@ async def get_stat():
 
 
 def process_orders(orders) -> Dict[str, Any]:
-    """
-    Обрабатывает записи заказов и структурирует данные для статистики.
-    """
-    stats = {}
+    chatgpt_stats = {}
     total_chatgpt = 0
     total_chatgpt_amount = 0
     midjourney_stats = {}
@@ -715,9 +712,9 @@ def process_orders(orders) -> Dict[str, Any]:
         total_amount = record['total_amount'] or 0  # Обработка возможных NULL значений
 
         if order_type in ['4o', 'o1-preview', 'o1-mini']:
-            if order_type not in stats:
-                stats[order_type] = {}
-            stats[order_type][quantity] = count
+            if order_type not in chatgpt_stats:
+                chatgpt_stats[order_type] = {}
+            chatgpt_stats[order_type][quantity] = count
             total_chatgpt += count
             total_chatgpt_amount += total_amount
         elif order_type == 'midjourney':
@@ -727,36 +724,36 @@ def process_orders(orders) -> Dict[str, Any]:
             total_midjourney += count
             total_midjourney_amount += total_amount
 
-    stats['ChatGPT'] = {
-        'details': stats,
-        'total_count': total_chatgpt,
-        'total_amount': total_chatgpt_amount
+    return {
+        'ChatGPT': {
+            'details': chatgpt_stats,
+            'total_count': total_chatgpt,
+            'total_amount': total_chatgpt_amount
+        },
+        'Midjourney': {
+            'details': midjourney_stats,
+            'total_count': total_midjourney,
+            'total_amount': total_midjourney_amount
+        }
     }
-    stats['Midjourney'] = {
-        'details': midjourney_stats,
-        'total_count': total_midjourney,
-        'total_amount': total_midjourney_amount
-    }
-    return stats
-
 
 def format_statistics(statistics: Dict[str, Any]) -> str:
     """
     Форматирует статистику в строку для отправки в Telegram.
     """
     def format_order(order_stats: Dict[str, Any], title: str) -> str:
-        lines = [f"```\n{title}:\n"]
-
+        lines = [f"```\n{title}:"]
+    
         # Форматирование ChatGPT
         chatgpt = order_stats.get('ChatGPT', {})
         if chatgpt:
             for order_type, details in chatgpt['details'].items():
-                lines.append(f"{order_type}")
+                lines.append(f"\n{order_type}")
                 for qty, cnt in sorted(details.items()):
                     lines.append(f"    {qty} токенов: {cnt}")
                 lines.append(f"    Всего {order_type}: {sum(details.values())}\n")
             lines.append(f"Всего оплат ChatGPT: {chatgpt['total_count']}, на сумму {chatgpt['total_amount']}₽\n")
-
+    
         # Форматирование Midjourney
         midjourney = order_stats.get('Midjourney', {})
         if midjourney:
@@ -767,7 +764,7 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
         
         lines.append("```")
         return '\n'.join(lines)
-
+    
     all_time = format_order(statistics['all_time'], "Оплат за все время")
     today = format_order(statistics['today'], "Оплат с начала дня")
     return f"{all_time}\n\n{today}"
