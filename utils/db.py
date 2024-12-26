@@ -794,7 +794,7 @@ def format_statistics(statistics: Dict[str, Any]) -> str:
     Форматирует статистику в строку для отправки в Telegram.
     """
     def format_order(order_stats: Dict[str, Any], title: str) -> str:
-        lines = [f"```\n{title}:"]
+        lines = [f"\n{title}:"]
 
         # Форматирование ChatGPT
         chatgpt = order_stats.get('ChatGPT', {})
