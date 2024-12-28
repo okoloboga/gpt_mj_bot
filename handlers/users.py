@@ -202,7 +202,6 @@ def formatter(text):
     return text
 
 
-
 # Генерация ответа от ChatGPT
 async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
