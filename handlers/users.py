@@ -194,11 +194,13 @@ def formatter(text):
     
     logger.info('AFTER ESCAPE: ' + text)
 
-    text.replace("\*\*", "*").replace("\_\_", "_").replace("\`\`", "`").replace("\~\~", "~")
+    # Последовательно заменяем экранированные символы на обычные
+    text = text.replace("\\*\\*", "*").replace("\\_\\_", "_").replace("\\`\\`", "`").replace("\\~\\~", "~")
 
     logger.info('AFTER REPLACE: ' + text)
     
     return text
+
 
 
 # Генерация ответа от ChatGPT
