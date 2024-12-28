@@ -189,11 +189,7 @@ def split_message(text: str, max_length: int) -> list:
 
 def formatter(text):
     # Экранируем специальные символы для MarkdownV2
-    escape_chars = r'_*[]()~`>#+-=|{}.!'
-    text = ''.join(['\\' + char if char in escape_chars else char for char in text])
-    
-    # Преобразуем двойные звездочки в одну экранированную звездочку для Telegram
-    text = re.sub(r'\*\*(.*?)\*\*', r'*\1*', text)
+    text.replace("**", "*").replace("__", "_").replace("``", "`").replace("~~", "~")
     return text
 
 
