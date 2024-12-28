@@ -240,7 +240,14 @@ async def remove_chatgpt(user_id, tokens, model):
     if column not in {'tokens_4o', 'tokens_4o_mini', 'tokens_o1_preview', 'tokens_o1_mini'}:
         raise ValueError("Invalid model name")
 
-    await conn.execute(f"UPDATE users SET {column} = {column} - $2 WHERE user_id = $1", user_id, tokens)
+    await conn.execute(
+        f"""
+        UPDATE users
+        SET {column} = GREATEST({column} - $2, 0)
+        WHERE user_id = $1
+        """,
+        user_id, tokens
+    )
     await conn.close()
 
 
