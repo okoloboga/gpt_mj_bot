@@ -187,6 +187,16 @@ def split_message(text: str, max_length: int) -> list:
     return parts
 
 
+def formatter(text):
+    # Экранируем специальные символы для MarkdownV2
+    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    text = ''.join(['\\' + char if char in escape_chars else char for char in text])
+    
+    # Преобразуем двойные звездочки в одну экранированную звездочку для Telegram
+    text = re.sub(r'\*\*(.*?)\*\*', r'*\1*', text)
+    return text
+
+
 # Генерация ответа от ChatGPT
 async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
@@ -205,14 +215,13 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
     logger.info(f"Ответ ChatGPT: {res['content']}")
 
-    answer = res["content"].replace('**', '*')
     if len(res["content"]) <= 4096:
-        await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio(), parse_mode="Markdown")
+        await bot.send_message(user_id, formatted(res["content"]), reply_markup=user_kb.get_clear_or_audio(), parse_mode="MarkdownV2")
     else:
         # Разделение сообщения на части
-        parts = split_message(res["content"], 4096)
+        parts = split_message(formatted(res["content"]), 4096)
         for part in parts:
-            await bot.send_message(user_id, part, reply_markup=user_kb.get_clear_or_audio(), parse_mode="Markdown")
+            await bot.send_message(user_id, part, reply_markup=user_kb.get_clear_or_audio(), parse_mode="MarkdownV2")
 
     await state.update_data(content=res["content"])
 
