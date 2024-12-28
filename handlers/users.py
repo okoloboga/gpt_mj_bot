@@ -197,6 +197,7 @@ def formatter(text):
 
     # Последовательно заменяем экранированные символы на обычные
     # text = text.replace("\\*\\*", "*").replace("\\_", "_").replace("\\*", "*").replace("\\`", "`").replace("\\~\\~", "~")
+    text = text.replace("**", "*")
 
     # logger.info('AFTER REPLACE: ' + text)
     
