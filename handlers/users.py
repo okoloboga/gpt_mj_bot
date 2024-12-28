@@ -210,11 +210,13 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
     logger.info(f"Ответ ChatGPT: {res['content']}")
 
+    escaped = escape_markdown_v2(res["content"])
+
     if len(res["content"]) <= 4096:
-        await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
+        await bot.send_message(user_id, escaped, reply_markup=user_kb.get_clear_or_audio())
     else:
         # Разделение сообщения на части
-        parts = split_message(res["content"], 4096)
+        parts = split_message(escaped, 4096)
         for part in parts:
             await bot.send_message(user_id, part, reply_markup=user_kb.get_clear_or_audio())
 
