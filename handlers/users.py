@@ -206,7 +206,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     logger.info(f"Ответ ChatGPT: {res['content']}")
 
     if len(res["content"]) <= 4096:
-        await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio(), parse_mode=None)
+        await bot.send_message(user_id, (res["content"]).replace('python', ''), reply_markup=user_kb.get_clear_or_audio(), parse_mode=None)
     else:
         # Разделение сообщения на части
         parts = split_message(res["content"], 4096)
