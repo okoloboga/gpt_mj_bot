@@ -88,7 +88,7 @@ async def switch_api_handler(message: Message):
                     )
 
 async def show_stats(message: Message):
-    statistics = await db.fetch_short_statistics()
+    statistics = (await db.fetch_short_statistics()).replace('None', '0')
 
     logger.info(statistics)
 
@@ -100,7 +100,7 @@ async def show_stats(message: Message):
                            )
 
 async def show_stats(callback: CallbackQuery):
-    statistics = await db.fetch_short_statistics()
+    statistics = (await db.fetch_short_statistics()).replace('None', '0')
 
     logger.info(statistics)
 
@@ -112,7 +112,7 @@ async def show_stats(callback: CallbackQuery):
                            text="more_stats"
                            )
 async def show_stats(callback: CallbackQuery):
-    statistics = (await db.fetch_statistics())
+    statistics = (await db.fetch_statistics()).replace('None', '0')
 
     logger.info(statistics)
 

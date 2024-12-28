@@ -203,6 +203,8 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
     res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPTs
 
+    logger.info(f"Ответ ChatGPT: {res['content']}")
+
     if len(res["content"]) <= 4096:
         await bot.send_message(user_id, res["content"], reply_markup=user_kb.get_clear_or_audio())
     else:
@@ -226,7 +228,7 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
     user = await db.get_user(user_id)  # Получаем обновленные данные пользователя
     has_purchase = await db.has_matching_orders(user_id)
     
-    if 0 < user[f"tokens_{model_dashed}"] <= 3000 and model_dashed != "4o_mini":  # Если осталось 3 тыс или меньше токенов
+    if user[f"tokens_{model_dashed}"] <= 3000 and model_dashed != "4o_mini":  # Если осталось 3 тыс или меньше токенов
 
         logger.info(f"Осталось {user[f'tokens_{model_dashed}']} токенов, было уведомление: {user_notified}, совершал ли покупку: {has_purchase}")
 
