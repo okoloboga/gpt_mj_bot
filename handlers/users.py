@@ -189,15 +189,16 @@ def split_message(text: str, max_length: int) -> list:
 
 def formatter(text):
     # Экранируем специальные символы для MarkdownV2
-    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    # escape_chars = r'_*[]()~`>#+-=|{}.!'
+    escape_chars = r'[]()~>#+-=|{}.!'
     text = ''.join(['\\' + char if char in escape_chars else char for char in text])
     
     logger.info('AFTER ESCAPE: ' + text)
 
     # Последовательно заменяем экранированные символы на обычные
-    text = text.replace("\\*\\*", "*").replace("\\_", "_").replace("\\`", "`").replace("\\~\\~", "~")
+    # text = text.replace("\\*\\*", "*").replace("\\_", "_").replace("\\*", "*").replace("\\`", "`").replace("\\~\\~", "~")
 
-    logger.info('AFTER REPLACE: ' + text)
+    # logger.info('AFTER REPLACE: ' + text)
     
     return text
 
