@@ -213,8 +213,6 @@ async def get_gpt(prompt, messages, user_id, bot: Bot, state: FSMContext):
 
     res = await ai.get_gpt(messages, model)  # Отправляем запрос в ChatGPTs
 
-    logger.info(f"Ответ ChatGPT: {res['content']}")
-
     if len(res["content"]) <= 4096:
         await bot.send_message(user_id, formatter(res["content"]), reply_markup=user_kb.get_clear_or_audio(), parse_mode="MarkdownV2")
     else:
