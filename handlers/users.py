@@ -195,6 +195,9 @@ def formatter(text):
     logger.info('AFTER ESCAPE: ' + text)
 
     text.replace("\*\*", "*").replace("\_\_", "_").replace("\`\`", "`").replace("\~\~", "~")
+
+    logger.info('AFTER REPLACE: ' + text)
+    
     return text
 
 
