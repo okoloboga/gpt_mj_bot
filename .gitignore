@@ -1,0 +1,4 @@
+/venv
+config.copy.py
+*/__pycache__
+__pycache__

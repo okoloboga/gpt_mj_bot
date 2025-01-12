@@ -693,7 +693,7 @@ async def has_matching_orders(user_id: int) -> bool:
 СТАТИСТИКА ДЛЯ АДМИНА
 '''
 
-CHATGPT_ORDER_TYPES = ['4o', 'o1-preview', 'o1-mini']
+CHATGPT_ORDER_TYPES = ['4o', '4o-mini', 'o1-preview', 'o1-mini']
 CHATGPT_QUANTITIES = [20000, 40000, 60000, 100000]
 MIDJOURNEY_QUANTITIES = [10, 20, 50, 100]
 
@@ -898,7 +898,7 @@ async def fetch_short_statistics() -> str:
         chatgpt_requests_all_time = await conn.fetchval("""
             SELECT COUNT(*)
             FROM usage
-            WHERE ai_type IN ('chatgpt', '4o', 'o1-preview', 'o1-mini')
+            WHERE ai_type IN ('chatgpt', '4o', '4o-mini', 'o1-preview', 'o1-mini')
         """)
         logger.info(f"ChatGPT запросов за всё время: {chatgpt_requests_all_time}")
 
@@ -906,7 +906,7 @@ async def fetch_short_statistics() -> str:
         chatgpt_payments_all_time = await conn.fetchval("""
             SELECT COUNT(*)
             FROM orders
-            WHERE pay_time IS NOT NULL AND order_type IN ('chatgpt', '4o', 'o1-preview', 'o1-mini')
+            WHERE pay_time IS NOT NULL AND order_type IN ('chatgpt', '4o', '4o-mini', 'o1-preview', 'o1-mini')
         """)
         logger.info(f"ChatGPT оплат за всё время: {chatgpt_payments_all_time}")
 
@@ -955,7 +955,7 @@ async def fetch_short_statistics() -> str:
         chatgpt_requests_today = await conn.fetchval("""
             SELECT COUNT(*)
             FROM usage
-            WHERE ai_type IN ('chatgpt', '4o', 'o1-preview', 'o1-mini') AND create_time >= $1
+            WHERE ai_type IN ('chatgpt', '4o', '4o-mini', 'o1-preview', 'o1-mini') AND create_time >= $1
         """, start_of_day)
         logger.info(f"ChatGPT запросов за сегодня: {chatgpt_requests_today}")
 
@@ -963,7 +963,7 @@ async def fetch_short_statistics() -> str:
         chatgpt_payments_today = await conn.fetchval("""
             SELECT COUNT(*)
             FROM orders
-            WHERE pay_time IS NOT NULL AND pay_time >= $1 AND order_type IN ('chatgpt', '4o', 'o1-preview', 'o1-mini')
+            WHERE pay_time IS NOT NULL AND pay_time >= $1 AND order_type IN ('chatgpt', '4o', '4o-mini', 'o1-preview', 'o1-mini')
         """, start_of_day)
         logger.info(f"ChatGPT оплат за сегодня: {chatgpt_payments_today}")
 

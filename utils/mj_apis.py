@@ -210,8 +210,8 @@ class MidJourneyAPI:
                 try:
                     error_data = json.loads((str(e)[19:]).strip())  # Парсим JSON из строки ошибки
                     logger.info(f"Ошибка GoAPI: {error_data}")
-                    message = error_data.get("message", "Нет сообщения в ошибке")
-                    return message
+                    # message = error_data.get("message", "Нет сообщения в ошибке")
+                    return error_data
                 except (json.JSONDecodeError, IndexError) as parse_error:
                     # Если не удаётся распарсить, логируем ошибку
                     logger.error(f"Ошибка при парсинге ответа GoAPI: {parse_error}")

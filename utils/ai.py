@@ -147,8 +147,6 @@ async def get_gpt(messages, model):
     return {"status": status, "content": content, "tokens": tokens}  # Возвращаем результат
 
 
-
-
 # Функция для отправки запроса в MidJourney
 async def get_mdjrny(prompt, user_id):
 
