@@ -1,6 +1,7 @@
 /venv
 config.copy.py
-config.py
-.gitignore
 */__pycache__
 __pycache__
+/photos
+config.py
+.gitignore
