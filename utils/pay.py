@@ -9,7 +9,7 @@ from urllib.parse import urlencode  # Для кодирования URL пара
 import requests  # Для выполнения HTTP-запросов
 
 import config  # Импорт конфигурации
-from config import FreeKassa, LAVA_API_KEY, LAVA_SHOP_ID, PayOK, Tinkoff  # Импорт настроек платежных систем
+from config import FreeKassa, LAVA_API_KEY, LAVA_SHOP_ID, PayOK, Tinkoff, CRYPTOMUS_API, CRYPTOMUS_ID, IP  # Импорт настроек платежных систем
 from utils import db  # Импорт функций работы с базой данных
 
 
@@ -29,10 +29,10 @@ def get_pay_url_tinkoff(order_id, amount):
         "TerminalKey": Tinkoff.terminal_id,
         "Amount": amount * 100,  # Сумма в копейках
         "OrderId": order_id,  # Идентификатор заказа
-        "NotificationURL": "http://91.192.102.250/api/pay/tinkoff"  # URL для уведомлений о статусе оплаты
+        "NotificationURL": f"http://{IP}/api/pay/tinkoff"  # URL для уведомлений о статусе оплаты
     }
     # Строка для подписи
-    sing_str = f"{amount * 100}http://91.192.102.250/api/pay/tinkoff{order_id}{Tinkoff.api_token}{Tinkoff.terminal_id}"
+    sing_str = f"{amount * 100}http://{IP}/api/pay/tinkoff{order_id}{Tinkoff.api_token}{Tinkoff.terminal_id}"
     # Генерация подписи (SHA256)
     sign = hashlib.sha256(sing_str.encode('utf-8')).hexdigest()
 
@@ -45,25 +45,25 @@ def get_pay_url_tinkoff(order_id, amount):
     return res_data["PaymentURL"]  # Возвращаем URL для оплаты
 
 
-# Функция для получения ссылки оплаты через PayOK
-def get_pay_url_payok(order_id, amount):
+# # Функция для получения ссылки оплаты через PayOK
+# def get_pay_url_payok(order_id, amount):
 
-    desc = "Пополнение баланса NeuronAgent"  # Описание платежа
-    currency = "RUB"  # Валюта
-    # Формирование строки для подписи
-    sign_string = '|'.join(
-        str(item) for item in
-        [amount, order_id, PayOK.shop_id, currency, desc, PayOK.secret]
-    )
-    # Генерация подписи (MD5)
-    sign = hashlib.md5(sign_string.encode())
+#     desc = "Пополнение баланса NeuronAgent"  # Описание платежа
+#     currency = "RUB"  # Валюта
+#     # Формирование строки для подписи
+#     sign_string = '|'.join(
+#         str(item) for item in
+#         [amount, order_id, PayOK.shop_id, currency, desc, PayOK.secret]
+#     )
+#     # Генерация подписи (MD5)
+#     sign = hashlib.md5(sign_string.encode())
 
-    # Параметры для оплаты
-    params = {"amount": amount, "payment": order_id, "shop": PayOK.shop_id, "desc": desc, "currency": currency,
-              "sign": sign.hexdigest()}
+#     # Параметры для оплаты
+#     params = {"amount": amount, "payment": order_id, "shop": PayOK.shop_id, "desc": desc, "currency": currency,
+#               "sign": sign.hexdigest()}
 
-    # Возвращаем URL для оплаты через PayOK
-    return "https://payok.io/pay?" + urlencode(params)
+#     # Возвращаем URL для оплаты через PayOK
+#     return "https://payok.io/pay?" + urlencode(params)
 
 
 # Функция для получения ссылки оплаты через FreeKassa
@@ -87,26 +87,69 @@ def sortDict(data: dict):
 
 
 # Функция для получения ссылки оплаты через Lava
-def get_pay_url_lava(user_id, amount):
+# def get_pay_url_lava(user_id, amount):
 
-    # Формирование данных для платежа
+#     # Формирование данных для платежа
+#     payload = {
+#         "sum": amount,
+#         "orderId": str(user_id) + ":" + str(random.randint(10000, 1000000)),  # Уникальный идентификатор заказа
+#         "shopId": LAVA_SHOP_ID
+#     }
+
+#     # Сортировка данных
+#     payload = sortDict(payload)
+#     jsonStr = json.dumps(payload).encode()
+
+#     # Генерация подписи (HMAC-SHA256)
+#     sign = hmac.new(bytes(LAVA_API_KEY, 'UTF-8'), jsonStr, hashlib.sha256).hexdigest()
+#     headers = {"Signature": sign, "Accept": "application/json", "Content-Type": "application/json"}
+    
+#     # Отправляем запрос на создание счета
+#     res = requests.post("https://api.lava.ru/business/invoice/create", json=payload, headers=headers)
+#     return res.json()["data"]["url"]  # Возвращаем URL для оплаты
+
+
+'''CRYPTOMUS'''
+# Функция для создания подписи
+def generate_sign(payload, api_key):
+    json_payload = json.dumps(payload, separators=(',', ':'))
+    return hashlib.sha256(f"{json_payload}{api_key}".encode()).hexdigest()
+
+
+# Общая функция для создания ссылки на оплату
+def create_payment_link(order_id, amount):
+    # Параметры для создания платежа
     payload = {
-        "sum": amount,
-        "orderId": str(user_id) + ":" + str(random.randint(10000, 1000000)),  # Уникальный идентификатор заказа
-        "shopId": LAVA_SHOP_ID
+        "amount": str(amount),  # Сумма (строкой)
+        "currency": "USD",  # Код валюты
+        "order_id": order_id,  # Уникальный идентификатор заказа
+        "url_return": f"http://{IP}/api/pay/cryptomus/return",  # URL возврата
+        "url_success": f"http://{IP}/api/pay/cryptomus/success",  # URL успешного платежа
+        "url_callback": f"http://{IP}/api/pay/cryptomus/callback",  # URL для коллбэков
     }
 
-    # Сортировка данных
-    payload = sortDict(payload)
-    jsonStr = json.dumps(payload).encode()
+    # Создание подписи
+    sign = generate_sign(payload, CRYPTOMUS_API)
 
-    # Генерация подписи (HMAC-SHA256)
-    sign = hmac.new(bytes(LAVA_API_KEY, 'UTF-8'), jsonStr, hashlib.sha256).hexdigest()
-    headers = {"Signature": sign, "Accept": "application/json", "Content-Type": "application/json"}
-    
-    # Отправляем запрос на создание счета
-    res = requests.post("https://api.lava.ru/business/invoice/create", json=payload, headers=headers)
-    return res.json()["data"]["url"]  # Возвращаем URL для оплаты
+    # Заголовки
+    headers = {
+        "merchant": CRYPTOMUS_ID,
+        "sign": sign,
+        "Content-Type": "application/json",
+    }
+
+    # Отправка запроса
+    response = requests.post("https://api.cryptomus.com/v1/payment", headers=headers, json=payload)
+
+    # Обработка ответа
+    if response.status_code == 200:
+        data = response.json()
+        if data.get("state") == 0:
+            return data["result"]["url"]  # Возвращаем ссылку на оплату
+        else:
+            raise Exception(f"Ошибка API: {data.get('message')}")
+    else:
+        raise Exception(f"HTTP ошибка: {response.status_code} - {response.text}")
 
 
 # Функция для обработки успешной оплаты токенов/запросов

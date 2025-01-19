@@ -144,8 +144,9 @@ def get_pay_urls(urls, order_id, src='acc'):
 
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton("Банковская карта", url=urls["tinkoff"]),
-        InlineKeyboardButton("Криптовалюта", web_app=WebAppInfo(url=urls["freekassa"])),
+        InlineKeyboardButton("Криптовалюта", url=urls["cryptomus"]),
         InlineKeyboardButton("Telegram Stars", callback_data=f"tg_stars:{order_id}"),
+        InlineKeyboardButton("Другие способы", web_app=WebAppInfo(url=urls["freekassa"])),
         InlineKeyboardButton("🔙Назад", callback_data=back))
 
 

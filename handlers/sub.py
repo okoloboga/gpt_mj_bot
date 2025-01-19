@@ -24,6 +24,7 @@ logging.basicConfig(
 def get_pay_urls(order_id, amount):
     return {
         "tinkoff": pay.get_pay_url_tinkoff(order_id, amount),  # Ссылка для оплаты через Tinkoff
+        "cryptomus": pay.get_pay_url_cryptomus(order_id, amount),
         "freekassa": pay.get_pay_url_freekassa(order_id, amount),  # Ссылка для оплаты через FreeKassa
         "payok": pay.get_pay_url_payok(order_id, amount),  # Ссылка для оплаты через PayOK
     }

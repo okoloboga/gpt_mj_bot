@@ -92,13 +92,13 @@ async def check_pay_freekassa(MERCHANT_ORDER_ID, AMOUNT):
 
 
 # Обработка платежей от Lava
-@app.post('/api/pay/lava')
-async def check_pay_lava(data: LavaWebhook):
+# @app.post('/api/pay/lava')
+# async def check_pay_lava(data: LavaWebhook):
 
-    if data.status != "success":
-        raise HTTPException(200)  # Если статус не успешный, возвращаем HTTP 200
-    await process_pay(data.order_id, int(data.amount))  # Обрабатываем платеж
-    raise HTTPException(200)
+#     if data.status != "success":
+#         raise HTTPException(200)  # Если статус не успешный, возвращаем HTTP 200
+#     await process_pay(data.order_id, int(data.amount))  # Обрабатываем платеж
+#     raise HTTPException(200)
 
 
 # Обработка платежей от Tinkoff
@@ -113,12 +113,44 @@ async def check_pay_tinkoff(request: Request):
     return "OK"
 
 
-# Обработка платежей от PayOK
-@app.post('/api/pay/payok')
-async def check_pay_payok(payment_id: Annotated[str, Form()], amount: Annotated[str, Form()]):
+# URL для возврата пользователя
+@app.get("/api/pay/cryptomus/return")
+async def return_handler():
+    return {"message": "Вы вернулись с платежной страницы"}
 
-    await process_pay(payment_id, int(amount))  # Обрабатываем платеж
-    raise HTTPException(200)
+
+# URL для успешного платежа
+@app.get("/api/pay/cryptomus/success")
+async def success_handler():
+    return {"message": "Платеж успешно завершен!"}
+
+
+# URL для приема коллбэков от Cryptomus
+@app.post("/api/pay/cryptomus/callback")
+async def callback_handler(request: Request):
+    data = await request.json()  # Получаем JSON данные из запроса
+    print(f"Коллбэк от Cryptomus: {data}")
+
+    # Проверяем статус платежа
+    if data.get("payment_status") == "paid":
+        # Обрабатываем успешный платеж
+        order_id = data.get("order_id")
+        amount = data.get("amount")
+        # Здесь вызываем вашу функцию обработки платежа
+        await process_pay(order_id, float(amount))
+    else:
+        print(f"Платеж не завершен: {data.get('payment_status')}")
+
+    # Возвращаем OK, чтобы Cryptomus не отправлял запросы повторно
+    return {"status": "ok"}
+
+
+# Обработка платежей от PayOK
+# @app.post('/api/pay/payok')
+# async def check_pay_payok(payment_id: Annotated[str, Form()], amount: Annotated[str, Form()]):
+
+#     await process_pay(payment_id, int(amount))  # Обрабатываем платеж
+#     raise HTTPException(200)
 
 
 # @app.post('/api/midjourney')
